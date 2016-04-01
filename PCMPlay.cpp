@@ -14,7 +14,7 @@
 #include <dxerr.h>
 #include <dsound.h>
 #include "resource.h"
-#include "CVideo.h"rjacob
+#include "CVideo.h"
 #include "Image.h"
 #include "CS576SoundUtil.h"
 #include "DXUtil.h"
@@ -42,7 +42,8 @@ VOID    EnablePlayUI( HWND hDlg, BOOL bEnable );
 CSoundManager* g_pSoundManager = NULL;
 CSound*        g_pSound = NULL;
 BOOL           g_bBufferPaused;
-MyImage		   inImage, outImage;
+CVideo		   *g_pMyVideo;
+MyImage		   outImage;
 char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];
 
@@ -58,12 +59,10 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 {
 	int w, h;
 	w = 480; h = 270;
-	//w = 240; h = 180;
-	sscanf(pCmdLine, "%s %s", &FramePath, &AudioPath);
-	inImage.setWidth(w);
-	inImage.setHeight(h);
-    // Display the main dialog box.
 
+	sscanf(pCmdLine, "%s %s", &FramePath, &AudioPath);
+
+    // Display the main dialog box.
 	if (strstr(FramePath, ".rgb") == NULL)
 	{
 		MessageBox(NULL, "1:Incorrect input file format. "
@@ -73,7 +72,7 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 	}
 	else
 	{
-		inImage.setImagePath(FramePath);
+		g_pMyVideo = new CVideo(FramePath, w, h);
 		if (!inImage.ReadImage())
 		{
 			MessageBox(NULL, "Incorrect input file format. "
