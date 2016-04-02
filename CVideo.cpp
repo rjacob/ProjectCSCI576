@@ -115,3 +115,8 @@ bool CVideo::playVideo()
 
 	return bReturn;
 }//playVideo
+
+bool CVideo::stopVideo()
+{
+	m_eThreadState = THREAD_STATE_KILLED;
+}//stopVideo

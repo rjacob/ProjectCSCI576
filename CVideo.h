@@ -23,6 +23,7 @@ public:
 	long getNoFrames() const { return m_ulNoFrames;}
 	char* getVideoPath() { return m_videoPath;}
 	bool playVideo();
+	bool stopVideo();
 
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path); }
