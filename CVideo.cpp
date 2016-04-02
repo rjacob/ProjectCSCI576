@@ -30,3 +30,9 @@ CVideo::~CVideo()
 	fclose(m_pFile);
 	m_pFile = 0;
 }//destructor
+
+MyImage* CVideo::getVideoFrame()
+{
+	//fprintf(stderr, "Usage is `Image.exe Imagefile w h`");
+	return m_pCurrentFrame->ReadImage(m_pFile);
+}

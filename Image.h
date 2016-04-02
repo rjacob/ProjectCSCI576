@@ -31,9 +31,9 @@ class MyImage
 {
 
 private:
-	int		Width;					// Width of Image
-	int		Height;					// Height of Image
-	char*	Data;					// RGB data of the image
+	int		m_nWidth;					// Width of Image
+	int		m_nHeight;					// Height of Image
+	char*	m_Data;					// RGB data of the image
 
 public:
 	// Constructor
@@ -47,12 +47,12 @@ public:
 	MyImage & operator= (const MyImage & otherImage);
 
 	// Reader & Writer functions
-	void	setWidth( const int w)  { Width = w; }; 
-	void	setHeight(const int h) { Height = h; }; 
-	void	setImageData( const char *img ) { Data = (char *)img; };
-	int		getWidth() { return Width; };
-	int		getHeight() { return Height; };
-	char*	getImageData() { return Data; };
+	void	setWidth( const int w)  { m_nWidth = w; }; 
+	void	setHeight(const int h) { m_nHeight = h; };
+	void	setImageData( const char *img ) { m_Data = (char *)img; };
+	int		getWidth() { return m_nWidth; };
+	int		getHeight() { return m_nHeight; };
+	char*	getImageData() { return m_Data; };
 
 	// Input Output operations
 	bool	ReadImage(FILE*);

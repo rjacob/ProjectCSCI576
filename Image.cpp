@@ -13,29 +13,28 @@
 // Constructor and Desctructors
 MyImage::MyImage() 
 {
-	Data = NULL;
-	Width = -1;
-	Height = -1;
+	m_Data = NULL;
+	m_nWidth = -1;
+	m_nHeight = -1;
 }
 
 MyImage::~MyImage()
 {
-	if ( Data )
-		delete Data;
+	if (m_Data)
+		delete m_Data;
 }
 
 
 // Copy constructor
 MyImage::MyImage( MyImage *otherImage)
 {
-	Height = otherImage->Height;
-	Width  = otherImage->Width;
-	Data   = new char[Width*Height*3];
-	strcpy(otherImage->ImagePath, ImagePath);
+	m_nHeight = otherImage->m_nHeight;
+	m_nWidth = otherImage->m_nWidth;
+	m_Data = new char[m_nWidth*m_nHeight *3];
 
-	for ( int i=0; i<(Height*Width*3); i++ )
+	for ( int i=0; i<(m_nHeight*m_nWidth *3); i++ )
 	{
-		Data[i]	= otherImage->Data[i];
+		m_Data[i]	= otherImage->m_Data[i];
 	}
 }
 
@@ -44,14 +43,13 @@ MyImage::MyImage( MyImage *otherImage)
 // = operator overload
 MyImage & MyImage::operator= (const MyImage &otherImage)
 {
-	Height = otherImage.Height;
-	Width  = otherImage.Width;
-	Data   = new char[Width*Height*3];
-	strcpy( (char *)otherImage.ImagePath, ImagePath );
+	m_nHeight = otherImage.m_nHeight;
+	m_nWidth = otherImage.m_nWidth;
+	m_Data = new char[m_nWidth*m_nHeight *3];
 
-	for ( int i=0; i<(Height*Width*3); i++ )
+	for ( int i=0; i<(m_nHeight*m_nWidth *3); i++ )
 	{
-		Data[i]	= otherImage.Data[i];
+		m_Data[i]	= otherImage.m_Data[i];
 	}
 	
 	return *this;
@@ -64,39 +62,38 @@ MyImage & MyImage::operator= (const MyImage &otherImage)
 bool MyImage::ReadImage(FILE* _inFile)
 {
 	// Verify ImagePath
-	if (ImagePath[0] == 0 || Width < 0 || Height < 0 )
+	if (m_nWidth < 0 || m_nHeight < 0 )
 	{
 		fprintf(stderr, "Image or Image properties not defined");
-		fprintf(stderr, "Usage is `Image.exe Imagefile w h`");
 		return false;
 	}
 	
 	// Create and populate RGB buffers
 	int i;
-	char *Rbuf = new char[Height*Width]; 
-	char *Gbuf = new char[Height*Width]; 
-	char *Bbuf = new char[Height*Width]; 
+	char *Rbuf = new char[m_nHeight*m_nWidth];
+	char *Gbuf = new char[m_nHeight*m_nWidth];
+	char *Bbuf = new char[m_nHeight*m_nWidth];
 
-	for (i = 0; i < Width*Height; i ++)
+	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
 		Rbuf[i] = fgetc(_inFile);
 	}
-	for (i = 0; i < Width*Height; i ++)
+	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
 		Gbuf[i] = fgetc(_inFile);
 	}
-	for (i = 0; i < Width*Height; i ++)
+	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
 		Bbuf[i] = fgetc(_inFile);
 	}
 	
 	// Allocate Data structure and copy
-	Data = new char[Width*Height*3];
-	for (i = 0; i < Height*Width; i++)
+	m_Data = new char[m_nWidth*m_nHeight *3];
+	for (i = 0; i < m_nHeight*m_nWidth; i++)
 	{
-		Data[3*i]	= Bbuf[i];
-		Data[3*i+1]	= Gbuf[i];
-		Data[3*i+2]	= Rbuf[i];
+		m_Data[3*i]	= Bbuf[i];
+		m_Data[3*i+1] = Gbuf[i];
+		m_Data[3*i+2] = Rbuf[i];
 	}
 
 	// Clean up and return
@@ -112,28 +109,28 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 {
 	// Create and populate RGB buffers
 	int i;
-	char *Rbuf = new char[Height*Width]; 
-	char *Gbuf = new char[Height*Width]; 
-	char *Bbuf = new char[Height*Width]; 
+	char *Rbuf = new char[m_nHeight*m_nWidth];
+	char *Gbuf = new char[m_nHeight*m_nWidth];
+	char *Bbuf = new char[m_nHeight*m_nWidth];
 
-	for (i = 0; i < Height*Width; i++)
+	for (i = 0; i < m_nHeight*m_nWidth; i++)
 	{
-		Bbuf[i] = Data[3*i];
-		Gbuf[i] = Data[3*i+1];
-		Rbuf[i] = Data[3*i+2];
+		Bbuf[i] = m_Data[3*i];
+		Gbuf[i] = m_Data[3*i+1];
+		Rbuf[i] = m_Data[3*i+2];
 	}
 
 	
 	// Write data to file
-	for (i = 0; i < Width*Height; i ++)
+	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
 		fputc(Rbuf[i], _pImageFile);
 	}
-	for (i = 0; i < Width*Height; i ++)
+	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
 		fputc(Gbuf[i], _pImageFile);
 	}
-	for (i = 0; i < Width*Height; i ++)
+	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
 		fputc(Bbuf[i], _pImageFile);
 	}
@@ -155,10 +152,10 @@ bool MyImage::Modify()
 	// TO DO by student
 	
 	// sample operation
-	for ( int i=0; i<Width*Height; i++ )
+	for ( int i=0; i<m_nWidth*m_nHeight; i++ )
 	{
-		Data[3*i] = 0;
-		Data[3*i+1] = 0;
+		m_Data[3*i] = 0;
+		m_Data[3*i+1] = 0;
 
 	}
 

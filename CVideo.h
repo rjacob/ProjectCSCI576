@@ -10,8 +10,11 @@ public:
 	~CVideo();
 
 	//accessors
+	unsigned int getVideoWidth() const { return m_unWidth;}
+	unsigned int getVideoHeight() const { return m_unHeight; }
 	long getNoFrames() const { return m_ulNoFrames;}
-	char* getVideoPath() const { return m_videoPath;}
+	char* getVideoPath() { return m_videoPath;}
+	MyImage* getVideoFrame();
 
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path); }
@@ -20,7 +23,7 @@ private:
 	unsigned long m_ulNoFrames;
 	unsigned int m_unWidth;
 	unsigned int m_unHeight;
-	MyImage m_currentFrame;
+	MyImage* m_pCurrentFrame;
 
 	char m_videoPath[_MAX_PATH];	// Video location
 

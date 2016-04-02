@@ -20,8 +20,6 @@
 #include "DXUtil.h"
 
 
-
-
 //-----------------------------------------------------------------------------
 // Function-prototypes
 //-----------------------------------------------------------------------------
@@ -32,8 +30,6 @@ HRESULT OnPlaySound( HWND hDlg );
 HRESULT PlayBuffer( BOOL bLooped );
 VOID    OnTimer( HWND hDlg );
 VOID    EnablePlayUI( HWND hDlg, BOOL bEnable );
-
-
 
 
 //-----------------------------------------------------------------------------
@@ -73,7 +69,8 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 	else
 	{
 		g_pMyVideo = new CVideo(FramePath, w, h);
-		if (!inImage.ReadImage())
+
+		if (!g_pMyVideo->getVideoFrame())
 		{
 			MessageBox(NULL, "Incorrect input file format. "
 				"Sample will now exit.", "AV Player Sample",
@@ -81,7 +78,7 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 			return FALSE;
 		}
 		else
-			outImage = inImage;
+			outImage = g_pMyVideo->getVideoFrame();
 	}
 	DialogBox(hInst, MAKEINTRESOURCE(IDD_MAIN), NULL, MainDlgProc);
 
@@ -166,12 +163,12 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 			BITMAPINFO bmi;
 			memset(&bmi, 0, sizeof(bmi));
 			bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-			bmi.bmiHeader.biWidth = inImage.getWidth();
-			bmi.bmiHeader.biHeight = -inImage.getHeight();  // Use negative height.  DIB is top-down.
+			bmi.bmiHeader.biWidth = g_pMyVideo->getVideoWidth();
+			bmi.bmiHeader.biHeight = -g_pMyVideo->getVideoHeight();  // Use negative height.  DIB is top-down.
 			bmi.bmiHeader.biPlanes = 1;
 			bmi.bmiHeader.biBitCount = 24;
 			bmi.bmiHeader.biCompression = BI_RGB;
-			bmi.bmiHeader.biSizeImage = inImage.getWidth()*inImage.getHeight();
+			bmi.bmiHeader.biSizeImage = g_pMyVideo->getVideoWidth()*g_pMyVideo->getVideoHeight();
 
 			SetDIBitsToDevice(hdc,
 				34, 20, outImage.getWidth(), outImage.getHeight(),
