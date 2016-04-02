@@ -140,6 +140,11 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
                         g_pSound->Reset();
                     }
 
+					if (g_pMyVideo)
+					{
+						g_pMyVideo->stopVideo();
+					}
+
                     EnablePlayUI( hDlg, TRUE );
                     break;
 
@@ -231,9 +236,6 @@ VOID OnInitDialog( HWND hDlg )
 
 }
 
-
-
-
 //-----------------------------------------------------------------------------
 // Name: OnOpenSoundFile()
 // Desc: Called when the user requests to open a sound file
@@ -305,8 +307,6 @@ VOID OnOpenSoundFile( HWND hDlg )
 }
 
 
-
-
 //-----------------------------------------------------------------------------
 // Name: OnPlaySound()
 // Desc: User hit the "Play" button
@@ -355,8 +355,6 @@ HRESULT OnPlaySound( HWND hDlg )
 
     return S_OK;
 }
-
-
 
 
 //-----------------------------------------------------------------------------
