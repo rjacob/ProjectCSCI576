@@ -80,16 +80,12 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 		else
 		{
 			g_pMyVideo->setOutputBuff(&outImage);
-			g_pMyVideo->playVideo();
 		}
 	}
 	DialogBox(hInst, MAKEINTRESOURCE(IDD_MAIN), NULL, MainDlgProc);
 
     return TRUE;
-}
-
-
-
+}//WinMain
 
 //-----------------------------------------------------------------------------
 // Name: MainDlgProc()
@@ -131,6 +127,8 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
                                     MB_OK | MB_ICONERROR );
                         EndDialog( hDlg, IDABORT );
                     }
+
+					g_pMyVideo->playVideo();
                     break;
 
                 case IDC_STOP:
@@ -155,6 +153,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
         case WM_TIMER:
             OnTimer( hDlg );
+			InvalidateRect(hDlg, &rt, TRUE);
             break;
 
         case WM_DESTROY:
@@ -232,9 +231,8 @@ VOID OnInitDialog( HWND hDlg )
     g_bBufferPaused = FALSE;
 
     // Create a timer, so we can check for when the soundbuffer is stopped
-    SetTimer( hDlg, 0, 250, NULL );
-
-}
+    SetTimer( hDlg, 0, 33, NULL );
+}//OnInitDialog
 
 //-----------------------------------------------------------------------------
 // Name: OnOpenSoundFile()

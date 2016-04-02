@@ -6,8 +6,8 @@
 typedef enum
 {
 	THREAD_STATE_UNKNOWN = 0,
-	THREAD_STATE_ALIVE,
-	THREAD_STATE_KILLED
+	THREAD_STATE_ALIVE,//Playing
+	THREAD_STATE_KILLED//Stopped
 }THREAD_STATE_E;
 
 class CVideo
@@ -24,6 +24,7 @@ public:
 	char* getVideoPath() { return m_videoPath;}
 	bool playVideo();
 	bool stopVideo();
+	bool isVideoPlaying() { return m_bPlaying; }
 
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path); }
@@ -31,6 +32,7 @@ public:
 	
 private:
 	unsigned long m_ulNoFrames;
+	unsigned long m_ulCurrentFrameIndex;
 	unsigned int m_unWidth;
 	unsigned int m_unHeight;
 	MyImage* m_pCurrentFrame;
@@ -43,8 +45,10 @@ private:
 	THREAD_STATE_E m_eThreadState;
 	HANDLE m_threadHandle;
 	DWORD m_dwThreadId;
+	BOOL m_bPlaying;
+
+	bool copyVideoFrame(MyImage&, unsigned int);
 
 	static void spawnThread(CVideo* _pThis) { _pThis->threadProcessingLoop(); }
 	void threadProcessingLoop();
-	bool copyVideoFrame(MyImage&);
 };

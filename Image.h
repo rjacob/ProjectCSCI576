@@ -55,7 +55,7 @@ public:
 	char*	getImageData() { return m_Data; };
 
 	// Input Output operations
-	bool	ReadImage(FILE*);
+	bool	ReadImage(FILE*, unsigned int);
 	bool	WriteImage(FILE*);
 
 	// Modifications

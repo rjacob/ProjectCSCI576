@@ -54,20 +54,22 @@ MyImage & MyImage::operator= (const MyImage &otherImage)
 
 // MyImage::ReadImage
 // Function to read the image given a path
-bool MyImage::ReadImage(FILE* _inFile)
+bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 {
+	int i;
 	// Verify ImagePath
-	if (m_nWidth < 0 || m_nHeight < 0 )
+	if (m_nWidth < 0 || m_nHeight < 0)
 	{
 		fprintf(stderr, "Image or Image properties not defined");
 		return false;
 	}
 	
 	// Create and populate RGB buffers
-	int i;
 	char *Rbuf = new char[m_nHeight*m_nWidth];
 	char *Gbuf = new char[m_nHeight*m_nWidth];
 	char *Bbuf = new char[m_nHeight*m_nWidth];
+
+	fseek(_inFile, _nFrameNo*m_nHeight*m_nWidth*3, SEEK_SET);
 
 	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
