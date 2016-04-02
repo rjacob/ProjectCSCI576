@@ -439,9 +439,6 @@ HRESULT CSound::FillBufferWithSound( LPDIRECTSOUNDBUFFER pDSB, BOOL bRepeatWavIf
     return S_OK;
 }
 
-
-
-
 //-----------------------------------------------------------------------------
 // Name: CSound::RestoreBuffer()
 // Desc: Restores the lost buffer. *pbWasRestored returns TRUE if the buffer was 
@@ -484,8 +481,6 @@ HRESULT CSound::RestoreBuffer( LPDIRECTSOUNDBUFFER pDSB, BOOL* pbWasRestored )
         return S_FALSE;
     }
 }
-
-
 
 
 //-----------------------------------------------------------------------------

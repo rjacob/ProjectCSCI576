@@ -70,7 +70,7 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 	{
 		g_pMyVideo = new CVideo(FramePath, w, h);
 
-		if (!g_pMyVideo->getVideoFrame())
+		if (g_pMyVideo == NULL)
 		{
 			MessageBox(NULL, "Incorrect input file format. "
 				"Sample will now exit.", "AV Player Sample",
@@ -78,7 +78,10 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 			return FALSE;
 		}
 		else
-			outImage = g_pMyVideo->getVideoFrame();
+		{
+			g_pMyVideo->setOutputBuff(&outImage);
+			g_pMyVideo->playVideo();
+		}
 	}
 	DialogBox(hInst, MAKEINTRESOURCE(IDD_MAIN), NULL, MainDlgProc);
 
@@ -152,8 +155,9 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
         case WM_DESTROY:
             // Cleanup everything
             KillTimer( hDlg, 1 );    
-            SAFE_DELETE( g_pSound );
-            SAFE_DELETE( g_pSoundManager );
+            SAFE_DELETE(g_pSound);
+            SAFE_DELETE(g_pSoundManager);
+			SAFE_DELETE(g_pMyVideo);
             break; 
 
 		case WM_PAINT:
@@ -184,10 +188,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
     }
 
     return TRUE; // Handled message
-}
-
-
-
+}//MainDlgProc
 
 //-----------------------------------------------------------------------------
 // Name: OnInitDialog()

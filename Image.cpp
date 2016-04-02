@@ -24,7 +24,6 @@ MyImage::~MyImage()
 		delete m_Data;
 }
 
-
 // Copy constructor
 MyImage::MyImage( MyImage *otherImage)
 {
@@ -37,8 +36,6 @@ MyImage::MyImage( MyImage *otherImage)
 		m_Data[i]	= otherImage->m_Data[i];
 	}
 }
-
-
 
 // = operator overload
 MyImage & MyImage::operator= (const MyImage &otherImage)
@@ -53,9 +50,7 @@ MyImage & MyImage::operator= (const MyImage &otherImage)
 	}
 	
 	return *this;
-
 }
-
 
 // MyImage::ReadImage
 // Function to read the image given a path
