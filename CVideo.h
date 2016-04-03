@@ -23,6 +23,7 @@ public:
 	long getNoFrames() const { return m_ulNoFrames;}
 	char* getVideoPath() { return m_videoPath;}
 	bool playVideo();
+	bool pauseVideo();
 	bool stopVideo();
 	bool isVideoPlaying() { return m_bPlaying; }
 

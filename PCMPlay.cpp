@@ -19,7 +19,6 @@
 #include "CS576SoundUtil.h"
 #include "DXUtil.h"
 
-
 //-----------------------------------------------------------------------------
 // Function-prototypes
 //-----------------------------------------------------------------------------
@@ -27,10 +26,8 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 VOID    OnInitDialog( HWND hDlg );
 VOID    OnOpenSoundFile( HWND hDlg );
 HRESULT OnPlaySound( HWND hDlg );
-HRESULT PlayBuffer( BOOL bLooped );
 VOID    OnTimer( HWND hDlg );
 VOID    EnablePlayUI( HWND hDlg, BOOL bEnable );
-
 
 //-----------------------------------------------------------------------------
 // Defines, constants, and global variables
@@ -42,8 +39,6 @@ CVideo		   *g_pMyVideo;
 MyImage		   outImage;
 char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];
-
-
 
 //-----------------------------------------------------------------------------
 // Name: WinMain()
@@ -182,7 +177,6 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 				34, 20, outImage.getWidth(), outImage.getHeight(),
 				0, 0, 0, outImage.getHeight(),
 				outImage.getImageData(), &bmi, DIB_RGB_COLORS);
-
 
 			EndPaint(hDlg, &ps);
 		}

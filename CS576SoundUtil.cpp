@@ -16,8 +16,6 @@
 #include "DXUtil.h"
 #include <sys/stat.h>
 
-
-
 //-----------------------------------------------------------------------------
 // Name: CSoundManager::CSoundManager()
 // Desc: Constructs the class
@@ -27,9 +25,6 @@ CSoundManager::CSoundManager()
     m_pDS = NULL;
 }
 
-
-
-
 //-----------------------------------------------------------------------------
 // Name: CSoundManager::~CSoundManager()
 // Desc: Destroys the class
@@ -38,9 +33,6 @@ CSoundManager::~CSoundManager()
 {
     SAFE_RELEASE( m_pDS ); 
 }
-
-
-
 
 //-----------------------------------------------------------------------------
 // Name: CSoundManager::Initialize()
@@ -71,9 +63,6 @@ HRESULT CSoundManager::Initialize( HWND  hWnd,
 
     return S_OK;
 }
-
-
-
 
 //-----------------------------------------------------------------------------
 // Name: CSoundManager::SetPrimaryBufferFormat()
@@ -121,9 +110,6 @@ HRESULT CSoundManager::SetPrimaryBufferFormat( DWORD dwPrimaryChannels,
     return S_OK;
 }
 
-
-
-
 //-----------------------------------------------------------------------------
 // Name: CSoundManager::Get3DListenerInterface()
 // Desc: Returns the 3D listener interface associated with primary buffer.
@@ -160,9 +146,6 @@ HRESULT CSoundManager::Get3DListenerInterface( LPDIRECTSOUND3DLISTENER* ppDSList
 
     return S_OK;
 }
-
-
-
 
 //-----------------------------------------------------------------------------
 // Name: CSoundManager::Create()
@@ -307,16 +290,6 @@ LFail:
     return hr;
 }
 
-
-
-
-
-
-
-
-
-
-
 //-----------------------------------------------------------------------------
 // Name: CSound::CSound()
 // Desc: Constructs the class
@@ -339,8 +312,7 @@ CSound::CSound( LPDIRECTSOUNDBUFFER* apDSBuffer, DWORD dwDSBufferSize,
     // Make DirectSound do pre-processing on sound effects
     for( i=0; i<dwNumBuffers; i++ )
         m_apDSBuffer[i]->SetCurrentPosition(0);
-}
-
+}//constructor
 
 //-----------------------------------------------------------------------------
 // Name: CSound::~CSound()
@@ -356,9 +328,6 @@ CSound::~CSound()
     SAFE_DELETE_ARRAY( m_apDSBuffer ); 
     SAFE_DELETE( m_pPCMFile );
 }
-
-
-
 
 //-----------------------------------------------------------------------------
 // Name: CSound::FillBufferWithSound()
@@ -437,7 +406,7 @@ HRESULT CSound::FillBufferWithSound( LPDIRECTSOUNDBUFFER pDSB, BOOL bRepeatWavIf
     pDSB->Unlock( pDSLockedBuffer, dwDSLockedBufferSize, NULL, 0 );
 
     return S_OK;
-}
+}//FillBufferWithSound
 
 //-----------------------------------------------------------------------------
 // Name: CSound::RestoreBuffer()
@@ -480,8 +449,7 @@ HRESULT CSound::RestoreBuffer( LPDIRECTSOUNDBUFFER pDSB, BOOL* pbWasRestored )
     {
         return S_FALSE;
     }
-}
-
+}//RestoreBuffer
 
 //-----------------------------------------------------------------------------
 // Name: CSound::GetFreeBuffer()
@@ -509,10 +477,7 @@ LPDIRECTSOUNDBUFFER CSound::GetFreeBuffer()
         return m_apDSBuffer[ i ];
     else
         return m_apDSBuffer[ rand() % m_dwNumBuffers ];
-}
-
-
-
+}//GetFreeBuffer
 
 //-----------------------------------------------------------------------------
 // Name: CSound::GetBuffer()
@@ -526,7 +491,7 @@ LPDIRECTSOUNDBUFFER CSound::GetBuffer( DWORD dwIndex )
         return NULL;
 
     return m_apDSBuffer[dwIndex];
-}
+}//GetBuffer
 
 
 
@@ -1085,9 +1050,6 @@ HRESULT CPCMFile::Close()
     return S_OK;
 }
 
-
-
-
 //-----------------------------------------------------------------------------
 // Name: CWaveFile::WriteMMIO()
 // Desc: Support function for reading from a multimedia I/O stream
@@ -1157,9 +1119,6 @@ HRESULT CPCMFile::WriteMMIO( WAVEFORMATEX *pwfxDest )
        
     return S_OK;
 }
-
-
-
 
 //-----------------------------------------------------------------------------
 // Name: CWaveFile::Write()
