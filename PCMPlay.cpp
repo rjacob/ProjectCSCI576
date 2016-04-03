@@ -123,7 +123,11 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
                         EndDialog( hDlg, IDABORT );
                     }
 
-					g_pMyVideo->playVideo();
+					if (g_pMyVideo->isVideoPlaying())
+						g_pMyVideo->pauseVideo();
+					else
+						g_pMyVideo->playVideo();
+
                     break;
 
                 case IDC_STOP:
@@ -161,6 +165,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 		case WM_PAINT:
 		{
+
 			hdc = BeginPaint(hDlg, &ps);
 
 			BITMAPINFO bmi;
@@ -352,23 +357,26 @@ HRESULT OnPlaySound( HWND hDlg )
 //-----------------------------------------------------------------------------
 // Name: OnTimer()
 // Desc: When we think the sound is playing this periodically checks to see if 
-//       the sound has stopped.  If it has then updates the dialog.
+//       the sound has stopped.  If it has then updates the dialog. This occurs at 4Hz
+//		 Timer is also driving the refresh of the video which happens at 30Hz
 //-----------------------------------------------------------------------------
 VOID OnTimer( HWND hDlg ) 
 {
-    if( IsWindowEnabled( GetDlgItem( hDlg, IDC_STOP ) ) )
-    {
-        // We think the sound is playing, so see if it has stopped yet.
-        if( !g_pSound->IsSoundPlaying() ) 
-        {
-            // Update the UI controls to show the sound as stopped
-            EnablePlayUI( hDlg, TRUE );
-        }
-    }
+	static unsigned long ulTimerCount = 0;
+
+	if (++ulTimerCount % (30 / 4) == 0)//Check only at 4hz, when timer is at 30Hz
+	{
+		if (IsWindowEnabled(GetDlgItem(hDlg, IDC_STOP)))
+		{
+			// We think the sound is playing, so see if it has stopped yet.
+			if (!g_pSound->IsSoundPlaying())
+			{
+				// Update the UI controls to show the sound as stopped
+				EnablePlayUI(hDlg, TRUE);
+			}
+		}
+	}
 }
-
-
-
 
 //-----------------------------------------------------------------------------
 // Name: EnablePlayUI( hDlg,)
