@@ -28,6 +28,8 @@ public:
 	bool stopVideo();
 	bool isVideoPlaying() { return m_bPlaying; }
 
+	//Test delete this line
+
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path); }
 	void setOutputBuff(MyImage* _pOutputBuff) { m_pOutputBuffer = _pOutputBuff; }
