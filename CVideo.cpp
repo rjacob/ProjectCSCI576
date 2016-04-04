@@ -108,7 +108,7 @@ bool CVideo::playVideo()
 {
 	bool bReturn = false;
 
-	//Dont spawn addition threads when going from pause to replay
+	//Dont spawn additional threads when going from pause to replay
 	if (m_eThreadState == THREAD_STATE_UNKNOWN ||
 		m_eThreadState == THREAD_STATE_KILLED)
 	{

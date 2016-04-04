@@ -39,6 +39,7 @@ CVideo		   *g_pMyVideo;
 MyImage		   outImage;
 char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];
+BITMAPINFO g_bmi;
 
 //-----------------------------------------------------------------------------
 // Name: WinMain()
@@ -152,7 +153,6 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
         case WM_TIMER:
             OnTimer( hDlg );
-			InvalidateRect(hDlg, &rt, TRUE);
             break;
 
         case WM_DESTROY:
@@ -165,23 +165,21 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 		case WM_PAINT:
 		{
-
 			hdc = BeginPaint(hDlg, &ps);
 
-			BITMAPINFO bmi;
-			memset(&bmi, 0, sizeof(bmi));
-			bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-			bmi.bmiHeader.biWidth = g_pMyVideo->getVideoWidth();
-			bmi.bmiHeader.biHeight = -g_pMyVideo->getVideoHeight();  // Use negative height.  DIB is top-down.
-			bmi.bmiHeader.biPlanes = 1;
-			bmi.bmiHeader.biBitCount = 24;
-			bmi.bmiHeader.biCompression = BI_RGB;
-			bmi.bmiHeader.biSizeImage = g_pMyVideo->getVideoWidth()*g_pMyVideo->getVideoHeight();
+			memset(&g_bmi, 0, sizeof(g_bmi));
+			g_bmi.bmiHeader.biSize = sizeof(g_bmi.bmiHeader);
+			g_bmi.bmiHeader.biWidth = g_pMyVideo->getVideoWidth();
+			g_bmi.bmiHeader.biHeight = -g_pMyVideo->getVideoHeight();  // Use negative height.  DIB is top-down.
+			g_bmi.bmiHeader.biPlanes = 1;
+			g_bmi.bmiHeader.biBitCount = 24;
+			g_bmi.bmiHeader.biCompression = BI_RGB;
+			g_bmi.bmiHeader.biSizeImage = g_pMyVideo->getVideoWidth()*g_pMyVideo->getVideoHeight();
 
 			SetDIBitsToDevice(hdc,
 				34, 20, outImage.getWidth(), outImage.getHeight(),
 				0, 0, 0, outImage.getHeight(),
-				outImage.getImageData(), &bmi, DIB_RGB_COLORS);
+				outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
 
 			EndPaint(hDlg, &ps);
 		}
@@ -362,6 +360,7 @@ HRESULT OnPlaySound( HWND hDlg )
 //-----------------------------------------------------------------------------
 VOID OnTimer( HWND hDlg ) 
 {
+	HDC hdc;
 	static unsigned long ulTimerCount = 0;
 
 	if (++ulTimerCount % (30 / 4) == 0)//Check only at 4hz, when timer is at 30Hz
@@ -376,7 +375,13 @@ VOID OnTimer( HWND hDlg )
 			}
 		}
 	}
-}
+
+	hdc = GetDC(hDlg);
+	SetDIBitsToDevice(hdc,
+		34, 20, outImage.getWidth(), outImage.getHeight(),
+		0, 0, 0, outImage.getHeight(),
+		outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+}//OnTimer
 
 //-----------------------------------------------------------------------------
 // Name: EnablePlayUI( hDlg,)
