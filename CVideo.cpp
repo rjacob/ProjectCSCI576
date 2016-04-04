@@ -2,30 +2,32 @@
 
 /*************************************
 * Function: Constructor
-* Author: Roeil Jacob
 * Description: 
 *************************************/
 CVideo::CVideo()
 :
 	m_ulNoFrames(0),
+	m_ulCurrentFrameIndex(0),
 	m_unWidth(0),
 	m_unHeight(0),
-	m_eThreadState(THREAD_STATE_UNKNOWN)
+	m_eThreadState(THREAD_STATE_UNKNOWN),
+	m_bPlaying(FALSE)
 {
 	m_videoPath[0] = 0;
 }//constructor
 
 /*************************************
 * Function: Constructor
-* Author: Roeil Jacob
 * Description:
 *************************************/
 CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 :
 	m_ulNoFrames(0),
+	m_ulCurrentFrameIndex(0),
 	m_unWidth(_nWidth),
 	m_unHeight(_nHeight),
-	m_eThreadState(THREAD_STATE_UNKNOWN)
+	m_eThreadState(THREAD_STATE_UNKNOWN),
+	m_bPlaying(FALSE)
 {
 	strncpy(m_videoPath, _cstrVideoPath, strlen(_cstrVideoPath));
 	// Create a valid output file pointer
@@ -43,6 +45,17 @@ CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 		return;
 	}
 
+	//Find the number of frames and reset file pointer
+	int nFileSize = 0;
+	fseek(m_pFile, 0L, SEEK_END);
+	nFileSize = ftell(m_pFile);
+	fseek(m_pFile, 0L, SEEK_SET);
+
+	if (nFileSize)
+	{
+		m_ulNoFrames = nFileSize / (m_unWidth*m_unHeight * 3);
+	}
+
 	m_pCurrentFrame = new MyImage();
 	m_pCurrentFrame->setWidth(m_unWidth);
 	m_pCurrentFrame->setHeight(m_unHeight);
@@ -50,7 +63,6 @@ CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 
 /*************************************
 * Function:
-* Author: Roeil Jacob
 * Description:
 *************************************/
 CVideo::~CVideo()
@@ -61,36 +73,35 @@ CVideo::~CVideo()
 
 /*************************************
 * Function:
-* Author: Roeil Jacob
 * Description:
 *************************************/
 void CVideo::threadProcessingLoop()
 {
-	m_eThreadState = THREAD_STATE_ALIVE;
-
 	do
 	{
-		copyVideoFrame(*m_pOutputBuffer);
+		if (m_eThreadState != THREAD_STATE_PAUSED)
+		{
+			copyVideoFrame(*m_pOutputBuffer, m_ulCurrentFrameIndex++);
+		}
 		Sleep(1000 / 30);//30Hz
-	} while (m_eThreadState == THREAD_STATE_ALIVE);
+	} while(m_eThreadState != THREAD_STATE_KILLED && m_ulCurrentFrameIndex < m_ulNoFrames);
+
+	m_ulCurrentFrameIndex = 0;
 }//threadProcessingLoop
 
 /*************************************
-* Function:
-* Author: Roeil Jacob
-* Description:
+* Function: copyVideoFrame
+* Description: TODO: Double buffer scheme should go here?
 *************************************/
-bool CVideo::copyVideoFrame(MyImage& _image)
+bool CVideo::copyVideoFrame(MyImage& _image, unsigned int _nFrameNo)
 {
-	//fprintf(stderr, "Usage is `Image.exe Imagefile w h`");
-	m_pCurrentFrame->ReadImage(m_pFile);
+	m_pCurrentFrame->ReadImage(m_pFile, _nFrameNo);
 	_image = *m_pCurrentFrame;
 	return true;
 }//copyVideoFrame
 
 /*************************************
-* Function:
-* Author: Roeil Jacob
+* Function: playVideo
 * Description:
 *************************************/
 bool CVideo::playVideo()
@@ -111,12 +122,35 @@ bool CVideo::playVideo()
 		bReturn = false;
 	}
 	else
+	{
+		m_eThreadState = THREAD_STATE_ALIVE;
+		m_bPlaying = true;
 		bReturn = true;
+	}
 
 	return bReturn;
 }//playVideo
 
+/*************************************
+* Function: stopVideo
+* Description:
+*************************************/
 bool CVideo::stopVideo()
 {
 	m_eThreadState = THREAD_STATE_KILLED;
+	m_ulCurrentFrameIndex = 0;
+	m_bPlaying = false;
+	//Clean-up
+	return true;
 }//stopVideo
+
+/*************************************
+* Function: pauseVideo
+* Description:
+*************************************/
+bool CVideo::pauseVideo()
+{
+	m_eThreadState = THREAD_STATE_PAUSED;
+	m_bPlaying = false;
+	return true;
+}//pauseVideo

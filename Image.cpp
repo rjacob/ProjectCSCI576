@@ -6,7 +6,6 @@
 // Code used by students as starter code to display and modify images
 //
 //*****************************************************************************
-
 #include "Image.h"
 
 
@@ -25,7 +24,7 @@ MyImage::~MyImage()
 }
 
 // Copy constructor
-MyImage::MyImage( MyImage *otherImage)
+MyImage::MyImage(MyImage *otherImage)
 {
 	m_nHeight = otherImage->m_nHeight;
 	m_nWidth = otherImage->m_nWidth;
@@ -38,17 +37,19 @@ MyImage::MyImage( MyImage *otherImage)
 }
 
 // = operator overload
-MyImage & MyImage::operator= (const MyImage &otherImage)
+MyImage& MyImage::operator= (const MyImage &otherImage)
 {
 	m_nHeight = otherImage.m_nHeight;
 	m_nWidth = otherImage.m_nWidth;
-	m_Data = new char[m_nWidth*m_nHeight *3];
 
-	for ( int i=0; i<(m_nHeight*m_nWidth *3); i++ )
+	if (m_Data == NULL)
+		m_Data = new char[m_nWidth*m_nHeight * 3];
+
+	for (int i = 0; i < (m_nHeight*m_nWidth * 3); i++)
 	{
-		m_Data[i]	= otherImage.m_Data[i];
+		m_Data[i] = otherImage.m_Data[i];
 	}
-	
+
 	return *this;
 }
 
@@ -85,7 +86,9 @@ bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 	}
 	
 	// Allocate Data structure and copy
-	m_Data = new char[m_nWidth*m_nHeight *3];
+	if(m_Data == NULL)
+		m_Data = new char[m_nWidth*m_nHeight *3];
+
 	for (i = 0; i < m_nHeight*m_nWidth; i++)
 	{
 		m_Data[3*i]	= Bbuf[i];
