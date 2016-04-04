@@ -108,13 +108,18 @@ bool CVideo::playVideo()
 {
 	bool bReturn = false;
 
-	m_threadHandle = CreateThread(
-		NULL,                   // default security attributes
-		0,                      // use default stack size  
-		(LPTHREAD_START_ROUTINE)&spawnThread,       // thread function name
-		this,						// argument to thread function 
-		0,                      // use default creation flags 
-		&m_dwThreadId);   // returns the thread identifier 
+	//Dont spawn addition threads when going from pause to replay
+	if (m_eThreadState == THREAD_STATE_UNKNOWN ||
+		m_eThreadState == THREAD_STATE_KILLED)
+	{
+		m_threadHandle = CreateThread(
+			NULL,                   // default security attributes
+			0,                      // use default stack size  
+			(LPTHREAD_START_ROUTINE)&spawnThread,       // thread function name
+			this,						// argument to thread function 
+			0,                      // use default creation flags 
+			&m_dwThreadId);   // returns the thread identifier
+	}
 
 	if (m_threadHandle == NULL)
 	{
