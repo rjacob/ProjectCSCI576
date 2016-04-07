@@ -60,6 +60,9 @@ public:
 
 	// Modifications
 	bool	Modify();
+	
+	// Calculations
+	double	calcEntropy();
 
 };
 
