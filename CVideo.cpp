@@ -83,7 +83,7 @@ void CVideo::threadProcessingLoop()
 		{
 			copyVideoFrame(*m_pOutputBuffer, m_ulCurrentFrameIndex++);
 		}
-		Sleep(1000 / 30);//30Hz
+		Sleep(1000 / 20);//20Hz
 	} while(m_eThreadState != THREAD_STATE_KILLED && m_ulCurrentFrameIndex < m_ulNoFrames);
 
 	m_ulCurrentFrameIndex = 0;

@@ -1,5 +1,6 @@
 #pragma once
 #include "CMutexExclusiveLock.h"
+#include "Image.h"
 
 #define NO_BUFFERS 2
 
@@ -11,7 +12,8 @@ private:
 
 	unsigned short m_usCurrentIndex;
 public:
-	CDoubleBuffer();
+	CDoubleBuffer();//Default Constructor
+	CDoubleBuffer(MyImage);//Constructor
 	virtual ~CDoubleBuffer();
 
 	void write(const T&);

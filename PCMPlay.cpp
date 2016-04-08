@@ -14,6 +14,7 @@
 #include <dxerr.h>
 #include <dsound.h>
 #include "resource.h"
+#include "CDoubleBuffer.h"
 #include "CVideo.h"
 #include "Image.h"
 #include "CS576SoundUtil.h"
@@ -37,6 +38,8 @@ CSound*        g_pSound = NULL;
 BOOL           g_bBufferPaused;
 CVideo		   *g_pMyVideo;
 MyImage		   outImage;
+//CDoubleBuffer<MyImage> oImage;
+
 char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];
 BITMAPINFO g_bmi;
@@ -363,7 +366,7 @@ VOID OnTimer( HWND hDlg )
 	HDC hdc;
 	static unsigned long ulTimerCount = 0;
 
-	if (++ulTimerCount % (30 / 4) == 0)//Check only at 4hz, when timer is at 30Hz
+	if (++ulTimerCount % (20 / 4) == 0)//Check only at 4hz, when timer is at 30Hz
 	{
 		if (IsWindowEnabled(GetDlgItem(hDlg, IDC_STOP)))
 		{

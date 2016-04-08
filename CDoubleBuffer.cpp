@@ -6,7 +6,13 @@ CDoubleBuffer<T>::CDoubleBuffer()
 	m_usCurrentIndex(0)
 {
 
-}//constructor
+}//default constructor
+
+template <class T>
+CDoubleBuffer<T>::CDoubleBuffer(MyImage)
+{
+
+}
 
 template <class T>
 CDoubleBuffer<T>::~CDoubleBuffer()
@@ -17,6 +23,7 @@ CDoubleBuffer<T>::~CDoubleBuffer()
 template <class T>
 void CDoubleBuffer<T>::write(const T&)
 {
+	CMutexEclusiveLock lock;
 	m_doubleBuffer[m_usCurrentIndex] = T;
 	m_usCurrentIndex++;
 	m_usCurrentIndex %= NO_BUFFERS;
@@ -25,6 +32,7 @@ void CDoubleBuffer<T>::write(const T&)
 template <class T>
 T CDoubleBuffer<T>::read() const
 {
+	CMutexEclusiveLock lock;
 	unsigned short unCurrentIndex = ++m_usCurrentIndex;
 	unCurrentIndex %= NO_BUFFERS;
 
