@@ -38,7 +38,6 @@ CSound*        g_pSound = NULL;
 BOOL           g_bBufferPaused;
 CVideo		   *g_pMyVideo;
 MyImage		   outImage;
-//CDoubleBuffer<MyImage> oImage;
 
 char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];

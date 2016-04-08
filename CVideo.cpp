@@ -56,9 +56,8 @@ CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 		m_ulNoFrames = nFileSize / (m_unWidth*m_unHeight * 3);
 	}
 
-	m_pCurrentFrame = new MyImage();
-	m_pCurrentFrame->setWidth(m_unWidth);
-	m_pCurrentFrame->setHeight(m_unHeight);
+	m_FrameBuffer.read().setWidth(m_unWidth);
+	m_FrameBuffer.read().setHeight(m_unHeight);
 }//constructor
 
 /*************************************
@@ -95,8 +94,8 @@ void CVideo::threadProcessingLoop()
 *************************************/
 bool CVideo::copyVideoFrame(MyImage& _image, unsigned int _nFrameNo)
 {
-	m_pCurrentFrame->ReadImage(m_pFile, _nFrameNo);
-	_image = *m_pCurrentFrame;
+	m_FrameBuffer.read().ReadImage(m_pFile, _nFrameNo);
+	_image = m_FrameBuffer.read();
 	return true;
 }//copyVideoFrame
 

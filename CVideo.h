@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include "Image.h"
+#include "CDoubleBuffer.h"
 
 typedef enum
 {
@@ -41,6 +42,7 @@ private:
 	unsigned int m_unHeight;
 	MyImage* m_pCurrentFrame;
 	MyImage* m_pOutputBuffer;
+	CDoubleBuffer m_FrameBuffer;
 
 	char m_videoPath[_MAX_PATH];	// Video location
 

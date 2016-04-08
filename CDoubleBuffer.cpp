@@ -1,38 +1,16 @@
 #include "CDoubleBuffer.h"
 
-template <class T>
-CDoubleBuffer<T>::CDoubleBuffer()
-:
-	m_usCurrentIndex(0)
+void CDoubleBuffer::write(const MyImage& _image)
 {
-
-}//default constructor
-
-template <class T>
-CDoubleBuffer<T>::CDoubleBuffer(MyImage)
-{
-
-}
-
-template <class T>
-CDoubleBuffer<T>::~CDoubleBuffer()
-{
-
-}//destructor
-
-template <class T>
-void CDoubleBuffer<T>::write(const T&)
-{
-	CMutexEclusiveLock lock;
-	m_doubleBuffer[m_usCurrentIndex] = T;
+	CMutexExlusiveLock lock(m_mutex);
+	m_doubleBuffer[m_usCurrentIndex] = _image;
 	m_usCurrentIndex++;
 	m_usCurrentIndex %= NO_BUFFERS;
 }//write
 
-template <class T>
-T CDoubleBuffer<T>::read() const
+MyImage CDoubleBuffer::read()
 {
-	CMutexEclusiveLock lock;
+	CMutexExlusiveLock lock(m_mutex);
 	unsigned short unCurrentIndex = ++m_usCurrentIndex;
 	unCurrentIndex %= NO_BUFFERS;
 

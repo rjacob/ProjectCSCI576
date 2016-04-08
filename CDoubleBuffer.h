@@ -4,18 +4,16 @@
 
 #define NO_BUFFERS 2
 
-template <class T>
 class CDoubleBuffer
 {
 private:
-	T m_doubleBuffer[NO_BUFFERS];
-
+	MyImage m_doubleBuffer[NO_BUFFERS];
+	CMutexLock m_mutex;
 	unsigned short m_usCurrentIndex;
 public:
-	CDoubleBuffer();//Default Constructor
-	CDoubleBuffer(MyImage);//Constructor
-	virtual ~CDoubleBuffer();
+	CDoubleBuffer() : m_usCurrentIndex(0) {}//Default Constructor
+	virtual ~CDoubleBuffer() {}
 
-	void write(const T&);
-	T read() const;
+	void write(const MyImage&);
+	MyImage read();
 };//CDoubleBuffer
