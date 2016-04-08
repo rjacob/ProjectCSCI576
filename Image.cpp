@@ -7,7 +7,7 @@
 //
 //*****************************************************************************
 #include "Image.h"
-
+#include <cmath>
 
 // Constructor and Desctructors
 MyImage::MyImage() 
@@ -160,4 +160,28 @@ bool MyImage::Modify()
 	}
 
 	return false;
+}
+
+// Calculate entropy of image
+// Calculation based on flattening RGB image into 1D array
+double MyImage::calcEntropy()
+{
+	// Count number of symbols in image
+	int symbolHistogram = new int[256];
+	for (int i = 0; i < (m_nHeight*m_nWidth * 3); i++)
+	{
+		char currentSymbol = M_Data[i];
+		symbolHistogram[currentSymbol]++;
+	}
+	
+	//Calculate entropy
+	double entropy = 0;
+	double numSymbols = m_nHeight * m_nWidth * 3;
+	for (int i = 0; i < 256; i++){
+		double symbolProbability = symbolHistogram[i] / numSymbols;
+		entropy += (symbolProbability * log2(symbolProbability));
+	}
+	
+	entropy = -entropy;
+	return entropy;
 }
