@@ -24,7 +24,7 @@ public:
 	unsigned int getVideoHeight() const { return m_unHeight; }
 	long getNoFrames() const { return m_ulNoFrames;}
 	char* getVideoPath() { return m_videoPath;}
-	bool playVideo();
+	bool playVideo(bool _bCorrect);
 	bool pauseVideo();
 	bool stopVideo();
 	bool isVideoPlaying() { return m_bPlaying; }
@@ -39,6 +39,7 @@ private:
 	unsigned long m_ulCurrentFrameIndex;
 	unsigned int m_unWidth;
 	unsigned int m_unHeight;
+	bool m_bCorrect;
 	MyImage* m_pCurrentFrame;
 	MyImage* m_pOutputBuffer;
 
