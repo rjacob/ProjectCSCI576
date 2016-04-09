@@ -28,8 +28,7 @@ public:
 	bool pauseVideo();
 	bool stopVideo();
 	bool isVideoPlaying() { return m_bPlaying; }
-
-	//Test delete this line
+	bool drawVideoFrame(MyImage&);
 
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path); }
@@ -42,7 +41,6 @@ private:
 	unsigned int m_unHeight;
 	MyImage* m_pCurrentFrame;
 	MyImage* m_pOutputBuffer;
-	CDoubleBuffer m_FrameBuffer;
 
 	char m_videoPath[_MAX_PATH];	// Video location
 

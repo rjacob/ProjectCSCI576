@@ -56,8 +56,9 @@ CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 		m_ulNoFrames = nFileSize / (m_unWidth*m_unHeight * 3);
 	}
 
-	m_FrameBuffer.read().setWidth(m_unWidth);
-	m_FrameBuffer.read().setHeight(m_unHeight);
+	m_pCurrentFrame = new MyImage();
+	m_pCurrentFrame->setWidth(m_unWidth);
+	m_pCurrentFrame->setHeight(m_unHeight);
 }//constructor
 
 /*************************************
@@ -82,20 +83,20 @@ void CVideo::threadProcessingLoop()
 		{
 			copyVideoFrame(*m_pOutputBuffer, m_ulCurrentFrameIndex++);
 		}
-		Sleep(1000 / 20);//20Hz
+		Sleep(1000 / 15);//15Hz TODO: consider time it takes to readVideoFrame
 	} while(m_eThreadState != THREAD_STATE_KILLED && m_ulCurrentFrameIndex < m_ulNoFrames);
 
 	m_ulCurrentFrameIndex = 0;
 }//threadProcessingLoop
 
 /*************************************
-* Function: copyVideoFrame
-* Description: TODO: Double buffer scheme should go here?
+* Function: readVideoFrame
+* Description: 
 *************************************/
 bool CVideo::copyVideoFrame(MyImage& _image, unsigned int _nFrameNo)
 {
-	m_FrameBuffer.read().ReadImage(m_pFile, _nFrameNo);
-	_image = m_FrameBuffer.read();
+	m_pCurrentFrame->ReadImage(m_pFile, _nFrameNo);
+	_image = *m_pCurrentFrame;
 	return true;
 }//copyVideoFrame
 

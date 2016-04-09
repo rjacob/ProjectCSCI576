@@ -2,18 +2,37 @@
 #include "CMutexExclusiveLock.h"
 #include "Image.h"
 
-#define NO_BUFFERS 2
+enum
+{
+	OUT_BUFFER = 0,
+	IN_BUFFER,
+	NO_BUFFERS
+};
+
+typedef enum
+{
+	BUFFER_READY,
+	BUFFER_EMPTY
+}BUFF_STATE;
+
+typedef struct
+{
+	MyImage image;
+	//CMutexLock mutex;
+	BUFF_STATE eBuffState;
+}BUFFER_STYPE;
 
 class CDoubleBuffer
 {
 private:
-	MyImage m_doubleBuffer[NO_BUFFERS];
-	CMutexLock m_mutex;
+	BUFFER_STYPE m_doubleBuffer[NO_BUFFERS];
 	unsigned short m_usCurrentIndex;
+
+	bool swap();
 public:
-	CDoubleBuffer() : m_usCurrentIndex(0) {}//Default Constructor
+	CDoubleBuffer(int, int);
 	virtual ~CDoubleBuffer() {}
 
 	void write(const MyImage&);
-	MyImage read();
+	MyImage& read();
 };//CDoubleBuffer

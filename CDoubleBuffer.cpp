@@ -1,18 +1,52 @@
 #include "CDoubleBuffer.h"
 
+CDoubleBuffer::CDoubleBuffer(int _w, int _h)
+	: m_usCurrentIndex(0)
+{
+	for (int i = 0; i < NO_BUFFERS; ++i)
+	{
+		m_doubleBuffer[i].image.setHeight(_h);
+		m_doubleBuffer[i].image.setWidth(_w);
+		m_doubleBuffer[i].eBuffState = BUFFER_EMPTY;
+	}
+}//Default Constructor
+
+//Driven by processling loop/ thread
 void CDoubleBuffer::write(const MyImage& _image)
 {
-	CMutexExlusiveLock lock(m_mutex);
-	m_doubleBuffer[m_usCurrentIndex] = _image;
-	m_usCurrentIndex++;
-	m_usCurrentIndex %= NO_BUFFERS;
+	if (m_doubleBuffer[m_usCurrentIndex].eBuffState == BUFFER_EMPTY)
+	{
+		m_doubleBuffer[m_usCurrentIndex].image = _image;
+		m_doubleBuffer[m_usCurrentIndex].eBuffState = BUFFER_READY;
+		swap();
+	}
+	else
+	{
+		int i = 0;
+		i = 1;
+		//how often are we overflowing?
+	}
 }//write
 
-MyImage CDoubleBuffer::read()
+//Driven by timer in PCMPlay
+//Read the one that's not being written to
+MyImage& CDoubleBuffer::read()
 {
-	CMutexExlusiveLock lock(m_mutex);
-	unsigned short unCurrentIndex = ++m_usCurrentIndex;
-	unCurrentIndex %= NO_BUFFERS;
-
-	return m_doubleBuffer[m_usCurrentIndex];
+	if(m_doubleBuffer[m_usCurrentIndex].eBuffState == BUFFER_READY)
+	{
+		m_doubleBuffer[m_usCurrentIndex].eBuffState = BUFFER_EMPTY;
+		return m_doubleBuffer[m_usCurrentIndex].image;
+	}
+	else
+	{
+		//how often are we underflowing?
+	}
 }//read
+
+bool CDoubleBuffer::swap()
+{
+	m_usCurrentIndex++;
+	m_usCurrentIndex %= NO_BUFFERS;
+
+	return true;
+}//swap

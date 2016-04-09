@@ -167,7 +167,7 @@ bool MyImage::Modify()
 double MyImage::calcEntropy()
 {
 	// Count number of symbols in image
-	int *symbolHistogram = new int[256];
+	int symbolHistogram[256] = { 0 };
 	for (int i = 0; i < (m_nHeight*m_nWidth * 3); i++)
 	{
 		char currentSymbol = m_Data[i];
@@ -184,7 +184,6 @@ double MyImage::calcEntropy()
 	}
 
 	entropy = -entropy;
-	delete symbolHistogram;
 
 	return entropy;
 }//calcEntropy
