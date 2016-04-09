@@ -116,6 +116,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
                     break;
 
                 case IDC_PLAY:
+				{
                     // The 'play'/'pause' button was pressed
                     if( FAILED( hr = OnPlaySound( hDlg ) ) )
                     {
@@ -126,13 +127,14 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
                         EndDialog( hDlg, IDABORT );
                     }
 
+					BOOL checked = IsDlgButtonChecked(hDlg, IDC_CORRECT_CHECK);
+
 					if (g_pMyVideo->isVideoPlaying())
 						g_pMyVideo->pauseVideo();
 					else
-						g_pMyVideo->playVideo();
-
-                    break;
-
+						g_pMyVideo->playVideo((bool)checked);
+				}//IDC_PLAY
+				break;
                 case IDC_STOP:
                     if( g_pSound )
                     {
@@ -358,14 +360,14 @@ HRESULT OnPlaySound( HWND hDlg )
 // Name: OnTimer()
 // Desc: When we think the sound is playing this periodically checks to see if 
 //       the sound has stopped.  If it has then updates the dialog. This occurs at 4Hz
-//		 Timer is also driving the refresh of the video which happens at 30Hz
+//		 Timer is also driving the refresh of the video which happens at 15Hz
 //-----------------------------------------------------------------------------
 VOID OnTimer( HWND hDlg ) 
 {
 	HDC hdc;
 	static unsigned long ulTimerCount = 0;
 
-	if (++ulTimerCount % (20 / 4) == 0)//Check only at 4hz, when timer is at 30Hz
+	if (++ulTimerCount % (15 / 4) == 0)//Check only at 4hz, when timer is at 15Hz
 	{
 		if (IsWindowEnabled(GetDlgItem(hDlg, IDC_STOP)))
 		{
@@ -378,11 +380,16 @@ VOID OnTimer( HWND hDlg )
 		}
 	}
 
-	hdc = GetDC(hDlg);
-	SetDIBitsToDevice(hdc,
-		34, 20, outImage.getWidth(), outImage.getHeight(),
-		0, 0, 0, outImage.getHeight(),
-		outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+	if(g_pMyVideo->isVideoPlaying())
+	{
+		//g_pMyVideo->drawVideoFrame(outImage);
+
+		hdc = GetDC(hDlg);
+		SetDIBitsToDevice(hdc,
+			34, 20, outImage.getWidth(), outImage.getHeight(),
+			0, 0, 0, outImage.getHeight(),
+			outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+	}
 }//OnTimer
 
 //-----------------------------------------------------------------------------
@@ -394,6 +401,7 @@ VOID EnablePlayUI( HWND hDlg, BOOL bEnable )
     if( bEnable )
     {
         EnableWindow(   GetDlgItem( hDlg, IDC_LOOP_CHECK ), TRUE );
+		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), TRUE);
         EnableWindow(   GetDlgItem( hDlg, IDC_STOP ),       FALSE );
 
         EnableWindow(   GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
@@ -403,6 +411,7 @@ VOID EnablePlayUI( HWND hDlg, BOOL bEnable )
     else
     {
         EnableWindow(  GetDlgItem( hDlg, IDC_LOOP_CHECK ), FALSE );
+		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
         EnableWindow(  GetDlgItem( hDlg, IDC_STOP ),       TRUE );
         SetFocus(      GetDlgItem( hDlg, IDC_STOP ) );
 

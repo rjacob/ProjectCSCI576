@@ -23,10 +23,15 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+#include <cmath>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/nonfree/features2d.hpp>
 
 
 // Class structure of Image 
 // Use to encapsulate an RGB image
+using namespace cv;
 class MyImage 
 {
 
@@ -34,6 +39,9 @@ private:
 	int		m_nWidth;					// Width of Image
 	int		m_nHeight;					// Height of Image
 	char*	m_Data;					// RGB data of the image
+	Mat*	m_DataMat;
+	bool	m_bFeatureDet;
+	std::vector<KeyPoint> m_keypoints;
 
 public:
 	// Constructor

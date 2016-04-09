@@ -12,7 +12,7 @@
 #define IDC_STATIC1                     1015
 #define IDC_STATIC2                     1020
 #define IDC_CHECK1                      1021
-#define IDC_ANIMATE1                    1023
+#define IDC_CORRECT_CHECK               1021
 
 // Next default values for new objects
 // 

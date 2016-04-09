@@ -5,13 +5,14 @@
 * Description: 
 *************************************/
 CVideo::CVideo()
-:
+	:
 	m_ulNoFrames(0),
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(0),
 	m_unHeight(0),
 	m_eThreadState(THREAD_STATE_UNKNOWN),
-	m_bPlaying(FALSE)
+	m_bPlaying(FALSE),
+	m_bCorrect(false)
 {
 	m_videoPath[0] = 0;
 }//constructor
@@ -27,7 +28,8 @@ CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 	m_unWidth(_nWidth),
 	m_unHeight(_nHeight),
 	m_eThreadState(THREAD_STATE_UNKNOWN),
-	m_bPlaying(FALSE)
+	m_bPlaying(FALSE),
+	m_bCorrect(false)
 {
 	strncpy(m_videoPath, _cstrVideoPath, strlen(_cstrVideoPath));
 	// Create a valid output file pointer
@@ -104,9 +106,10 @@ bool CVideo::copyVideoFrame(MyImage& _image, unsigned int _nFrameNo)
 * Function: playVideo
 * Description:
 *************************************/
-bool CVideo::playVideo()
+bool CVideo::playVideo(bool _bCorrect)
 {
 	bool bReturn = false;
+	m_bCorrect = _bCorrect;
 
 	//Dont spawn additional threads when going from pause to replay
 	if (m_eThreadState == THREAD_STATE_UNKNOWN ||

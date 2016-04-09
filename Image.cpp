@@ -7,14 +7,15 @@
 //
 //*****************************************************************************
 #include "Image.h"
-#include <cmath>
 
 // Constructor and Desctructors
 MyImage::MyImage() 
 {
 	m_Data = NULL;
+	m_DataMat = NULL;
 	m_nWidth = -1;
 	m_nHeight = -1;
+	m_bFeatureDet = false;
 }
 
 MyImage::~MyImage()
@@ -25,10 +26,14 @@ MyImage::~MyImage()
 
 // Copy constructor
 MyImage::MyImage(MyImage *otherImage)
+:
+	m_bFeatureDet(false)
 {
 	m_nHeight = otherImage->m_nHeight;
 	m_nWidth = otherImage->m_nWidth;
 	m_Data = new char[m_nWidth*m_nHeight *3];
+
+	m_DataMat = new Mat(m_nHeight, m_nWidth, CV_8UC3, m_Data);
 
 	for ( int i=0; i<(m_nHeight*m_nWidth *3); i++ )
 	{
