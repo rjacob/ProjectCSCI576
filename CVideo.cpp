@@ -162,3 +162,41 @@ bool CVideo::pauseVideo()
 	m_bPlaying = false;
 	return true;
 }//pauseVideo
+
+ /*************************************
+ * Function: videoSummarization
+ * Description:
+ *************************************/
+bool CVideo::videoSummarization()
+{
+	MyImage currentFrame;
+	currentFrame.setWidth(m_unWidth);
+	currentFrame.setHeight(m_unHeight);
+
+	//Cycle through each frame in video
+	//Testing output write
+	//Apply RGB histogram, entropy here
+	for (unsigned long i = 0; i < m_ulNoFrames; i++) {
+		currentFrame.ReadImage(m_pFile, i);
+		FILE* outImageFile;
+		char imagePath[_MAX_PATH] = "Test.rgb";
+		outImageFile = fopen(imagePath, "wb");
+
+		if (outImageFile = NULL) {
+			fprintf(stderr, "Error Opening File for Output Write");
+			return false;
+		}
+
+		currentFrame.WriteImage(outImageFile);
+
+		fclose(outImageFile);
+	}
+
+	//Create array of "I-frames" here
+
+	//Choose best "GOPs" here
+
+	//Output summarized video (or "I-frame" array) here
+
+	return true;
+}//videoSummarization

@@ -33,6 +33,9 @@ public:
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path); }
 	void setOutputBuff(MyImage* _pOutputBuff) { m_pOutputBuffer = _pOutputBuff; }
+
+	//summarization functions
+	bool videoSummarization();
 	
 private:
 	unsigned long m_ulNoFrames;
