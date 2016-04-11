@@ -12,7 +12,7 @@
 MyImage::MyImage() 
 {
 	m_Data = NULL;
-	m_DataMat = NULL;
+	m_pDataMat = NULL;
 	m_nWidth = -1;
 	m_nHeight = -1;
 	m_bFeatureDet = false;
@@ -22,6 +22,8 @@ MyImage::~MyImage()
 {
 	if (m_Data)
 		delete m_Data;
+	if (m_pDataMat)
+		delete m_pDataMat;
 }
 
 // Copy constructor
@@ -33,12 +35,12 @@ MyImage::MyImage(MyImage *otherImage)
 	m_nWidth = otherImage->m_nWidth;
 	m_Data = new char[m_nWidth*m_nHeight *3];
 
-	m_DataMat = new Mat(m_nHeight, m_nWidth, CV_8UC3, m_Data);
-
 	for ( int i=0; i<(m_nHeight*m_nWidth *3); i++ )
 	{
 		m_Data[i]	= otherImage->m_Data[i];
 	}
+
+	m_pDataMat = new Mat(m_nHeight, m_nWidth, CV_8UC3, m_Data);
 }
 
 // = operator overload
@@ -54,6 +56,9 @@ MyImage& MyImage::operator= (const MyImage &otherImage)
 	{
 		m_Data[i] = otherImage.m_Data[i];
 	}
+
+	if(m_pDataMat == NULL)
+		m_pDataMat = new Mat(m_nHeight, m_nWidth, CV_8UC3, m_Data);
 
 	return *this;
 }
@@ -125,7 +130,6 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 		Rbuf[i] = m_Data[3*i+2];
 	}
 
-	
 	// Write data to file
 	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
@@ -153,17 +157,8 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 // eg Filtering, Transformation, Cropping, etc.
 bool MyImage::Modify()
 {
-
-	// TO DO by student
-	
-	// sample operation
-	for ( int i=0; i<m_nWidth*m_nHeight; i++ )
-	{
-		m_Data[3*i] = 0;
-		m_Data[3*i+1] = 0;
-
-	}
-
+	siftFeatures();
+	calcEntropy();
 	return false;
 }
 
@@ -192,3 +187,15 @@ double MyImage::calcEntropy()
 
 	return entropy;
 }//calcEntropy
+
+//Using OpenCV, compute SIFT features
+void MyImage::siftFeatures()
+{
+	Mat output(m_nHeight, m_nWidth, CV_8UC3);
+	unsigned int size = m_keypoints.size();
+	m_detector.detect(*m_pDataMat, m_keypoints);
+	size = m_keypoints.size();
+	drawKeypoints(*m_pDataMat, m_keypoints, output);
+	//mixChannels(*m_pDataMat, )
+}//siftFeatures
+

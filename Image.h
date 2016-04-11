@@ -39,9 +39,10 @@ private:
 	int		m_nWidth;					// Width of Image
 	int		m_nHeight;					// Height of Image
 	char*	m_Data;					// RGB data of the image
-	Mat*	m_DataMat;
+	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
 	std::vector<KeyPoint> m_keypoints;
+	SiftFeatureDetector m_detector;
 
 public:
 	// Constructor
@@ -71,6 +72,7 @@ public:
 	
 	// Calculations
 	double	calcEntropy();
+	void	siftFeatures();
 
 };
 

@@ -605,18 +605,18 @@ BOOL CSound::IsSoundPlaying()
 
     for( DWORD i=0; i<m_dwNumBuffers; i++ )
     {
-        if( m_apDSBuffer[i] )
+#if 0
+		if( m_apDSBuffer[i] )
         {  
             DWORD dwStatus = 0;
             m_apDSBuffer[i]->GetStatus( &dwStatus );
             bIsPlaying |= ( ( dwStatus & DSBSTATUS_PLAYING ) != 0 );
         }
+#endif
     }
 
     return bIsPlaying;
 }
-
-
 
 //================================================================================
 

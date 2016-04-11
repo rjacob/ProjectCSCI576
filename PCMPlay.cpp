@@ -389,6 +389,13 @@ VOID OnTimer( HWND hDlg )
 			34, 20, outImage.getWidth(), outImage.getHeight(),
 			0, 0, 0, outImage.getHeight(),
 			outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+
+		SetDIBitsToDevice(hdc,
+			34, 310,
+			outImage.getWidth() / 4, outImage.getHeight() / 4,
+			0, 0, 0,
+			outImage.getHeight() / 4,//Scan Lines
+			outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
 	}
 }//OnTimer
 

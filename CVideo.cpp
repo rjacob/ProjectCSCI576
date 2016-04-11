@@ -84,6 +84,7 @@ void CVideo::threadProcessingLoop()
 		if (m_eThreadState != THREAD_STATE_PAUSED)
 		{
 			copyVideoFrame(*m_pOutputBuffer, m_ulCurrentFrameIndex++);
+			m_pOutputBuffer->Modify();
 		}
 		Sleep(1000 / 15);//15Hz TODO: consider time it takes to readVideoFrame
 	} while(m_eThreadState != THREAD_STATE_KILLED && m_ulCurrentFrameIndex < m_ulNoFrames);
