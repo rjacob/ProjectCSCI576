@@ -33,7 +33,7 @@ MyImage::MyImage(MyImage *otherImage)
 {
 	m_nHeight = otherImage->m_nHeight;
 	m_nWidth = otherImage->m_nWidth;
-	m_Data = new char[m_nWidth*m_nHeight *3];
+	m_Data = new unsigned char[m_nWidth*m_nHeight *3];
 
 	for ( int i=0; i<(m_nHeight*m_nWidth *3); i++ )
 	{
@@ -50,7 +50,7 @@ MyImage& MyImage::operator= (const MyImage &otherImage)
 	m_nWidth = otherImage.m_nWidth;
 
 	if (m_Data == NULL)
-		m_Data = new char[m_nWidth*m_nHeight * 3];
+		m_Data = new unsigned char[m_nWidth*m_nHeight * 3];
 
 	for (int i = 0; i < (m_nHeight*m_nWidth * 3); i++)
 	{
@@ -76,9 +76,9 @@ bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 	}
 	
 	// Create and populate RGB buffers
-	char *Rbuf = new char[m_nHeight*m_nWidth];
-	char *Gbuf = new char[m_nHeight*m_nWidth];
-	char *Bbuf = new char[m_nHeight*m_nWidth];
+	unsigned char *Rbuf = new unsigned char[m_nHeight*m_nWidth];
+	unsigned char *Gbuf = new unsigned char[m_nHeight*m_nWidth];
+	unsigned char *Bbuf = new unsigned char[m_nHeight*m_nWidth];
 
 	fseek(_inFile, _nFrameNo*m_nHeight*m_nWidth*3, SEEK_SET);
 
@@ -97,7 +97,7 @@ bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 	
 	// Allocate Data structure and copy
 	if(m_Data == NULL)
-		m_Data = new char[m_nWidth*m_nHeight *3];
+		m_Data = new unsigned char[m_nWidth*m_nHeight *3];
 
 	for (i = 0; i < m_nHeight*m_nWidth; i++)
 	{
@@ -119,9 +119,9 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 {
 	// Create and populate RGB buffers
 	int i;
-	char *Rbuf = new char[m_nHeight*m_nWidth];
-	char *Gbuf = new char[m_nHeight*m_nWidth];
-	char *Bbuf = new char[m_nHeight*m_nWidth];
+	unsigned char *Rbuf = new unsigned char[m_nHeight*m_nWidth];
+	unsigned char *Gbuf = new unsigned char[m_nHeight*m_nWidth];
+	unsigned char *Bbuf = new unsigned char[m_nHeight*m_nWidth];
 
 	for (i = 0; i < m_nHeight*m_nWidth; i++)
 	{
@@ -170,7 +170,7 @@ double MyImage::calcEntropy()
 	int symbolHistogram[256] = { 0 };
 	for (int i = 0; i < (m_nHeight*m_nWidth * 3); i++)
 	{
-		char currentSymbol = m_Data[i];
+		unsigned char currentSymbol = m_Data[i];
 		symbolHistogram[currentSymbol]++;
 	}
 

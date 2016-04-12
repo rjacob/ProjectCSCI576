@@ -38,7 +38,7 @@ class MyImage
 private:
 	int		m_nWidth;					// Width of Image
 	int		m_nHeight;					// Height of Image
-	char*	m_Data;					// RGB data of the image
+	unsigned char*	m_Data;					// RGB data of the image
 	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
 	std::vector<KeyPoint> m_keypoints;
@@ -58,10 +58,10 @@ public:
 	// Reader & Writer functions
 	void	setWidth( const int w)  { m_nWidth = w; }; 
 	void	setHeight(const int h) { m_nHeight = h; };
-	void	setImageData( const char *img ) { m_Data = (char *)img; };
+	void	setImageData( const unsigned char *img ) { m_Data = (unsigned char *)img; };
 	int		getWidth() { return m_nWidth; };
 	int		getHeight() { return m_nHeight; };
-	char*	getImageData() { return m_Data; };
+	unsigned char*	getImageData() { return m_Data; };
 
 	// Input Output operations
 	bool	ReadImage(FILE*, unsigned int);
