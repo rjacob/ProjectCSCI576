@@ -14,6 +14,7 @@
 #define IDC_CORRECT_CHECK               1021
 #define IDC_SCROLLBAR1                  1024
 #define IDC_BUTTON1                     1025
+#define IDC_ANALYZE                     1025
 
 // Next default values for new objects
 // 

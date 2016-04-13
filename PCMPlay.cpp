@@ -149,7 +149,13 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
                     EnablePlayUI( hDlg, TRUE );
                     break;
-
+				case IDC_ANALYZE:
+				{
+					EnablePlayUI(hDlg, FALSE);
+					if (g_pMyVideo)
+						g_pMyVideo->analyzeVideo();
+				}
+				break;
                 default:
                     return FALSE; // Didn't handle message
             }
@@ -412,6 +418,7 @@ VOID EnablePlayUI( HWND hDlg, BOOL bEnable )
         EnableWindow(   GetDlgItem( hDlg, IDC_STOP ),       FALSE );
 
         EnableWindow(   GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
+		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), TRUE);
         SetFocus(       GetDlgItem( hDlg, IDC_PLAY ) );
         SetDlgItemText( hDlg, IDC_PLAY, "&Play" );
     }
@@ -423,6 +430,7 @@ VOID EnablePlayUI( HWND hDlg, BOOL bEnable )
         SetFocus(      GetDlgItem( hDlg, IDC_STOP ) );
 
         EnableWindow(  GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
+		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
         SetDlgItemText( hDlg, IDC_PLAY, "&Pause" );
     }
 }

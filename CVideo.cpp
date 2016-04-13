@@ -171,6 +171,7 @@ bool CVideo::pauseVideo()
 bool CVideo::analyzeVideo()
 {
 	//Analyze All frames
+	videoSummarization();
 	return false;
 }
 
