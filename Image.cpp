@@ -12,7 +12,6 @@
 MyImage::MyImage() 
 {
 	m_Data = NULL;
-	m_pDataMat = NULL;
 	m_nWidth = -1;
 	m_nHeight = -1;
 	m_bFeatureDet = false;
@@ -22,11 +21,9 @@ MyImage::~MyImage()
 {
 	if (m_Data)
 		delete m_Data;
-	if (m_pDataMat)
-		delete m_pDataMat;
 }
 
-// Copy constructor
+// Copy constructor, TODO: this is not called yet???
 MyImage::MyImage(MyImage *otherImage)
 :
 	m_bFeatureDet(false)
@@ -39,8 +36,6 @@ MyImage::MyImage(MyImage *otherImage)
 	{
 		m_Data[i]	= otherImage->m_Data[i];
 	}
-
-	m_pDataMat = new Mat(m_nHeight, m_nWidth, CV_8UC3, m_Data);
 }
 
 // = operator overload
@@ -56,9 +51,6 @@ MyImage& MyImage::operator= (const MyImage &otherImage)
 	{
 		m_Data[i] = otherImage.m_Data[i];
 	}
-
-	if(m_pDataMat == NULL)
-		m_pDataMat = new Mat(m_nHeight, m_nWidth, CV_8UC3, m_Data);
 
 	return *this;
 }
@@ -158,12 +150,13 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 bool MyImage::Modify()
 {
 	siftFeatures();
-	calcEntropy();
+	//calcEntropy();
 	return false;
 }
 
 // Calculate entropy of image
 // Calculation based on flattening RGB image into 1D array
+//twfong77@gmail.com
 double MyImage::calcEntropy()
 {
 	// Count number of symbols in image
@@ -191,11 +184,21 @@ double MyImage::calcEntropy()
 //Using OpenCV, compute SIFT features
 void MyImage::siftFeatures()
 {
-	Mat output(m_nHeight, m_nWidth, CV_8UC3);
-	unsigned int size = m_keypoints.size();
-	m_detector.detect(*m_pDataMat, m_keypoints);
-	size = m_keypoints.size();
-	drawKeypoints(*m_pDataMat, m_keypoints, output);
-	//mixChannels(*m_pDataMat, )
-}//siftFeatures
+	Mat	dataMat(m_nHeight, m_nWidth, CV_8UC3, m_Data);			// Open CV data matrix
+	//Mat dataMat = imread(m_nHeight, m_nWidth, CV_8UC3, Scalar(0, 0, 255));
+	//Mat dataMat = imread("C:/lena.jpg", CV_LOAD_IMAGE_UNCHANGED);
 
+	if (!dataMat.empty())
+	{
+		//namedWindow("Display window", WINDOW_AUTOSIZE);// Create a window for display.
+		//imshow("Display window", dataMat);
+
+		m_detector.detect(dataMat, m_keypoints);
+		//int size = m_keypoints.size();
+		drawKeypoints(dataMat, m_keypoints, dataMat);
+		//output.data();
+		//mixChannels(*m_pDataMat, )
+		//waitKey(0);
+		//destroyWindow("Display window");
+	}
+}//siftFeatures

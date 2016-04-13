@@ -56,6 +56,10 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 
 	sscanf(pCmdLine, "%s %s", &FramePath, &AudioPath);
 
+
+	//namedWindow("Display window", WINDOW_AUTOSIZE);// Create a window for display.
+	//imshow("Display window", dataMat);
+
     // Display the main dialog box.
 	if (strstr(FramePath, ".rgb") == NULL)
 	{

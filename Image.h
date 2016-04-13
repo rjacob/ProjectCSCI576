@@ -24,14 +24,15 @@
 #include <memory.h>
 #include <tchar.h>
 #include <cmath>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
 
 // Class structure of Image 
 // Use to encapsulate an RGB image
 using namespace cv;
+
 class MyImage 
 {
 
@@ -39,10 +40,9 @@ private:
 	int		m_nWidth;					// Width of Image
 	int		m_nHeight;					// Height of Image
 	char*	m_Data;					// RGB data of the image
-	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
 	std::vector<KeyPoint> m_keypoints;
-	SiftFeatureDetector m_detector;
+	FastFeatureDetector m_detector;
 
 public:
 	// Constructor
@@ -69,6 +69,8 @@ public:
 
 	// Modifications
 	bool	Modify();
+
+	bool	analyze();
 	
 	// Calculations
 	double	calcEntropy();

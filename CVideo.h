@@ -27,6 +27,7 @@ public:
 	bool playVideo(bool _bCorrect);
 	bool pauseVideo();
 	bool stopVideo();
+	bool analyzeVideo();
 	bool isVideoPlaying() { return m_bPlaying; }
 	bool drawVideoFrame(MyImage&);
 

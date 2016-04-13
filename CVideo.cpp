@@ -164,6 +164,16 @@ bool CVideo::pauseVideo()
 	return true;
 }//pauseVideo
 
+/*************************************
+* Function: pauseVideo
+* Description:
+*************************************/
+bool CVideo::analyzeVideo()
+{
+	//Analyze All frames
+	return false;
+}
+
  /*************************************
  * Function: videoSummarization
  * Description:
