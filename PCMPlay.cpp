@@ -153,7 +153,10 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 				{
 					EnablePlayUI(hDlg, FALSE);
 					if (g_pMyVideo)
+					{
 						g_pMyVideo->analyzeVideo();
+						g_pMyVideo->getVideoDuration();
+					}
 				}
 				break;
                 default:

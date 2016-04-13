@@ -172,6 +172,7 @@ bool CVideo::analyzeVideo()
 {
 	//Analyze All frames
 	videoSummarization();
+	m_unVideoDurationSubSec = 1234;
 	return false;
 }
 

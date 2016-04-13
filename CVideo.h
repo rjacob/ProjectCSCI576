@@ -29,6 +29,7 @@ public:
 	bool stopVideo();
 	bool analyzeVideo();
 	bool isVideoPlaying() { return m_bPlaying; }
+	unsigned int getVideoDuration() const { return m_unVideoDurationSubSec; }
 
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path); }
@@ -55,6 +56,7 @@ private:
 	HANDLE m_threadHandle;
 	DWORD m_dwThreadId;
 	bool m_bPlaying;
+	unsigned int m_unVideoDurationSubSec;//at 15Hz, 67ms
 
 	bool copyVideoFrame(MyImage&, unsigned int);
 

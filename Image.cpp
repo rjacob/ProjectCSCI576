@@ -218,6 +218,7 @@ void MyImage::calcHomography()
 	//Mat H = findHomography(mpts_2, mpts_1, RANSAC, 1, outlier_mask);
 }//calcHomography
 
+//Transformation (Rotation or a Projection)
 void MyImage::frameWarping()
 {
 
