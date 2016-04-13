@@ -28,7 +28,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 
-
 // Class structure of Image 
 // Use to encapsulate an RGB image
 using namespace cv;
@@ -42,7 +41,7 @@ private:
 	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
 	std::vector<KeyPoint> m_keypoints;
-	SiftFeatureDetector m_detector;
+	SiftFeatureDetector m_detectorCurr, m_detectorPrev;
 
 public:
 	// Constructor
@@ -72,8 +71,11 @@ public:
 	
 	// Calculations
 	double	calcEntropy();
-	void	siftFeatures();
-
+	void	siftFeaturesDetec();
+	void	featuresMatch(Mat, Mat);
+	void    outlierRejection();
+	void    calcHomography();
+	void    frameWarping();
 };
 
 #endif //IMAGE_DISPLAY

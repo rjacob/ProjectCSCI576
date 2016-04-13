@@ -152,8 +152,8 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 // eg Filtering, Transformation, Cropping, etc.
 bool MyImage::Modify()
 {
-	siftFeatures();
-	calcEntropy();
+	siftFeaturesDetec();
+	//calcEntropy();
 	return false;
 }
 
@@ -184,17 +184,41 @@ double MyImage::calcEntropy()
 }//calcEntropy
 
 //Using OpenCV, compute SIFT features
-void MyImage::siftFeatures()
+void MyImage::siftFeaturesDetec()
 {
-	Mat	dataMat(m_nHeight, m_nWidth, CV_8UC3, m_Data);			// Open CV data matrix
+	Mat	dataMat(m_nHeight, m_nWidth, CV_8UC3, m_Data); // Open CV data matrix
 
 	if (!dataMat.empty())
 	{
 		//namedWindow("Display window", WINDOW_AUTOSIZE);// Create a window for display.
 		//imshow("Display window", dataMat);
-		m_detector.detect(dataMat, m_keypoints);
+		m_detectorCurr.detect(dataMat, m_keypoints);
 		drawKeypoints(dataMat, m_keypoints, dataMat);
 		//waitKey(0);
 		//destroyWindow("Display window");
 	}
 }//siftFeatures
+
+//Brute-Force Matching (Hamming)
+void MyImage::featuresMatch(Mat _framePrev, Mat _framCurr)
+{
+	BFMatcher matcher(NORM_HAMMING);
+	vector<DMatch> matches;
+
+	//match(kpts_1, kpts_2, matcher, _framePrev, _framCurr, matches);
+}//featuresMatch
+
+void MyImage::outlierRejection()
+{
+
+}//outlierRejection
+
+void MyImage::calcHomography()
+{
+	//Mat H = findHomography(mpts_2, mpts_1, RANSAC, 1, outlier_mask);
+}//calcHomography
+
+void MyImage::frameWarping()
+{
+
+}//frameWarping

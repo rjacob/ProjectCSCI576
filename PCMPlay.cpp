@@ -330,7 +330,7 @@ HRESULT OnPlaySound( HWND hDlg )
     }
     else
     {
-        if( g_pSound->IsSoundPlaying() )
+        if(g_pSound->IsSoundPlaying() )
         {
             // To pause, just stop the buffer, but don't reset the position
             if( g_pSound )
@@ -405,7 +405,7 @@ VOID OnTimer( HWND hDlg )
 //-----------------------------------------------------------------------------
 VOID EnablePlayUI( HWND hDlg, BOOL bEnable )
 {
-    if( bEnable )
+    if(bEnable == TRUE)
     {
         EnableWindow(   GetDlgItem( hDlg, IDC_LOOP_CHECK ), TRUE );
 		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), TRUE);

@@ -29,11 +29,11 @@ public:
 	bool stopVideo();
 	bool analyzeVideo();
 	bool isVideoPlaying() { return m_bPlaying; }
-	bool drawVideoFrame(MyImage&);
 
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path); }
 	void setOutputBuff(MyImage* _pOutputBuff) { m_pOutputBuffer = _pOutputBuff; }
+	bool drawVideoFrame(MyImage&);//TODO
 
 	//summarization functions
 	bool videoSummarization();
@@ -54,7 +54,7 @@ private:
 	THREAD_STATE_E m_eThreadState;
 	HANDLE m_threadHandle;
 	DWORD m_dwThreadId;
-	BOOL m_bPlaying;
+	bool m_bPlaying;
 
 	bool copyVideoFrame(MyImage&, unsigned int);
 
