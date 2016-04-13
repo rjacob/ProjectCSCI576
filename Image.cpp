@@ -187,19 +187,13 @@ double MyImage::calcEntropy()
 void MyImage::siftFeatures()
 {
 	Mat	dataMat(m_nHeight, m_nWidth, CV_8UC3, m_Data);			// Open CV data matrix
-	//Mat dataMat = imread(m_nHeight, m_nWidth, CV_8UC3, Scalar(0, 0, 255));
-	//Mat dataMat = imread("C:/lena.jpg", CV_LOAD_IMAGE_UNCHANGED);
 
 	if (!dataMat.empty())
 	{
 		//namedWindow("Display window", WINDOW_AUTOSIZE);// Create a window for display.
 		//imshow("Display window", dataMat);
-
 		m_detector.detect(dataMat, m_keypoints);
-		//int size = m_keypoints.size();
 		drawKeypoints(dataMat, m_keypoints, dataMat);
-		//output.data();
-		//mixChannels(*m_pDataMat, )
 		//waitKey(0);
 		//destroyWindow("Display window");
 	}
