@@ -38,6 +38,7 @@ CSound*        g_pSound = NULL;
 BOOL           g_bBufferPaused;
 CVideo		   *g_pMyVideo;
 MyImage		   outImage;
+vector <MyImage> thumbnails;
 
 char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];
@@ -74,10 +75,6 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 				"Sample will now exit.", "AV Player Sample",
 				MB_OK | MB_ICONERROR);
 			return FALSE;
-		}
-		else
-		{
-			g_pMyVideo->setOutputBuff(&outImage);
 		}
 	}
 	DialogBox(hInst, MAKEINTRESOURCE(IDD_MAIN), NULL, MainDlgProc);
@@ -132,7 +129,10 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 					if (g_pMyVideo->isVideoPlaying())
 						g_pMyVideo->pauseVideo();
 					else
+					{
 						g_pMyVideo->playVideo((bool)checked);
+						g_pMyVideo->setOutputFrame(&outImage);
+					}
 				}//IDC_PLAY
 				break;
                 case IDC_STOP:
@@ -153,7 +153,20 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 				{
 					EnablePlayUI(hDlg, FALSE);
 					if (g_pMyVideo)
+					{
 						g_pMyVideo->analyzeVideo();
+
+						/*
+						MyImage image;
+						g_pMyVideo->getVideoFrame(image, 10);
+						thumbnails.push_back(image);
+						g_pMyVideo->getVideoFrame(image, 100);
+						thumbnails.push_back(image);
+						g_pMyVideo->getVideoFrame(image, 100);
+						thumbnails.push_back(image);
+						g_pMyVideo->getVideoDuration();
+						*/
+					}
 				}
 				break;
                 default:
@@ -190,6 +203,20 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 				34, 20, outImage.getWidth(), outImage.getHeight(),
 				0, 0, 0, outImage.getHeight(),
 				outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+
+			for (int i = 0; i < thumbnails.size(); ++i)
+			{
+				g_bmi.bmiHeader.biWidth = g_pMyVideo->getVideoWidth() / 4;
+				g_bmi.bmiHeader.biHeight = -g_pMyVideo->getVideoHeight() / 4;
+
+				SetDIBitsToDevice(hdc,
+					34+i*thumbnails.at(i).getWidth() / 4, 310,
+					thumbnails.at(i).getWidth()/4,
+					thumbnails.at(i).getHeight()/4,
+					0, 0, 0,
+					thumbnails.at(i).getHeight() / 4,//Scan Lines
+					thumbnails.at(i).getImageData(), &g_bmi, DIB_RGB_COLORS);
+			}
 
 			EndPaint(hDlg, &ps);
 		}
@@ -388,19 +415,10 @@ VOID OnTimer( HWND hDlg )
 
 	if(g_pMyVideo->isVideoPlaying())
 	{
-		//g_pMyVideo->drawVideoFrame(outImage);
-
 		hdc = GetDC(hDlg);
 		SetDIBitsToDevice(hdc,
 			34, 20, outImage.getWidth(), outImage.getHeight(),
 			0, 0, 0, outImage.getHeight(),
-			outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
-
-		SetDIBitsToDevice(hdc,
-			34, 310,
-			outImage.getWidth() / 4, outImage.getHeight() / 4,
-			0, 0, 0,
-			outImage.getHeight() / 4,//Scan Lines
 			outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
 	}
 }//OnTimer

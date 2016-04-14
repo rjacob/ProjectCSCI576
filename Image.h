@@ -40,14 +40,13 @@ private:
 	unsigned char*	m_Data;					// RGB data of the image
 	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
-	std::vector<KeyPoint> m_keypoints;
 	SiftFeatureDetector m_detectorCurr, m_detectorPrev;
 
 public:
 	// Constructor
 	MyImage();
 	// Copy Constructor
-	MyImage::MyImage( MyImage *otherImage);
+	//MyImage::MyImage( MyImage *otherImage);
 	// Destructor
 	~MyImage();
 
@@ -79,6 +78,7 @@ public:
 	void    outlierRejection();
 	void    calcHomography();
 	void    frameWarping();
+	void	siftFeaturesDetec(Mat&, vector<KeyPoint>&);
 };
 
 #endif //IMAGE_DISPLAY
