@@ -162,9 +162,8 @@ bool MyImage::Modify()
 double MyImage::calcEntropy()
 {
 	// Count number of symbols in image
-	int symbolHistogram[256] = { 0 };
-	for (int i = 0; i < (m_nHeight*m_nWidth * 3); i++)
-	{
+	unsigned long symbolHistogram[256] = { 0 };
+	for (unsigned long i = 0; i < m_nHeight * m_nWidth * 3; i++){
 		unsigned char currentSymbol = m_Data[i];
 		symbolHistogram[currentSymbol]++;
 	}
@@ -172,16 +171,113 @@ double MyImage::calcEntropy()
 	//Calculate entropy
 	double entropy = 0;
 	double numSymbols = m_nHeight * m_nWidth * 3;
-
 	for (int i = 0; i < 256; i++){
-		double symbolProbability = symbolHistogram[i] / numSymbols;
-		entropy += (symbolProbability * log2(symbolProbability));
+
+		//If number of occurences is 0, set sum value to 0
+		//Otherwise, use entropy equation
+		double summationValue = 0;
+		if (symbolHistogram[i] > 0) {
+			double symbolProbability = symbolHistogram[i] / numSymbols;
+			summationValue = symbolProbability * log2(symbolProbability);
+		}
+
+		entropy += summationValue;
 	}
 
 	entropy = -entropy;
 
 	return entropy;
 }//calcEntropy
+
+// Calculates temporal difference using template matching
+// Euclidean distance between 2 pixels
+double MyImage::templateMatchDifference(MyImage &previousFrame) 
+{
+	unsigned char* previousFrameData = previousFrame.getImageData();
+	double differenceSum = 0;
+
+	for (unsigned long i = 0; i < m_nHeight * m_nWidth; i++) {
+		differenceSum += sqrt(pow(m_Data[i] - previousFrameData[i], 2.0)
+							+ pow(m_Data[i + 1] - previousFrameData[i + 1], 2.0)
+							+ pow(m_Data[i + 2] - previousFrameData[i + 2], 2.0));
+	}
+
+	return differenceSum;
+}
+
+// Calculates temporal difference using color histograms
+int MyImage::colorHistogramDifference(MyImage &previousFrame) 
+{
+	unsigned char* previousFrameData = previousFrame.getImageData();
+
+	//Create histograms for each R,G,B value for both images
+	long PrevHist_B[256] = { 0 };
+	long PrevHist_G[256] = { 0 };
+	long PrevHist_R[256] = { 0 };
+	long CurrHist_B[256] = { 0 };
+	long CurrHist_G[256] = { 0 };
+	long CurrHist_R[256] = { 0 };
+
+	for (unsigned long i = 0; i < m_nHeight * m_nWidth; i++) {
+		PrevHist_B[previousFrameData[i]]++;
+		PrevHist_G[previousFrameData[i + 1]]++;
+		PrevHist_R[previousFrameData[i + 2]]++;
+
+		CurrHist_B[m_Data[i]]++;
+		CurrHist_G[m_Data[i + 1]]++;
+		CurrHist_R[m_Data[i + 2]]++;
+	}
+
+	//Get difference sum between histograms
+	int differenceSum = 0;
+	for (int i = 0; i < 256; i++) {
+		differenceSum += (abs(PrevHist_B[i] - CurrHist_B[i])
+						+ abs(PrevHist_G[i] - CurrHist_G[i])
+						+ abs(PrevHist_R[i] - CurrHist_R[i]));
+	}
+
+	return differenceSum;
+}
+
+// Calculates temporal difference using X Squared calculation
+double MyImage::xSquaredHistogramDifference(MyImage &previousFrame) 
+{
+	unsigned char* previousFrameData = previousFrame.getImageData();
+
+	//Create histograms for each R,G,B value for both images
+	long PrevHist_B[256] = { 0 };
+	long PrevHist_G[256] = { 0 };
+	long PrevHist_R[256] = { 0 };
+	long CurrHist_B[256] = { 0 };
+	long CurrHist_G[256] = { 0 };
+	long CurrHist_R[256] = { 0 };
+
+	for (unsigned long i = 0; i < m_nHeight * m_nWidth; i++) {
+		PrevHist_B[previousFrameData[i]]++;
+		PrevHist_G[previousFrameData[i + 1]]++;
+		PrevHist_R[previousFrameData[i + 2]]++;
+
+		CurrHist_B[m_Data[i]]++;
+		CurrHist_G[m_Data[i + 1]]++;
+		CurrHist_R[m_Data[i + 2]]++;
+	}
+
+	//Get difference sum between histograms
+	double differenceSum = 0;
+	for (int i = 0; i < 256; i++) {
+		double summationValue = 0;
+		if (CurrHist_B[i] + CurrHist_G[i] + CurrHist_R[i] > 0) {
+			summationValue = pow((PrevHist_B[i] - CurrHist_B[i])
+				+ abs(PrevHist_G[i] - CurrHist_G[i])
+				+ abs(PrevHist_R[i] - CurrHist_R[i]), 2.0)
+				/ (CurrHist_B[i] + CurrHist_G[i] + CurrHist_R[i]);
+		}
+
+		differenceSum += summationValue;
+	}
+
+	return differenceSum;
+}
 
 //Using OpenCV, compute SIFT features
 void MyImage::siftFeaturesDetec()

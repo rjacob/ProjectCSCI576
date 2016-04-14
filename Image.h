@@ -71,6 +71,9 @@ public:
 	
 	// Calculations
 	double	calcEntropy();
+	double	templateMatchDifference(MyImage &previousFrame);
+	int		colorHistogramDifference(MyImage &previousFrame);
+	double	xSquaredHistogramDifference(MyImage &previousFrame);
 	void	siftFeaturesDetec();
 	void	featuresMatch(Mat, Mat);
 	void    outlierRejection();

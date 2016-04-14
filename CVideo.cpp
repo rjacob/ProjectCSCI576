@@ -181,34 +181,74 @@ bool CVideo::analyzeVideo()
  *************************************/
 bool CVideo::videoSummarization()
 {
+	MyImage previousFrame;
+	previousFrame.setWidth(m_unWidth);
+	previousFrame.setHeight(m_unHeight);
+	copyVideoFrame(previousFrame, 0);
+
 	MyImage currentFrame;
 	currentFrame.setWidth(m_unWidth);
 	currentFrame.setHeight(m_unHeight);
 
 	//Cycle through each frame in video
-	//Testing output write
 	//Apply RGB histogram, entropy here
+	double *entropyValues = new double[m_ulNoFrames];
+	double *templateValues = new double[m_ulNoFrames];
+	int *colorHistValues = new int[m_ulNoFrames];
+	double *xSquaredValues = new double[m_ulNoFrames];
 	for (unsigned long i = 0; i < m_ulNoFrames; i++) {
-		currentFrame.ReadImage(m_pFile, i);
-		FILE* outImageFile;
-		char imagePath[_MAX_PATH] = "Test.rgb";
-		outImageFile = fopen(imagePath, "wb");
+		copyVideoFrame(currentFrame, i);
 
-		if (outImageFile = NULL) {
-			fprintf(stderr, "Error Opening File for Output Write");
-			return false;
-		}
+		//Add analysis values to arrays
+		entropyValues[i] = currentFrame.calcEntropy();
+		templateValues[i] = currentFrame.templateMatchDifference(previousFrame);
+		colorHistValues[i] = currentFrame.colorHistogramDifference(previousFrame);
+		xSquaredValues[i] = currentFrame.xSquaredHistogramDifference(previousFrame);
 
-		currentFrame.WriteImage(outImageFile);
+		/*
+		//Cout values, delete them later
+		std::cout.precision(10);
+		std::cout << "Frame " << i << ":\tEntropy: " << entropyValues[i]
+			<< "\tTemplate: " << templateValues[i]
+			<< "\tColor Histogram: " << colorHistValues[i]
+			<< "\tX Squared: " << xSquaredValues[i]
+			<< std::endl;
+		*/
 
-		fclose(outImageFile);
+		previousFrame = currentFrame;
 	}
+
+	//Create output file of data
+	FILE *outFile;
+	outFile = fopen("Video Data.txt", "w");
+	fprintf(outFile, "Number of frames: %d\n", m_ulNoFrames);
+	fprintf(outFile, "Frame:\t");
+	fprintf(outFile, "Entropy:\t");
+	fprintf(outFile, "Template:\t");
+	fprintf(outFile, "Color:\t");
+	fprintf(outFile, "X2:\n");
+
+	for (unsigned long i = 0; i < m_ulNoFrames; i++) {
+		fprintf(outFile, "%d\t", i);
+		fprintf(outFile, "%f\t", entropyValues[i]);
+		fprintf(outFile, "%f\t", templateValues[i]);
+		fprintf(outFile, "%d\t", colorHistValues[i]);
+		fprintf(outFile, "%f\n", xSquaredValues[i]);
+	}
+
+	fclose(outFile);
+	printf("Done!");
 
 	//Create array of "I-frames" here
 
 	//Choose best "GOPs" here
 
 	//Output summarized video (or "I-frame" array) here
+
+	delete entropyValues;
+	delete templateValues;
+	delete colorHistValues;
+	delete xSquaredValues;
 
 	return true;
 }//videoSummarization
