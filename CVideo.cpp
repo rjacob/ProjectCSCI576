@@ -7,6 +7,7 @@
 CVideo::CVideo()
 	:
 	m_ulNoFrames(0),
+	m_pOutputFrame(NULL),
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(0),
 	m_unHeight(0),
@@ -24,6 +25,7 @@ CVideo::CVideo()
 CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 :
 	m_ulNoFrames(0),
+	m_pOutputFrame(NULL),
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(_nWidth),
 	m_unHeight(_nHeight),
@@ -83,8 +85,11 @@ void CVideo::threadProcessingLoop()
 	{
 		if (m_eThreadState != THREAD_STATE_PAUSED)
 		{
-			copyVideoFrame(*m_pOutputBuffer, m_ulCurrentFrameIndex++);
-			m_pOutputBuffer->Modify();
+			copyVideoFrame(*m_pCurrentFrame, ++m_ulCurrentFrameIndex);
+			m_pCurrentFrame->Modify();
+
+			if(m_pOutputFrame)
+				*m_pOutputFrame = *m_pCurrentFrame;
 		}
 		Sleep(1000 / 15);//15Hz TODO: consider time it takes to readVideoFrame
 	} while(m_eThreadState != THREAD_STATE_KILLED && m_ulCurrentFrameIndex < m_ulNoFrames);
@@ -93,13 +98,16 @@ void CVideo::threadProcessingLoop()
 }//threadProcessingLoop
 
 /*************************************
-* Function: readVideoFrame
+* Function: copyVideoFrame
 * Description: 
 *************************************/
 bool CVideo::copyVideoFrame(MyImage& _image, unsigned int _nFrameNo)
 {
-	m_pCurrentFrame->ReadImage(m_pFile, _nFrameNo);
-	_image = *m_pCurrentFrame;
+	if (_nFrameNo)
+		_image.ReadImage(m_pFile, _nFrameNo);
+	else
+		_image = m_pCurrentFrame;//Calls copy constructor
+
 	return true;
 }//copyVideoFrame
 
@@ -173,6 +181,18 @@ bool CVideo::analyzeVideo()
 	//Analyze All frames
 	videoSummarization();
 	m_unVideoDurationSubSec = 1234;
+	return true;
+
+	vector<KeyPoint> keypointsCurr, keypointsPrev;
+
+	Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData()); // Open CV data matrixs
+	Mat dataMatPrev;
+
+	m_pCurrentFrame->siftFeaturesDetec(dataMatCurrent, keypointsCurr);
+	featuresMatch(dataMatCurrent, dataMatPrev);
+	outlierRejection();
+	//calcHomography(dataMatCurrent, dataMatPrev);
+
 	return false;
 }
 
@@ -213,3 +233,48 @@ bool CVideo::videoSummarization()
 
 	return true;
 }//videoSummarization
+
+//Brute-Force Matching (Hamming)
+void CVideo::featuresMatch(Mat _framePrev, Mat _framCurr)
+{
+	BFMatcher matcher(NORM_HAMMING);
+	vector<DMatch> matches;
+
+	matcher.match(_framePrev, _framCurr, matches);
+}//featuresMatch
+
+void CVideo::outlierRejection()
+{
+
+}//outlierRejection
+
+void CVideo::calcHomography(Mat& _matCurr, vector<KeyPoint>& _keyPtCurr, Mat& _matPrev, vector<KeyPoint>& _keyPtPrev)
+{
+	//Descriptor Extraction
+	Mat descriptorPrev, descriptorCurr;
+	SiftDescriptorExtractor extractor;
+
+	extractor.compute(_matPrev, _keyPtPrev, descriptorPrev);
+	extractor.compute(_matCurr, _keyPtCurr, descriptorCurr);
+
+	//Matching descriptor vectors using FLANN matcher
+
+	//Quick calculation of max and min distances between keypoints
+	std::vector<DMatch> matches;
+	double max_dist = 0; double min_dist = 100;
+
+	for (int i = 0; i < descriptorPrev.rows; i++)
+	{
+		double dist = matches[i].distance;
+		if (dist < min_dist) min_dist = dist;
+		if (dist > max_dist) max_dist = dist;
+	}
+
+	//Mat H = findHomography(mpts_2, mpts_1, RANSAC, 1, outlier_mask);
+}//calcHomography
+
+ //Transformation (Rotation or a Projection)
+void CVideo::frameWarping()
+{
+
+}//frameWarping

@@ -40,7 +40,6 @@ private:
 	unsigned char*	m_Data;					// RGB data of the image
 	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
-	std::vector<KeyPoint> m_keypoints;
 	SiftFeatureDetector m_detectorCurr, m_detectorPrev;
 
 public:
@@ -71,11 +70,7 @@ public:
 	
 	// Calculations
 	double	calcEntropy();
-	void	siftFeaturesDetec();
-	void	featuresMatch(Mat, Mat);
-	void    outlierRejection();
-	void    calcHomography();
-	void    frameWarping();
+	void	siftFeaturesDetec(Mat&, vector<KeyPoint>&);
 };
 
 #endif //IMAGE_DISPLAY
