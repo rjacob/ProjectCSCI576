@@ -85,7 +85,7 @@ void CVideo::threadProcessingLoop()
 	{
 		if (m_eThreadState != THREAD_STATE_PAUSED)
 		{
-			copyVideoFrame(*m_pCurrentFrame, ++m_ulCurrentFrameIndex);
+			copyVideoFrame(*m_pCurrentFrame, m_ulCurrentFrameIndex++);
 			m_pCurrentFrame->Modify();
 
 			if(m_pOutputFrame)
@@ -103,12 +103,7 @@ void CVideo::threadProcessingLoop()
 *************************************/
 bool CVideo::copyVideoFrame(MyImage& _image, unsigned int _nFrameNo)
 {
-	if (_nFrameNo)
-		_image.ReadImage(m_pFile, _nFrameNo);
-	else
-		_image = m_pCurrentFrame;//Calls copy constructor
-
-	return true;
+	return _image.ReadImage(m_pFile, _nFrameNo);
 }//copyVideoFrame
 
 /*************************************

@@ -52,7 +52,7 @@ private:
 	bool m_bPlaying;
 	unsigned int m_unVideoDurationSubSec;//at 15Hz, 67ms
 
-	bool copyVideoFrame(MyImage&, unsigned int _nFrame = 0);
+	bool copyVideoFrame(MyImage&, unsigned int _nFrame);
 
 	bool m_bCorrect;//TODO change into function??
 	bool videoSummarization();

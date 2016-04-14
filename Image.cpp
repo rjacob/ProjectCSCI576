@@ -27,6 +27,7 @@ MyImage::~MyImage()
 }
 
 // Copy constructor, TODO: this is not called yet???
+/*
 MyImage::MyImage(MyImage *otherImage)
 :
 	m_bFeatureDet(false)
@@ -40,6 +41,7 @@ MyImage::MyImage(MyImage *otherImage)
 		m_Data[i] = otherImage->m_Data[i];
 	}
 }
+*/
 
 // = operator overload
 MyImage& MyImage::operator= (const MyImage &otherImage)

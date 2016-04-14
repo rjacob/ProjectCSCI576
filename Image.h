@@ -46,7 +46,7 @@ public:
 	// Constructor
 	MyImage();
 	// Copy Constructor
-	MyImage::MyImage( MyImage *otherImage);
+	//MyImage::MyImage( MyImage *otherImage);
 	// Destructor
 	~MyImage();
 
