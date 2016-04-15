@@ -11,7 +11,7 @@ CVideo::CVideo()
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(0),
 	m_unHeight(0),
-	m_eThreadState(THREAD_STATE_UNKNOWN),
+	m_eVideoState(VIDEO_STATE_UNKNOWN),
 	m_bPlaying(FALSE),
 	m_bCorrect(false)
 {
@@ -29,7 +29,7 @@ CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(_nWidth),
 	m_unHeight(_nHeight),
-	m_eThreadState(THREAD_STATE_UNKNOWN),
+	m_eVideoState(VIDEO_STATE_UNKNOWN),
 	m_bPlaying(FALSE),
 	m_bCorrect(false)
 {
@@ -79,11 +79,11 @@ CVideo::~CVideo()
 * Function:
 * Description:
 *************************************/
-void CVideo::threadProcessingLoop()
+void CVideo::threadPlayingLoop()
 {
 	do
 	{
-		if (m_eThreadState != THREAD_STATE_PAUSED)
+		if (m_eVideoState != VIDEO_STATE_PAUSED)
 		{
 			copyVideoFrame(*m_pCurrentFrame, m_ulCurrentFrameIndex++);
 			m_pCurrentFrame->Modify();
@@ -92,7 +92,7 @@ void CVideo::threadProcessingLoop()
 				*m_pOutputFrame = *m_pCurrentFrame;
 		}
 		Sleep(1000 / 15);//15Hz TODO: consider time it takes to readVideoFrame
-	} while(m_eThreadState != THREAD_STATE_KILLED && m_ulCurrentFrameIndex < m_ulNoFrames);
+	} while(m_eVideoState != VIDEO_STATE_STOPPED && m_ulCurrentFrameIndex < m_ulNoFrames);
 
 	m_ulCurrentFrameIndex = 0;
 }//threadProcessingLoop
@@ -115,27 +115,27 @@ bool CVideo::playVideo(bool _bCorrect)
 	bool bReturn = false;
 	m_bCorrect = _bCorrect;
 
-	//Dont spawn additional threads when going from pause to replay
-	if (m_eThreadState == THREAD_STATE_UNKNOWN ||
-		m_eThreadState == THREAD_STATE_KILLED)
+	//Don't spawn additional threads when going from pause to replay
+	if (m_eVideoState == VIDEO_STATE_UNKNOWN ||
+		m_eVideoState == VIDEO_STATE_STOPPED)
 	{
-		m_threadHandle = CreateThread(
+		m_threadPlayingHandle = CreateThread(
 			NULL,                   // default security attributes
 			0,                      // use default stack size  
-			(LPTHREAD_START_ROUTINE)&spawnThread,       // thread function name
+			(LPTHREAD_START_ROUTINE)&spawnPlayingThread,       // thread function name
 			this,						// argument to thread function 
 			0,                      // use default creation flags 
 			&m_dwThreadId);   // returns the thread identifier
 	}
 
-	if (m_threadHandle == NULL)
+	if (m_threadPlayingHandle == NULL)
 	{
-		fprintf(stderr, "CreateThread");
+		fprintf(stderr, "Create Thread FAIL");
 		bReturn = false;
 	}
 	else
 	{
-		m_eThreadState = THREAD_STATE_ALIVE;
+		m_eVideoState = VIDEO_STATE_PLAYING;
 		m_bPlaying = true;
 		bReturn = true;
 	}
@@ -149,7 +149,7 @@ bool CVideo::playVideo(bool _bCorrect)
 *************************************/
 bool CVideo::stopVideo()
 {
-	m_eThreadState = THREAD_STATE_KILLED;
+	m_eVideoState = VIDEO_STATE_STOPPED;
 	m_ulCurrentFrameIndex = 0;
 	m_bPlaying = false;
 	//Clean-up
@@ -162,7 +162,7 @@ bool CVideo::stopVideo()
 *************************************/
 bool CVideo::pauseVideo()
 {
-	m_eThreadState = THREAD_STATE_PAUSED;
+	m_eVideoState = VIDEO_STATE_PAUSED;
 	m_bPlaying = false;
 	return true;
 }//pauseVideo
@@ -173,15 +173,20 @@ bool CVideo::pauseVideo()
 *************************************/
 bool CVideo::analyzeVideo()
 {
-	//Analyze All frames
-	videoSummarization();
-	m_unVideoDurationSubSec = 1234;
-	return true;
-
 	vector<KeyPoint> keypointsCurr, keypointsPrev;
 
 	Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData()); // Open CV data matrixs
 	Mat dataMatPrev;
+
+	m_threadAnalysisHandle = CreateThread(
+		NULL,                   // default security attributes
+		0,                      // use default stack size  
+		(LPTHREAD_START_ROUTINE)&spawnAnalyzingThread,       // thread function name
+		this,						// argument to thread function 
+		0,                      // use default creation flags 
+		&m_dwThreadId);   // returns the thread identifier
+
+	return true;
 
 	m_pCurrentFrame->siftFeaturesDetec(dataMatCurrent, keypointsCurr);
 	featuresMatch(dataMatCurrent, dataMatPrev);
@@ -189,6 +194,20 @@ bool CVideo::analyzeVideo()
 	//calcHomography(dataMatCurrent, dataMatPrev);
 
 	return false;
+}
+
+/*************************************
+* Function: threadAnalyzingLoop
+* Description:
+*************************************/
+void CVideo::threadAnalyzingLoop()
+{
+	m_eVideoState = VIDEO_STATE_ANALYZING;
+	m_ulCurrentFrameIndex = 0;
+	m_unVideoDurationSubSec = m_ulNoFrames * 15;
+	//Analyze All frames
+	videoSummarization();
+	m_eVideoState = VIDEO_STATE_UNKNOWN;
 }
 
  /*************************************
@@ -214,6 +233,7 @@ bool CVideo::videoSummarization()
 	double *xSquaredValues = new double[m_ulNoFrames];
 	for (unsigned long i = 0; i < m_ulNoFrames; i++) {
 		copyVideoFrame(currentFrame, i);
+		m_ulCurrentFrameIndex = i;//TODO: Should we progress this memb index, what about if we proceed with play??
 
 		//Add analysis values to arrays
 		entropyValues[i] = currentFrame.calcEntropy();

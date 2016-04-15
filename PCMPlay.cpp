@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 #define STRICT
 #include <windows.h>
+#include <Commctrl.h>
 #include "basetsd.h"
 #include <commdlg.h>
 #include <mmreg.h>
@@ -28,7 +29,7 @@ VOID    OnInitDialog( HWND hDlg );
 VOID    OnOpenSoundFile( HWND hDlg );
 HRESULT OnPlaySound( HWND hDlg );
 VOID    OnTimer( HWND hDlg );
-VOID    EnablePlayUI( HWND hDlg, BOOL bEnable );
+VOID    EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eState);
 
 //-----------------------------------------------------------------------------
 // Defines, constants, and global variables
@@ -126,7 +127,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 					BOOL checked = IsDlgButtonChecked(hDlg, IDC_CORRECT_CHECK);
 
-					if (g_pMyVideo->isVideoPlaying())
+					if (g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
 						g_pMyVideo->pauseVideo();
 					else
 					{
@@ -147,13 +148,16 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						g_pMyVideo->stopVideo();
 					}
 
-                    EnablePlayUI( hDlg, TRUE );
+                    EnablePlayUI( hDlg, VIDEO_STATE_STOPPED);
                     break;
 				case IDC_ANALYZE:
 				{
-					EnablePlayUI(hDlg, FALSE);
+					EnablePlayUI(hDlg, VIDEO_STATE_ANALYZING);
 					if (g_pMyVideo)
 					{
+						SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETRANGE, 0, MAKELPARAM(0, g_pMyVideo->getNoFrames()));
+						SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBS_SMOOTH, 0, 1);
+						SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETSTEP, (WPARAM)1, 0);
 						g_pMyVideo->analyzeVideo();
 
 						/*
@@ -330,7 +334,7 @@ VOID OnOpenSoundFile( HWND hDlg )
 
     // Update the UI controls to show the sound as the file is loaded
     //SetDlgItemText( hDlg, IDC_FILENAME, AudioPath);
-    EnablePlayUI( hDlg, TRUE );
+    EnablePlayUI( hDlg, VIDEO_STATE_STOPPED);
 
     // Remember the path for next time
     //strcpy( strPath, AudioPath);
@@ -359,7 +363,7 @@ HRESULT OnPlaySound( HWND hDlg )
 
         // Update the UI controls to show the sound as playing
         g_bBufferPaused = FALSE;
-        EnablePlayUI( hDlg, FALSE );
+        EnablePlayUI( hDlg, VIDEO_STATE_PLAYING);
     }
     else
     {
@@ -381,7 +385,7 @@ HRESULT OnPlaySound( HWND hDlg )
 
             // Update the UI controls to show the sound as playing
             g_bBufferPaused = FALSE;
-            EnablePlayUI( hDlg, FALSE );
+            EnablePlayUI( hDlg, VIDEO_STATE_PLAYING);
         }
     }
 
@@ -397,7 +401,6 @@ HRESULT OnPlaySound( HWND hDlg )
 //-----------------------------------------------------------------------------
 VOID OnTimer( HWND hDlg ) 
 {
-	HDC hdc;
 	static unsigned long ulTimerCount = 0;
 
 	if (++ulTimerCount % (15 / 4) == 0)//Check only at 4hz, when timer is at 15Hz
@@ -408,18 +411,42 @@ VOID OnTimer( HWND hDlg )
 			if (!g_pSound->IsSoundPlaying())
 			{
 				// Update the UI controls to show the sound as stopped
-				EnablePlayUI(hDlg, TRUE);
+				if(g_pMyVideo->getVideoState() == VIDEO_STATE_STOPPED)
+					EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
+				else if(g_pMyVideo->getVideoState() == VIDEO_STATE_PAUSED)
+					EnablePlayUI(hDlg, VIDEO_STATE_PAUSED);
 			}
 		}
 	}
 
-	if(g_pMyVideo->isVideoPlaying())
+	if(g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
 	{
-		hdc = GetDC(hDlg);
-		SetDIBitsToDevice(hdc,
+		SetDIBitsToDevice(GetDC(hDlg),
 			34, 20, outImage.getWidth(), outImage.getHeight(),
 			0, 0, 0, outImage.getHeight(),
 			outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+	}
+	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYZING)
+	{
+		char str[32];
+		unsigned short usPer = 0;
+		SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, g_pMyVideo->getCurrentFrameNo(), 0);
+		usPer = g_pMyVideo->getCurrentFrameNo() * 100 / g_pMyVideo->getNoFrames();
+		sprintf(str, "%d%%", usPer);
+		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), str);
+
+		if(g_pMyVideo->getCurrentFrameNo() == g_pMyVideo->getNoFrames())
+		{
+			EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
+			SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, 0, 0);
+			unsigned short unMin, unSec, unSubSec;
+			unMin = g_pMyVideo->getVideoDuration() / (15 * 60 * 60);
+			unSec = (g_pMyVideo->getVideoDuration() - unMin * 15 * 60 * 60) / (60 * 15);
+			unSubSec = (g_pMyVideo->getVideoDuration() - unMin * 15 * 60 * 60 - unSec * 15 * 60) / 15;
+
+			sprintf(str, "%0d:%0d:%0d", unMin, unSec, unSubSec);
+			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_END), str);
+		}
 	}
 }//OnTimer
 
@@ -427,20 +454,33 @@ VOID OnTimer( HWND hDlg )
 // Name: EnablePlayUI( hDlg,)
 // Desc: Enables or disables the Play UI controls 
 //-----------------------------------------------------------------------------
-VOID EnablePlayUI( HWND hDlg, BOOL bEnable )
+VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 {
-    if(bEnable == TRUE)
+    if(_eVideoState == VIDEO_STATE_PAUSED)
     {
         EnableWindow(   GetDlgItem( hDlg, IDC_LOOP_CHECK ), TRUE );
 		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), TRUE);
         EnableWindow(   GetDlgItem( hDlg, IDC_STOP ),       FALSE );
 
         EnableWindow(   GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
-		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
         SetFocus(       GetDlgItem( hDlg, IDC_PLAY ) );
         SetDlgItemText( hDlg, IDC_PLAY, "&Play" );
     }
-    else
+	else if (_eVideoState == VIDEO_STATE_STOPPED)
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_LOOP_CHECK), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_STOP), FALSE);
+
+		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), TRUE);
+		SetFocus(GetDlgItem(hDlg, IDC_PLAY));
+		SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, 0, 0);
+		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%%");
+		SetDlgItemText(hDlg, IDC_PLAY, "&Play");
+	}
+    else if(_eVideoState == VIDEO_STATE_PLAYING)
     {
         EnableWindow(  GetDlgItem( hDlg, IDC_LOOP_CHECK ), FALSE );
 		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
@@ -451,7 +491,16 @@ VOID EnablePlayUI( HWND hDlg, BOOL bEnable )
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
         SetDlgItemText( hDlg, IDC_PLAY, "&Pause" );
     }
-}
+	else if (_eVideoState == VIDEO_STATE_ANALYZING)
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_LOOP_CHECK), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_STOP), TRUE);
+		SetFocus(GetDlgItem(hDlg, IDC_ANALYZE));
+	}
+}//EnablePlayUI
 
 
 

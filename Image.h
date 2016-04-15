@@ -54,11 +54,11 @@ public:
 	MyImage & operator= (const MyImage & otherImage);
 
 	// Reader & Writer functions
-	void	setWidth( const int w)  { m_nWidth = w; }; 
+	void	setWidth( const int w) { m_nWidth = w; }; 
 	void	setHeight(const int h) { m_nHeight = h; };
 	void	setImageData( const unsigned char *img ) { m_Data = (unsigned char *)img; };
-	int		getWidth() { return m_nWidth; };
-	int		getHeight() { return m_nHeight; };
+	int		getWidth() const { return m_nWidth; };
+	int		getHeight() const { return m_nHeight; };
 	unsigned char*	getImageData() { return m_Data; };
 
 	// Input Output operations

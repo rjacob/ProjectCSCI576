@@ -6,11 +6,12 @@
 
 typedef enum
 {
-	THREAD_STATE_UNKNOWN = 0,
-	THREAD_STATE_ALIVE,//Playing
-	THREAD_STATE_PAUSED,//Paused
-	THREAD_STATE_KILLED//Stopped
-}THREAD_STATE_E;
+	VIDEO_STATE_UNKNOWN = 0,
+	VIDEO_STATE_PLAYING,//Playing
+	VIDEO_STATE_PAUSED,//Paused
+	VIDEO_STATE_ANALYZING,//Analyzing
+	VIDEO_STATE_STOPPED,//Stopped
+}VIDEO_STATE_E;
 
 //Thread based
 class CVideo
@@ -26,7 +27,8 @@ public:
 	long getNoFrames() const { return m_ulNoFrames;}
 	char* getVideoPath() { return m_videoPath;}
 	unsigned int getVideoDuration() const { return m_unVideoDurationSubSec; }
-	bool isVideoPlaying() { return m_bPlaying; }
+	VIDEO_STATE_E getVideoState() const { return m_eVideoState; }
+	unsigned long getCurrentFrameNo() const { return (m_ulCurrentFrameIndex + 1); }//TODO: m_ulCurrentFrameIndex
 
 	//mutators
 	void setImagePath(const char *path) { strcpy(m_videoPath, path);}\
@@ -41,13 +43,14 @@ public:
 private:
 	unsigned long m_ulNoFrames;
 	MyImage* m_pCurrentFrame, *m_pOutputFrame;
-	unsigned long m_ulCurrentFrameIndex;
+	unsigned long m_ulCurrentFrameIndex;//0-Indexed
 	unsigned int m_unWidth;
 	unsigned int m_unHeight;
 	char m_videoPath[_MAX_PATH];	// Video location
 	FILE* m_pFile;
-	THREAD_STATE_E m_eThreadState;
-	HANDLE m_threadHandle;
+	VIDEO_STATE_E m_eVideoState;
+	HANDLE m_threadPlayingHandle;
+	HANDLE m_threadAnalysisHandle;
 	DWORD m_dwThreadId;
 	bool m_bPlaying;
 	unsigned int m_unVideoDurationSubSec;//at 15Hz, 67ms
@@ -62,6 +65,9 @@ private:
 	void frameWarping();
 
 	//Thread Procesing
-	static void spawnThread(CVideo* _pThis) { _pThis->threadProcessingLoop(); }
-	void threadProcessingLoop();
+	static void spawnPlayingThread(CVideo* _pThis) { _pThis->threadPlayingLoop(); }
+	void threadPlayingLoop();
+
+	static void spawnAnalyzingThread(CVideo* _pThis) { _pThis->threadAnalyzingLoop(); }
+	void threadAnalyzingLoop();
 };
