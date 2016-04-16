@@ -231,27 +231,31 @@ bool CVideo::videoSummarization()
 	double *templateValues = new double[m_ulNoFrames];
 	int *colorHistValues = new int[m_ulNoFrames];
 	double *xSquaredValues = new double[m_ulNoFrames];
-	for (unsigned long i = 0; i < m_ulNoFrames; i++) {
-		copyVideoFrame(currentFrame, i);
-		m_ulCurrentFrameIndex = i;//TODO: Should we progress this memb index, what about if we proceed with play??
+	for (unsigned long i = 0; i < m_ulNoFrames; i++)
+	{
+		if (m_eVideoState != VIDEO_STATE_STOPPED)
+		{
+			copyVideoFrame(currentFrame, i);
+			m_ulCurrentFrameIndex = i;//TODO: Should we progress this memb index, what about if we proceed with play??
 
-		//Add analysis values to arrays
-		entropyValues[i] = currentFrame.calcEntropy();
-		templateValues[i] = currentFrame.templateMatchDifference(previousFrame);
-		colorHistValues[i] = currentFrame.colorHistogramDifference(previousFrame);
-		xSquaredValues[i] = currentFrame.xSquaredHistogramDifference(previousFrame);
+			//Add analysis values to arrays
+			entropyValues[i] = currentFrame.calcEntropy();
+			templateValues[i] = currentFrame.templateMatchDifference(previousFrame);
+			colorHistValues[i] = currentFrame.colorHistogramDifference(previousFrame);
+			xSquaredValues[i] = currentFrame.xSquaredHistogramDifference(previousFrame);
 
-		/*
-		//Cout values, delete them later
-		std::cout.precision(10);
-		std::cout << "Frame " << i << ":\tEntropy: " << entropyValues[i]
-			<< "\tTemplate: " << templateValues[i]
-			<< "\tColor Histogram: " << colorHistValues[i]
-			<< "\tX Squared: " << xSquaredValues[i]
-			<< std::endl;
-		*/
+			/*
+			//Cout values, delete them later
+			std::cout.precision(10);
+			std::cout << "Frame " << i << ":\tEntropy: " << entropyValues[i]
+				<< "\tTemplate: " << templateValues[i]
+				<< "\tColor Histogram: " << colorHistValues[i]
+				<< "\tX Squared: " << xSquaredValues[i]
+				<< std::endl;
+			*/
 
-		previousFrame = currentFrame;
+			previousFrame = currentFrame;
+		}
 	}
 
 	//Create output file of data

@@ -438,7 +438,6 @@ VOID OnTimer( HWND hDlg )
 		if(g_pMyVideo->getCurrentFrameNo() == g_pMyVideo->getNoFrames())
 		{
 			EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
-			SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, 0, 0);
 			unsigned short unMin, unSec, unSubSec;
 			unMin = g_pMyVideo->getVideoDuration() / (15 * 60 * 60);
 			unSec = (g_pMyVideo->getVideoDuration() - unMin * 15 * 60 * 60) / (60 * 15);
@@ -475,9 +474,14 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), TRUE);
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_STATIC_PER), FALSE);
 		SetFocus(GetDlgItem(hDlg, IDC_PLAY));
-		SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, 0, 0);
-		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%%");
+		if(g_pMyVideo->getCurrentFrameNo() != g_pMyVideo->getNoFrames())
+		{
+			//NOT automatically stopped on completion
+			SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, 0, 0);
+			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%%");
+		}
 		SetDlgItemText(hDlg, IDC_PLAY, "&Play");
 	}
     else if(_eVideoState == VIDEO_STATE_PLAYING)
@@ -494,6 +498,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 	else if (_eVideoState == VIDEO_STATE_ANALYZING)
 	{
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_STATIC_PER), TRUE);
 		EnableWindow(GetDlgItem(hDlg, IDC_LOOP_CHECK), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
