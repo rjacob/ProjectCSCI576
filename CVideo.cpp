@@ -99,12 +99,16 @@ void CVideo::threadPlayingLoop()
 			if(m_pOutputFrame)//is there a output buffer we can write to?
 				*m_pOutputFrame = *m_pCurrentFrame;
 
-			//unOnTime_ms = (clock() - iterationTime);
+			unOnTime_ms = (clock() - iterationTime);
+
+			if (unOnTime_ms > 1000 / 15)
+			{
+				unOnTime_ms = (1000 / 15);
+				OutputDebugString(_T("Dude"));
+			}
 		}
 		Sleep(1000/15 - unOnTime_ms);
 	} while(m_eVideoState != VIDEO_STATE_STOPPED && m_ulCurrentFrameIndex < m_ulNoFrames);
-
-	m_ulCurrentFrameIndex = 0;
 }//threadProcessingLoop
 
 /*************************************
@@ -219,7 +223,7 @@ void CVideo::threadAnalyzingLoop()
 	m_unVideoDurationSubSec = m_ulNoFrames * 15;
 	//Analyze All frames
 	videoSummarization();
-	m_eVideoState = VIDEO_STATE_UNKNOWN;
+	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
 }
 
  /*************************************
@@ -255,16 +259,6 @@ bool CVideo::videoSummarization()
 			templateValues[i] = currentFrame.templateMatchDifference(previousFrame);
 			colorHistValues[i] = currentFrame.colorHistogramDifference(previousFrame);//50ms
 			xSquaredValues[i] = currentFrame.xSquaredHistogramDifference(previousFrame);
-
-			/*
-			//Cout values, delete them later
-			std::cout.precision(10);
-			std::cout << "Frame " << i << ":\tEntropy: " << entropyValues[i]
-				<< "\tTemplate: " << templateValues[i]
-				<< "\tColor Histogram: " << colorHistValues[i]
-				<< "\tX Squared: " << xSquaredValues[i]
-				<< std::endl;
-			*/
 
 			previousFrame = currentFrame;
 		}

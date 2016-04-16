@@ -94,6 +94,8 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 	HDC hdc;
 	RECT rt;
 	GetClientRect(hDlg, &rt);
+	unsigned short unMin, unSec, unSubSec;
+	char str[32] = { 0 };
 
     switch( msg ) 
     {
@@ -134,6 +136,14 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						g_pMyVideo->playVideo((bool)checked);
 						g_pMyVideo->setOutputFrame(&outImage);
 					}
+
+					int noFrames = g_pMyVideo->getNoFrames();
+					unMin = floor((noFrames / 15) / 60);
+					unSec = floor((noFrames / 15) % 60);
+					unSubSec = (noFrames % 15);
+
+					sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+					SetWindowText(GetDlgItem(hDlg, IDC_STATIC_END), str);
 				}//IDC_PLAY
 				break;
                 case IDC_STOP:
@@ -170,6 +180,14 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						thumbnails.push_back(image);
 						g_pMyVideo->getVideoDuration();
 						*/
+
+						int noFrames = g_pMyVideo->getNoFrames();
+						unMin = floor((noFrames / 15) / 60);
+						unSec = floor((noFrames / 15) % 60);
+						unSubSec = (noFrames % 15);
+
+						sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+						SetWindowText(GetDlgItem(hDlg, IDC_STATIC_END), str);
 					}
 				}
 				break;
@@ -402,6 +420,8 @@ HRESULT OnPlaySound( HWND hDlg )
 VOID OnTimer( HWND hDlg ) 
 {
 	static unsigned long ulTimerCount = 0;
+	unsigned short unMin, unSec, unSubSec;
+	char str[32] = { 0 };
 
 	if (++ulTimerCount % (15 / 4) == 0)//Check only at 4hz, when timer is at 15Hz
 	{
@@ -426,27 +446,26 @@ VOID OnTimer( HWND hDlg )
 			34, 20, outImage.getWidth(), outImage.getHeight(),
 			0, 0, 0, outImage.getHeight(),
 			outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+
+		int noFrames = g_pMyVideo->getCurrentFrameNo();
+		unMin = floor((noFrames / 15) / 60);
+		unSec = floor((noFrames / 15) % 60);
+		unSubSec = (noFrames % 15);
+
+		sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
 	}
-	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYZING)
+	else if(g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYZING)
 	{
-		char str[32];
 		unsigned short usPer = 0;
 		SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, g_pMyVideo->getCurrentFrameNo(), 0);
 		usPer = g_pMyVideo->getCurrentFrameNo() * 100 / g_pMyVideo->getNoFrames();
 		sprintf(str, "%d%%", usPer);
 		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), str);
-
-		if(g_pMyVideo->getCurrentFrameNo() == g_pMyVideo->getNoFrames())
-		{
-			EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
-			unsigned short unMin, unSec, unSubSec;
-			unMin = g_pMyVideo->getVideoDuration() / (15 * 60 * 60);
-			unSec = (g_pMyVideo->getVideoDuration() - unMin * 15 * 60 * 60) / (60 * 15);
-			unSubSec = (g_pMyVideo->getVideoDuration() - unMin * 15 * 60 * 60 - unSec * 15 * 60) / 15;
-
-			sprintf(str, "%0d:%0d:%0d", unMin, unSec, unSubSec);
-			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_END), str);
-		}
+	}
+	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYSIS_COMPLETE)
+	{
+		EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
 	}
 }//OnTimer
 
