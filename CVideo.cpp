@@ -7,6 +7,8 @@
 CVideo::CVideo()
 	:
 	m_ulNoFrames(0),
+	m_pCurrentFrame(NULL),
+	m_pPrevFrame(NULL),
 	m_pOutputFrame(NULL),
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(0),
@@ -25,6 +27,8 @@ CVideo::CVideo()
 CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 :
 	m_ulNoFrames(0),
+	m_pCurrentFrame(NULL),
+	m_pPrevFrame(NULL),
 	m_pOutputFrame(NULL),
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(_nWidth),
@@ -63,6 +67,10 @@ CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 	m_pCurrentFrame = new MyImage();
 	m_pCurrentFrame->setWidth(m_unWidth);
 	m_pCurrentFrame->setHeight(m_unHeight);
+
+	m_pPrevFrame = new MyImage();
+	m_pPrevFrame->setHeight(m_unHeight);
+	m_pPrevFrame->setWidth(m_unWidth);
 }//constructor
 
 /*************************************
@@ -73,6 +81,10 @@ CVideo::~CVideo()
 {
 	fclose(m_pFile);
 	m_pFile = 0;
+
+	if(m_pCurrentFrame)
+		delete m_pCurrentFrame;
+
 }//destructor
 
 /*************************************
@@ -234,14 +246,7 @@ void CVideo::threadAnalyzingLoop()
  *************************************/
 bool CVideo::videoSummarization()
 {
-	MyImage previousFrame;
-	previousFrame.setWidth(m_unWidth);
-	previousFrame.setHeight(m_unHeight);
-	copyVideoFrame(previousFrame, 0);
-
-	MyImage currentFrame;
-	currentFrame.setWidth(m_unWidth);
-	currentFrame.setHeight(m_unHeight);
+	copyVideoFrame(*m_pPrevFrame, 0);//Get first frame, one step ahead
 
 	//Cycle through each frame in video
 	//Apply RGB histogram, entropy here
@@ -253,16 +258,16 @@ bool CVideo::videoSummarization()
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
-			copyVideoFrame(currentFrame, i);
+			copyVideoFrame(*m_pCurrentFrame, i);
 			m_ulCurrentFrameIndex = i;//TODO: Should we progress this memb index, what about if we proceed with play??
 
 			//Add analysis values to arrays
-			entropyValues[i] = currentFrame.calcEntropy();//70ms
-			templateValues[i] = currentFrame.templateMatchDifference(previousFrame);
-			colorHistValues[i] = currentFrame.colorHistogramDifference(previousFrame);//50ms
-			xSquaredValues[i] = currentFrame.xSquaredHistogramDifference(previousFrame);
+			entropyValues[i] = m_pCurrentFrame->calcEntropy();//70ms
+			templateValues[i] = m_pCurrentFrame->templateMatchDifference(*m_pPrevFrame);
+			colorHistValues[i] = m_pCurrentFrame->colorHistogramDifference(*m_pPrevFrame);//50ms
+			xSquaredValues[i] = m_pCurrentFrame->xSquaredHistogramDifference(*m_pPrevFrame);
 
-			previousFrame = currentFrame;
+			*m_pPrevFrame = *m_pCurrentFrame;
 		}
 	}
 
