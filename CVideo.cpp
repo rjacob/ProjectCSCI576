@@ -103,8 +103,10 @@ void CVideo::threadPlayingLoop()
 
 			if (unOnTime_ms > 1000 / 15)
 			{
-				unOnTime_ms = (1000 / 15);
-				OutputDebugString(_T("Dude"));
+				char str[128] = { 0 };
+				sprintf(str, "[%d] %d\n", m_ulCurrentFrameIndex, unOnTime_ms);
+				unOnTime_ms = (1000 / 15);//clamp
+				OutputDebugString(_T(str));
 			}
 		}
 		Sleep(1000/15 - unOnTime_ms);

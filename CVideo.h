@@ -31,7 +31,7 @@ public:
 	long getNoFrames() const { return m_ulNoFrames;}
 	unsigned int getVideoDuration() const { return m_unVideoDurationSubSec; }
 	VIDEO_STATE_E getVideoState() const { return m_eVideoState; }
-	unsigned long getCurrentFrameNo() const { return (m_ulCurrentFrameIndex + 1); }//TODO: m_ulCurrentFrameIndex
+	unsigned long getCurrentFrameNo() const { return (m_ulCurrentFrameIndex); }//TODO: m_ulCurrentFrameIndex
 
 	//mutators
 	void setOutputFrame(MyImage* _outputFrame) { m_pOutputFrame = _outputFrame; }
