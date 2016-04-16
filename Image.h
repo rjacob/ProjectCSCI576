@@ -40,7 +40,7 @@ private:
 	unsigned char*	m_Data;					// RGB data of the image
 	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
-	SiftFeatureDetector m_detectorCurr, m_detectorPrev;
+	SiftFeatureDetector m_detector;
 
 public:
 	// Constructor
@@ -56,7 +56,6 @@ public:
 	// Reader & Writer functions
 	void	setWidth( const int w) { m_nWidth = w; }; 
 	void	setHeight(const int h) { m_nHeight = h; };
-	void	setImageData( const unsigned char *img ) { m_Data = (unsigned char *)img; };
 	int		getWidth() const { return m_nWidth; };
 	int		getHeight() const { return m_nHeight; };
 	unsigned char*	getImageData() { return m_Data; };
@@ -69,16 +68,13 @@ public:
 	bool	Modify();
 	
 	// Calculations
+	void	countSymbols();
 	double	calcEntropy();
 	double	templateMatchDifference(MyImage &previousFrame);
 	int		colorHistogramDifference(MyImage &previousFrame);
 	double	xSquaredHistogramDifference(MyImage &previousFrame);
-	void	siftFeaturesDetec();
-	void	featuresMatch(Mat, Mat);
-	void    outlierRejection();
-	void    calcHomography();
-	void    frameWarping();
 	void	siftFeaturesDetec(Mat&, vector<KeyPoint>&);
+	void	frameWarping();
 };
 
 #endif //IMAGE_DISPLAY

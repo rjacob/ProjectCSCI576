@@ -147,7 +147,7 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 	delete Bbuf;
 
 	return true;
-}
+}//WriteImage
 
 
 // Here is where you would place your code to modify an image
@@ -155,8 +155,14 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 bool MyImage::Modify()
 {
 	//calcEntropy();
+	frameWarping();
 	return false;
-}
+}//Modify
+
+void MyImage::countSymbols()
+{
+
+}//countSymbols
 
 // Calculate entropy of image
 // Calculation based on flattening RGB image into 1D array
@@ -164,7 +170,7 @@ double MyImage::calcEntropy()
 {
 	// Count number of symbols in image
 	unsigned long symbolHistogram[256] = { 0 };
-	for (unsigned long i = 0; i < m_nHeight * m_nWidth * 3; i++){
+	for (int i = 0; i < m_nHeight * m_nWidth * 3; i++){
 		unsigned char currentSymbol = m_Data[i];
 		symbolHistogram[currentSymbol]++;
 	}
@@ -172,13 +178,15 @@ double MyImage::calcEntropy()
 	//Calculate entropy
 	double entropy = 0;
 	double numSymbols = m_nHeight * m_nWidth * 3;
+	double summationValue = 0;
+	double symbolProbability;
 	for (int i = 0; i < 256; i++){
 
 		//If number of occurences is 0, set sum value to 0
 		//Otherwise, use entropy equation
-		double summationValue = 0;
+		summationValue = 0;
 		if (symbolHistogram[i] > 0) {
-			double symbolProbability = symbolHistogram[i] / numSymbols;
+			symbolProbability = symbolHistogram[i] / numSymbols;
 			summationValue = symbolProbability * log2(symbolProbability);
 		}
 
@@ -197,14 +205,14 @@ double MyImage::templateMatchDifference(MyImage &previousFrame)
 	unsigned char* previousFrameData = previousFrame.getImageData();
 	double differenceSum = 0;
 
-	for (unsigned long i = 0; i < m_nHeight * m_nWidth; i++) {
+	for (int i = 0; i < m_nHeight * m_nWidth; i++) {
 		differenceSum += sqrt(pow(m_Data[i] - previousFrameData[i], 2.0)
 							+ pow(m_Data[i + 1] - previousFrameData[i + 1], 2.0)
 							+ pow(m_Data[i + 2] - previousFrameData[i + 2], 2.0));
 	}
 
 	return differenceSum;
-}
+}//templateMatchDifference
 
 // Calculates temporal difference using color histograms
 int MyImage::colorHistogramDifference(MyImage &previousFrame) 
@@ -219,7 +227,7 @@ int MyImage::colorHistogramDifference(MyImage &previousFrame)
 	long CurrHist_G[256] = { 0 };
 	long CurrHist_R[256] = { 0 };
 
-	for (unsigned long i = 0; i < m_nHeight * m_nWidth; i++) {
+	for (int i = 0; i < m_nHeight * m_nWidth; i++) {
 		PrevHist_B[previousFrameData[i]]++;
 		PrevHist_G[previousFrameData[i + 1]]++;
 		PrevHist_R[previousFrameData[i + 2]]++;
@@ -253,7 +261,7 @@ double MyImage::xSquaredHistogramDifference(MyImage &previousFrame)
 	long CurrHist_G[256] = { 0 };
 	long CurrHist_R[256] = { 0 };
 
-	for (unsigned long i = 0; i < m_nHeight * m_nWidth; i++) {
+	for (int i = 0; i < m_nHeight * m_nWidth; i++) {
 		PrevHist_B[previousFrameData[i]]++;
 		PrevHist_G[previousFrameData[i + 1]]++;
 		PrevHist_R[previousFrameData[i + 2]]++;
@@ -283,14 +291,19 @@ double MyImage::xSquaredHistogramDifference(MyImage &previousFrame)
 //Using OpenCV, compute SIFT features
 void MyImage::siftFeaturesDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
 {
-
 	if (!_dataMat.empty())
 	{
 		//namedWindow("Display window", WINDOW_AUTOSIZE);// Create a window for display.
 		//imshow("Display window", dataMat);
-		m_detectorCurr.detect(_dataMat, _keypoints);
+		m_detector.detect(_dataMat, _keypoints);
 		drawKeypoints(_dataMat, _keypoints, _dataMat);
 		//waitKey(0);
 		//destroyWindow("Display window");
 	}
 }//siftFeatures
+
+ //Transformation (Rotation or a Projection)
+void MyImage::frameWarping()
+{
+
+}//frameWarping

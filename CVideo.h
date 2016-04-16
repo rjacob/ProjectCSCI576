@@ -1,8 +1,11 @@
 #pragma once
 
 #include <windows.h>
+#include <time.h>
 #include "Image.h"
 #include "CDoubleBuffer.h"
+
+#define DEBUG_FILE 0
 
 typedef enum
 {
@@ -25,13 +28,11 @@ public:
 	unsigned int getVideoWidth() const { return m_unWidth;}
 	unsigned int getVideoHeight() const { return m_unHeight; }
 	long getNoFrames() const { return m_ulNoFrames;}
-	char* getVideoPath() { return m_videoPath;}
 	unsigned int getVideoDuration() const { return m_unVideoDurationSubSec; }
 	VIDEO_STATE_E getVideoState() const { return m_eVideoState; }
 	unsigned long getCurrentFrameNo() const { return (m_ulCurrentFrameIndex + 1); }//TODO: m_ulCurrentFrameIndex
 
 	//mutators
-	void setImagePath(const char *path) { strcpy(m_videoPath, path);}\
 	void setOutputFrame(MyImage* _outputFrame) { m_pOutputFrame = _outputFrame; }
 
 	//Interface + summarization functions
@@ -42,7 +43,8 @@ public:
 	
 private:
 	unsigned long m_ulNoFrames;
-	MyImage* m_pCurrentFrame, *m_pOutputFrame;
+	MyImage *m_pCurrentFrame, *m_pPrevFrame;
+	MyImage *m_pOutputFrame;
 	unsigned long m_ulCurrentFrameIndex;//0-Indexed
 	unsigned int m_unWidth;
 	unsigned int m_unHeight;
@@ -60,9 +62,8 @@ private:
 	bool m_bCorrect;//TODO change into function??
 	bool videoSummarization();
 	void featuresMatch(Mat, Mat);
-	void outlierRejection();
-	void calcHomography(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
-	void frameWarping();
+	void outlierRejection(vector<DMatch>&);
+	void calcHomographyMatrix(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
 
 	//Thread Procesing
 	static void spawnPlayingThread(CVideo* _pThis) { _pThis->threadPlayingLoop(); }

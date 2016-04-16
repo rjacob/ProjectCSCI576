@@ -76,22 +76,32 @@ CVideo::~CVideo()
 }//destructor
 
 /*************************************
-* Function:
-* Description:
+* Function: threadPlayingLoop
+* Description: Sleep time is with the time it takes to compute 15Hz
 *************************************/
 void CVideo::threadPlayingLoop()
 {
+	clock_t iterationTime;
+	unsigned short unOnTime_ms;
+
 	do
 	{
+		unOnTime_ms = 0;
+
 		if (m_eVideoState != VIDEO_STATE_PAUSED)
 		{
+			iterationTime = clock();
 			copyVideoFrame(*m_pCurrentFrame, m_ulCurrentFrameIndex++);
-			m_pCurrentFrame->Modify();
 
-			if(m_pOutputFrame)
+			if(m_bCorrect)
+				m_pCurrentFrame->Modify();
+
+			if(m_pOutputFrame)//is there a output buffer we can write to?
 				*m_pOutputFrame = *m_pCurrentFrame;
+
+			//unOnTime_ms = (clock() - iterationTime);
 		}
-		Sleep(1000 / 15);//15Hz TODO: consider time it takes to readVideoFrame
+		Sleep(1000/15 - unOnTime_ms);
 	} while(m_eVideoState != VIDEO_STATE_STOPPED && m_ulCurrentFrameIndex < m_ulNoFrames);
 
 	m_ulCurrentFrameIndex = 0;
@@ -175,8 +185,9 @@ bool CVideo::analyzeVideo()
 {
 	vector<KeyPoint> keypointsCurr, keypointsPrev;
 
-	Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData()); // Open CV data matrixs
-	Mat dataMatPrev;
+	// Open CV data matrixs
+	Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
+	//Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
 
 	m_threadAnalysisHandle = CreateThread(
 		NULL,                   // default security attributes
@@ -188,10 +199,11 @@ bool CVideo::analyzeVideo()
 
 	return true;
 
-	m_pCurrentFrame->siftFeaturesDetec(dataMatCurrent, keypointsCurr);
-	featuresMatch(dataMatCurrent, dataMatPrev);
-	outlierRejection();
-	//calcHomography(dataMatCurrent, dataMatPrev);
+//	m_pPrevFrame->siftFeaturesDetec(dataMatPrev, keypointsPrev);
+//	m_pCurrentFrame->siftFeaturesDetec(dataMatCurrent, keypointsCurr);
+
+//	featuresMatch(dataMatPrev, dataMatCurrent);
+//	calcHomographyMatrix(dataMatCurrent, keypointsCurr, dataMatPrev, keypointsPrev);
 
 	return false;
 }
@@ -239,9 +251,9 @@ bool CVideo::videoSummarization()
 			m_ulCurrentFrameIndex = i;//TODO: Should we progress this memb index, what about if we proceed with play??
 
 			//Add analysis values to arrays
-			entropyValues[i] = currentFrame.calcEntropy();
+			entropyValues[i] = currentFrame.calcEntropy();//70ms
 			templateValues[i] = currentFrame.templateMatchDifference(previousFrame);
-			colorHistValues[i] = currentFrame.colorHistogramDifference(previousFrame);
+			colorHistValues[i] = currentFrame.colorHistogramDifference(previousFrame);//50ms
 			xSquaredValues[i] = currentFrame.xSquaredHistogramDifference(previousFrame);
 
 			/*
@@ -258,6 +270,7 @@ bool CVideo::videoSummarization()
 		}
 	}
 
+#if DEBUG_FILE
 	//Create output file of data
 	FILE *outFile;
 	outFile = fopen("Video Data.txt", "w");
@@ -278,6 +291,7 @@ bool CVideo::videoSummarization()
 
 	fclose(outFile);
 	printf("Done!");
+#endif
 
 	//Create array of "I-frames" here
 
@@ -300,14 +314,16 @@ void CVideo::featuresMatch(Mat _framePrev, Mat _framCurr)
 	vector<DMatch> matches;
 
 	matcher.match(_framePrev, _framCurr, matches);
+
+	outlierRejection(matches);
 }//featuresMatch
 
-void CVideo::outlierRejection()
+void CVideo::outlierRejection(vector<DMatch>& _matches)
 {
 
 }//outlierRejection
 
-void CVideo::calcHomography(Mat& _matCurr, vector<KeyPoint>& _keyPtCurr, Mat& _matPrev, vector<KeyPoint>& _keyPtPrev)
+void CVideo::calcHomographyMatrix(Mat& _matCurr, vector<KeyPoint>& _keyPtCurr, Mat& _matPrev, vector<KeyPoint>& _keyPtPrev)
 {
 	//Descriptor Extraction
 	Mat descriptorPrev, descriptorCurr;
@@ -331,9 +347,3 @@ void CVideo::calcHomography(Mat& _matCurr, vector<KeyPoint>& _keyPtCurr, Mat& _m
 
 	//Mat H = findHomography(mpts_2, mpts_1, RANSAC, 1, outlier_mask);
 }//calcHomography
-
- //Transformation (Rotation or a Projection)
-void CVideo::frameWarping()
-{
-
-}//frameWarping

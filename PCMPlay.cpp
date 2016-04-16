@@ -421,6 +421,7 @@ VOID OnTimer( HWND hDlg )
 
 	if(g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
 	{
+		//This is very we draw subsequent frames to display
 		SetDIBitsToDevice(GetDC(hDlg),
 			34, 20, outImage.getWidth(), outImage.getHeight(),
 			0, 0, 0, outImage.getHeight(),
@@ -478,7 +479,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		SetFocus(GetDlgItem(hDlg, IDC_PLAY));
 		if(g_pMyVideo->getCurrentFrameNo() != g_pMyVideo->getNoFrames())
 		{
-			//NOT automatically stopped on completion
+			//Stopped by user and not on completion
 			SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, 0, 0);
 			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%%");
 		}
