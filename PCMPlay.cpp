@@ -500,7 +500,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		{
 			//Stopped by user and not on completion
 			SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, 0, 0);
-			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%%");
+			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%");
 		}
 		SetDlgItemText(hDlg, IDC_PLAY, "&Play");
 	}
@@ -526,10 +526,3 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		SetFocus(GetDlgItem(hDlg, IDC_ANALYZE));
 	}
 }//EnablePlayUI
-
-
-
-
-
-
-
