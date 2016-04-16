@@ -61,7 +61,7 @@ private:
 	bool copyVideoFrame(MyImage&, unsigned int _nFrame);
 
 	bool m_bCorrect;//TODO change into function??
-	bool videoSummarization();
+	bool videoSummarization(unsigned long);
 	void featuresMatch(Mat, Mat);
 	void outlierRejection(vector<DMatch>&);
 	void calcHomographyMatrix(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);

@@ -201,12 +201,6 @@ bool CVideo::pauseVideo()
 *************************************/
 bool CVideo::analyzeVideo()
 {
-	vector<KeyPoint> keypointsCurr, keypointsPrev;
-
-	// Open CV data matrixs
-	Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
-	//Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
-
 	m_threadAnalysisHandle = CreateThread(
 		NULL,                   // default security attributes
 		0,                      // use default stack size  
@@ -216,14 +210,6 @@ bool CVideo::analyzeVideo()
 		&m_dwThreadId);   // returns the thread identifier
 
 	return true;
-
-//	m_pPrevFrame->siftFeaturesDetec(dataMatPrev, keypointsPrev);
-//	m_pCurrentFrame->siftFeaturesDetec(dataMatCurrent, keypointsCurr);
-
-//	featuresMatch(dataMatPrev, dataMatCurrent);
-//	calcHomographyMatrix(dataMatCurrent, keypointsCurr, dataMatPrev, keypointsPrev);
-
-	return false;
 }
 
 /*************************************
@@ -235,8 +221,29 @@ void CVideo::threadAnalyzingLoop()
 	m_eVideoState = VIDEO_STATE_ANALYZING;
 	m_ulCurrentFrameIndex = 0;
 	m_unVideoDurationSubSec = m_ulNoFrames * 15;
+	vector<KeyPoint> keypointsCurr, keypointsPrev;
+
+	// Open CV data matrixs
+	Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
+	Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
+
+	copyVideoFrame(*m_pPrevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
-	videoSummarization();
+	for (unsigned long i = 0; i < m_ulNoFrames; i++)
+	{
+		if (m_eVideoState != VIDEO_STATE_STOPPED)
+		{
+			videoSummarization(i);
+			m_ulCurrentFrameIndex = i;//TODO: Should we progress this memb index, what about if we proceed with play??
+
+		//	m_pPrevFrame->siftFeaturesDetec(dataMatPrev, keypointsPrev);
+		//	m_pCurrentFrame->siftFeaturesDetec(dataMatCurrent, keypointsCurr);
+
+		//	featuresMatch(dataMatPrev, dataMatCurrent);
+		//	calcHomographyMatrix(dataMatCurrent, keypointsCurr, dataMatPrev, keypointsPrev);
+
+		}
+	}
 	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
 }
 
@@ -244,9 +251,10 @@ void CVideo::threadAnalyzingLoop()
  * Function: videoSummarization
  * Description:
  *************************************/
-bool CVideo::videoSummarization()
+bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 {
-	copyVideoFrame(*m_pPrevFrame, 0);//Get first frame, one step ahead
+	if (m_ulNoFrames == 0)
+		return false;
 
 	//Cycle through each frame in video
 	//Apply RGB histogram, entropy here
@@ -254,22 +262,15 @@ bool CVideo::videoSummarization()
 	double *templateValues = new double[m_ulNoFrames];
 	int *colorHistValues = new int[m_ulNoFrames];
 	double *xSquaredValues = new double[m_ulNoFrames];
-	for (unsigned long i = 0; i < m_ulNoFrames; i++)
-	{
-		if (m_eVideoState != VIDEO_STATE_STOPPED)
-		{
-			copyVideoFrame(*m_pCurrentFrame, i);
-			m_ulCurrentFrameIndex = i;//TODO: Should we progress this memb index, what about if we proceed with play??
 
-			//Add analysis values to arrays
-			entropyValues[i] = m_pCurrentFrame->calcEntropy();//70ms
-			templateValues[i] = m_pCurrentFrame->templateMatchDifference(*m_pPrevFrame);
-			colorHistValues[i] = m_pCurrentFrame->colorHistogramDifference(*m_pPrevFrame);//50ms
-			xSquaredValues[i] = m_pCurrentFrame->xSquaredHistogramDifference(*m_pPrevFrame);
+	copyVideoFrame(*m_pCurrentFrame, _ulFrameIndex);
+	//Add analysis values to arrays
+	entropyValues[_ulFrameIndex] = m_pCurrentFrame->calcEntropy();//70ms
+	templateValues[_ulFrameIndex] = m_pCurrentFrame->templateMatchDifference(*m_pPrevFrame);
+	colorHistValues[_ulFrameIndex] = m_pCurrentFrame->colorHistogramDifference(*m_pPrevFrame);//50ms
+	xSquaredValues[_ulFrameIndex] = m_pCurrentFrame->xSquaredHistogramDifference(*m_pPrevFrame);
 
-			*m_pPrevFrame = *m_pCurrentFrame;
-		}
-	}
+	*m_pPrevFrame = *m_pCurrentFrame;
 
 #if DEBUG_FILE
 	//Create output file of data
