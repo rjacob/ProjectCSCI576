@@ -232,10 +232,8 @@ void CVideo::threadAnalyzingLoop()
 			copyVideoFrame(*m_pCurrentFrame, i);
 			//videoSummarization(i);
 
-//=========== CORRECTION ============
-
-			// Open CV data matrixs
-			Mat	dataMatCurrent = imread("..\\Pictures\\left01.jpg", IMREAD_COLOR);//(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
+			// Open CV data matrices
+			Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
 			Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
 
 			if(!dataMatPrev.empty() && !dataMatCurrent.empty())
@@ -246,28 +244,16 @@ void CVideo::threadAnalyzingLoop()
 				cvtColor(dataMatCurrent, greyMatCurr, CV_BGR2GRAY);
 
 				m_pPrevFrame->fastFeaturesDetec(greyMatPrev, keypointsPrev);
-				Mat outputMat;
-				size_t sizeK = keypointsPrev.size();
-				drawKeypoints(greyMatPrev, keypointsPrev, outputMat);
-
-				if (!outputMat.empty())
-				{
-					namedWindow("Display window", cv::WINDOW_AUTOSIZE);// Create a window for display.
-					imshow("Display window", outputMat);
-				}
-				waitKey(0);
-
 				m_pCurrentFrame->fastFeaturesDetec(greyMatCurr, keypointsCurr);
 
-				/*
-				featuresMatch(greyMatPrev, greyMatCurr);
-				*/
+				featuresMatch(dataMatPrev, keypointsPrev, dataMatCurrent, keypointsCurr);
 				//	calcHomographyMatrix(dataMatCurrent, keypointsCurr, dataMatPrev, keypointsPrev);
 			}
-//=============================
+
 			*m_pPrevFrame = *m_pCurrentFrame;
 			m_ulCurrentFrameIndex = i;
 		}
+
 	}
 	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
 }
@@ -339,12 +325,16 @@ void CVideo::featuresMatch(Mat _framePrev, vector<KeyPoint>& _keyPts1, Mat _fram
 	vector<DMatch> matches;
 	Mat desc_1, desc_2;
 
+	char str[128] = { 0 };
+	sprintf(str, "[%d, %d]\n",_keyPts1.size(), _keyPts2.size());
+	OutputDebugString(_T(str));
+
 	extractor.compute(_framePrev, _keyPts1, desc_1);
-	extractor.compute(_framCurr, _keyPts2, desc_2);
+	//extractor.compute(_framCurr, _keyPts2, desc_2);
 
-	matcher.match(desc_1, desc_2, matches);
+	//matcher.match(desc_1, desc_2, matches);
 
-	outlierRejection(matches, _keyPts1, _keyPts2);
+	//outlierRejection(matches, _keyPts1, _keyPts2);
 }//featuresMatch
 
 void CVideo::outlierRejection(vector<DMatch>& _matches, vector<KeyPoint>& _keyPts1, vector<KeyPoint>& _keyPts2)
