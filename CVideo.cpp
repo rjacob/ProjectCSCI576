@@ -203,7 +203,7 @@ bool CVideo::analyzeVideo()
 {
 	m_threadAnalysisHandle = CreateThread(
 		NULL,                   // default security attributes
-		0,                      // use default stack size  
+		1024*1024*4,                      // use default stack size  
 		(LPTHREAD_START_ROUTINE)&spawnAnalyzingThread,       // thread function name
 		this,						// argument to thread function 
 		0,                      // use default creation flags 
@@ -223,25 +223,50 @@ void CVideo::threadAnalyzingLoop()
 	m_unVideoDurationSubSec = m_ulNoFrames * 15;
 	vector<KeyPoint> keypointsCurr, keypointsPrev;
 
-	// Open CV data matrixs
-	Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
-	Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
-
 	copyVideoFrame(*m_pPrevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
 	for (unsigned long i = 0; i < m_ulNoFrames; i++)
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
-			videoSummarization(i);
-			m_ulCurrentFrameIndex = i;//TODO: Should we progress this memb index, what about if we proceed with play??
+			copyVideoFrame(*m_pCurrentFrame, i);
+			//videoSummarization(i);
 
-		//	m_pPrevFrame->siftFeaturesDetec(dataMatPrev, keypointsPrev);
-		//	m_pCurrentFrame->siftFeaturesDetec(dataMatCurrent, keypointsCurr);
+//=========== CORRECTION ============
 
-		//	featuresMatch(dataMatPrev, dataMatCurrent);
-		//	calcHomographyMatrix(dataMatCurrent, keypointsCurr, dataMatPrev, keypointsPrev);
+			// Open CV data matrixs
+			Mat	dataMatCurrent = imread("..\\Pictures\\left01.jpg", IMREAD_COLOR);//(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
+			Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
 
+			if(!dataMatPrev.empty() && !dataMatCurrent.empty())
+			{
+				//Convert to grayscale
+				Mat greyMatPrev, greyMatCurr;
+				cvtColor(dataMatPrev, greyMatPrev, CV_BGR2GRAY);
+				cvtColor(dataMatCurrent, greyMatCurr, CV_BGR2GRAY);
+
+				m_pPrevFrame->fastFeaturesDetec(greyMatPrev, keypointsPrev);
+				Mat outputMat;
+				size_t sizeK = keypointsPrev.size();
+				drawKeypoints(greyMatPrev, keypointsPrev, outputMat);
+
+				if (!outputMat.empty())
+				{
+					namedWindow("Display window", cv::WINDOW_AUTOSIZE);// Create a window for display.
+					imshow("Display window", outputMat);
+				}
+				waitKey(0);
+
+				m_pCurrentFrame->fastFeaturesDetec(greyMatCurr, keypointsCurr);
+
+				/*
+				featuresMatch(greyMatPrev, greyMatCurr);
+				*/
+				//	calcHomographyMatrix(dataMatCurrent, keypointsCurr, dataMatPrev, keypointsPrev);
+			}
+//=============================
+			*m_pPrevFrame = *m_pCurrentFrame;
+			m_ulCurrentFrameIndex = i;
 		}
 	}
 	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
@@ -263,14 +288,11 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 	int *colorHistValues = new int[m_ulNoFrames];
 	double *xSquaredValues = new double[m_ulNoFrames];
 
-	copyVideoFrame(*m_pCurrentFrame, _ulFrameIndex);
 	//Add analysis values to arrays
 	entropyValues[_ulFrameIndex] = m_pCurrentFrame->calcEntropy();//70ms
 	templateValues[_ulFrameIndex] = m_pCurrentFrame->templateMatchDifference(*m_pPrevFrame);
 	colorHistValues[_ulFrameIndex] = m_pCurrentFrame->colorHistogramDifference(*m_pPrevFrame);//50ms
 	xSquaredValues[_ulFrameIndex] = m_pCurrentFrame->xSquaredHistogramDifference(*m_pPrevFrame);
-
-	*m_pPrevFrame = *m_pCurrentFrame;
 
 #if DEBUG_FILE
 	//Create output file of data
@@ -310,42 +332,40 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 }//videoSummarization
 
 //Brute-Force Matching (Hamming)
-void CVideo::featuresMatch(Mat _framePrev, Mat _framCurr)
+void CVideo::featuresMatch(Mat _framePrev, vector<KeyPoint>& _keyPts1, Mat _framCurr, vector<KeyPoint>& _keyPts2)
 {
+	BriefDescriptorExtractor extractor(32);
 	BFMatcher matcher(NORM_HAMMING);
 	vector<DMatch> matches;
+	Mat desc_1, desc_2;
 
-	matcher.match(_framePrev, _framCurr, matches);
+	extractor.compute(_framePrev, _keyPts1, desc_1);
+	extractor.compute(_framCurr, _keyPts2, desc_2);
 
-	outlierRejection(matches);
+	matcher.match(desc_1, desc_2, matches);
+
+	outlierRejection(matches, _keyPts1, _keyPts2);
 }//featuresMatch
 
-void CVideo::outlierRejection(vector<DMatch>& _matches)
+void CVideo::outlierRejection(vector<DMatch>& _matches, vector<KeyPoint>& _keyPts1, vector<KeyPoint>& _keyPts2)
 {
+	vector<Point2f> mpts_1, mpts_2;
 
+	mpts_1.clear();
+	mpts_2.clear();
+	mpts_1.reserve(_matches.size());
+	mpts_2.reserve(_matches.size());
+	for (size_t i = 0; i < _matches.size(); i++)
+	{
+		const DMatch& match = _matches[i];
+		mpts_1.push_back(_keyPts1[match.queryIdx].pt);
+		mpts_2.push_back(_keyPts2[match.trainIdx].pt);
+	}
 }//outlierRejection
 
 void CVideo::calcHomographyMatrix(Mat& _matCurr, vector<KeyPoint>& _keyPtCurr, Mat& _matPrev, vector<KeyPoint>& _keyPtPrev)
 {
 	//Descriptor Extraction
 	Mat descriptorPrev, descriptorCurr;
-	SiftDescriptorExtractor extractor;
-
-	extractor.compute(_matPrev, _keyPtPrev, descriptorPrev);
-	extractor.compute(_matCurr, _keyPtCurr, descriptorCurr);
-
-	//Matching descriptor vectors using FLANN matcher
-
-	//Quick calculation of max and min distances between keypoints
-	std::vector<DMatch> matches;
-	double max_dist = 0; double min_dist = 100;
-
-	for (int i = 0; i < descriptorPrev.rows; i++)
-	{
-		double dist = matches[i].distance;
-		if (dist < min_dist) min_dist = dist;
-		if (dist > max_dist) max_dist = dist;
-	}
-
 	//Mat H = findHomography(mpts_2, mpts_1, RANSAC, 1, outlier_mask);
 }//calcHomography

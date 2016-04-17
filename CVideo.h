@@ -62,8 +62,8 @@ private:
 
 	bool m_bCorrect;//TODO change into function??
 	bool videoSummarization(unsigned long);
-	void featuresMatch(Mat, Mat);
-	void outlierRejection(vector<DMatch>&);
+	void featuresMatch(Mat, vector<KeyPoint>&, Mat, vector<KeyPoint>&);
+	void outlierRejection(vector<DMatch>&, vector<KeyPoint>&, vector<KeyPoint>&);
 	void calcHomographyMatrix(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
 
 	//Thread Procesing

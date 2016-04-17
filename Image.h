@@ -24,9 +24,11 @@
 #include <memory.h>
 #include <tchar.h>
 #include <cmath>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/nonfree/features2d.hpp>
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/nonfree/nonfree.hpp"
 
 // Class structure of Image 
 // Use to encapsulate an RGB image
@@ -40,7 +42,7 @@ private:
 	unsigned char*	m_Data;					// RGB data of the image
 	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
-	SiftFeatureDetector m_detector;
+	FastFeatureDetector *m_pDetector;//For real-time processing
 
 public:
 	// Constructor
@@ -73,7 +75,7 @@ public:
 	double	templateMatchDifference(MyImage &previousFrame);
 	int		colorHistogramDifference(MyImage &previousFrame);
 	double	xSquaredHistogramDifference(MyImage &previousFrame);
-	void	siftFeaturesDetec(Mat&, vector<KeyPoint>&);
+	void	fastFeaturesDetec(Mat&, vector<KeyPoint>&);
 	void	frameWarping();
 };
 

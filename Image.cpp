@@ -24,6 +24,9 @@ MyImage::~MyImage()
 		delete m_Data;
 	if (m_pDataMat)
 		delete m_pDataMat;
+
+	if (m_pDetector)
+		delete m_pDetector;
 }
 
 // Copy constructor, TODO: this is not called yet???
@@ -102,6 +105,8 @@ bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 		m_Data[3*i+1] = Gbuf[i];
 		m_Data[3*i+2] = Rbuf[i];
 	}
+
+	m_pDetector = new FastFeatureDetector(50);
 
 	// Clean up and return
 	delete Rbuf;
@@ -288,17 +293,12 @@ double MyImage::xSquaredHistogramDifference(MyImage &previousFrame)
 	return differenceSum;
 }
 
-//Using OpenCV, compute SIFT features
-void MyImage::siftFeaturesDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
+//Using OpenCV, compute FAST features
+void MyImage::fastFeaturesDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
 {
 	if (!_dataMat.empty())
 	{
-		//namedWindow("Display window", WINDOW_AUTOSIZE);// Create a window for display.
-		//imshow("Display window", dataMat);
-		m_detector.detect(_dataMat, _keypoints);
-		drawKeypoints(_dataMat, _keypoints, _dataMat);
-		//waitKey(0);
-		//destroyWindow("Display window");
+		m_pDetector->detect(_dataMat, _keypoints);
 	}
 }//siftFeatures
 
