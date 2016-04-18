@@ -71,6 +71,8 @@ CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
 	m_pPrevFrame = new MyImage();
 	m_pPrevFrame->setHeight(m_unHeight);
 	m_pPrevFrame->setWidth(m_unWidth);
+
+	m_pMatcher = new BFMatcher(NORM_L2);
 }//constructor
 
 /*************************************
@@ -84,6 +86,12 @@ CVideo::~CVideo()
 
 	if(m_pCurrentFrame)
 		delete m_pCurrentFrame;
+
+	if (m_pPrevFrame)
+		delete m_pPrevFrame;
+
+	if (m_pMatcher)
+		delete m_pMatcher;
 
 }//destructor
 
@@ -203,7 +211,7 @@ bool CVideo::analyzeVideo()
 {
 	m_threadAnalysisHandle = CreateThread(
 		NULL,                   // default security attributes
-		1024*1024*4,                      // use default stack size  
+		1024*1024*32,                      // use default stack size  
 		(LPTHREAD_START_ROUTINE)&spawnAnalyzingThread,       // thread function name
 		this,						// argument to thread function 
 		0,                      // use default creation flags 
@@ -232,6 +240,7 @@ void CVideo::threadAnalyzingLoop()
 			copyVideoFrame(*m_pCurrentFrame, i);
 			//videoSummarization(i);
 
+#if CORRECT
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
 			Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
@@ -243,12 +252,47 @@ void CVideo::threadAnalyzingLoop()
 				cvtColor(dataMatPrev, greyMatPrev, CV_BGR2GRAY);
 				cvtColor(dataMatCurrent, greyMatCurr, CV_BGR2GRAY);
 
-				m_pPrevFrame->fastFeaturesDetec(greyMatPrev, keypointsPrev);
-				m_pCurrentFrame->fastFeaturesDetec(greyMatCurr, keypointsCurr);
+				//Train
+				m_pPrevFrame->featuresDetec(dataMatPrev, keypointsPrev);
 
-				featuresMatch(dataMatPrev, keypointsPrev, dataMatCurrent, keypointsCurr);
+				//Query
+				m_pCurrentFrame->featuresDetec(dataMatCurrent, keypointsCurr);
+
+				SurfDescriptorExtractor extractor;
+
+				try
+				{
+					extractor.compute(greyMatPrev, keypointsPrev, descriptorPrev);
+					extractor.compute(greyMatCurr, keypointsCurr, descriptorCurr);
+				}
+				catch (...)
+				{
+					OutputDebugString(_T("Exception"));
+				}
+
+				m_pMatcher->match(descriptorCurr, descriptorPrev, matches);
+
+				//char str[128] = { 0 };
+				//sprintf(str, "[%d, %d] %d\n", keypointsPrev.size(), keypointsCurr.size(), matches.size());
+				//OutputDebugString(_T(str));
+
+				mpts1.clear();
+				mpts2.clear();
+				mpts1.reserve(matches.size());
+				mpts2.reserve(matches.size());
+				for (size_t i = 0; i < matches.size(); i++)
+				{
+					const DMatch& match = matches[i];
+					mpts1.push_back(keypointsPrev[match.queryIdx].pt);
+					mpts2.push_back(keypointsCurr[match.trainIdx].pt);
+				}
+
+				//homographyMatrix = findHomography(mpts2, mpts1, RANSAC, 1, outlier_mask);
+
+				//featuresMatch(greyMatPrev, keypointsPrev, greyMatCurr, keypointsCurr);
 				//	calcHomographyMatrix(dataMatCurrent, keypointsCurr, dataMatPrev, keypointsPrev);
 			}
+#endif
 
 			*m_pPrevFrame = *m_pCurrentFrame;
 			m_ulCurrentFrameIndex = i;
@@ -256,6 +300,7 @@ void CVideo::threadAnalyzingLoop()
 
 	}
 	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
+	m_ulCurrentFrameIndex = 0;
 }
 
  /*************************************
@@ -318,44 +363,58 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 }//videoSummarization
 
 //Brute-Force Matching (Hamming)
-void CVideo::featuresMatch(Mat _framePrev, vector<KeyPoint>& _keyPts1, Mat _framCurr, vector<KeyPoint>& _keyPts2)
+void CVideo::featuresMatch(Mat& _framePrev, vector<KeyPoint>& _keyPtsPrev, Mat&  _framCurr, vector<KeyPoint>& _keyPtsCurr)
 {
-	BriefDescriptorExtractor extractor(32);
-	BFMatcher matcher(NORM_HAMMING);
+	SurfDescriptorExtractor extractor;
+	BFMatcher matcher(NORM_L2);
+
 	vector<DMatch> matches;
-	Mat desc_1, desc_2;
+	Mat descriptorPrev, descriptorCurr;
 
-	char str[128] = { 0 };
-	sprintf(str, "[%d, %d]\n",_keyPts1.size(), _keyPts2.size());
-	OutputDebugString(_T(str));
+	try
+	{
+		extractor.compute(_framePrev, _keyPtsPrev, descriptorPrev);
+		extractor.compute(_framCurr, _keyPtsCurr, descriptorCurr);
+	}
+	catch (...)
+	{
+		OutputDebugString(_T("Exception"));
+	}
 
-	extractor.compute(_framePrev, _keyPts1, desc_1);
-	//extractor.compute(_framCurr, _keyPts2, desc_2);
+	matcher.match(descriptorCurr, descriptorPrev, matches);
 
-	//matcher.match(desc_1, desc_2, matches);
+	//char str[128] = { 0 };
+	//sprintf(str, "[%d, %d] %d\n", _keyPtsPrev.size(), _keyPtsCurr.size(), matches.size());
+	//OutputDebugString(_T(str));
 
-	//outlierRejection(matches, _keyPts1, _keyPts2);
+	//vector<Point2f> mpts1, mpts2;
+	//vector<char> outlier_mask;
+	//Mat homographyMatrix;
+	//outlierRejection(matches, _keyPtsPrev, _keyPtsCurr, mpts1, mpts2);
+	//homographyMatrix = findHomography(mpts2, mpts1, RANSAC, 1, outlier_mask);
 }//featuresMatch
 
-void CVideo::outlierRejection(vector<DMatch>& _matches, vector<KeyPoint>& _keyPts1, vector<KeyPoint>& _keyPts2)
+void CVideo::outlierRejection(
+	vector<DMatch>& _matches,
+	vector<KeyPoint>& _keyPts1,
+	vector<KeyPoint>& _keyPts2,
+	vector<Point2f>& _mpts_1,
+	vector<Point2f>& _mpts_2)
 {
-	vector<Point2f> mpts_1, mpts_2;
-
-	mpts_1.clear();
-	mpts_2.clear();
-	mpts_1.reserve(_matches.size());
-	mpts_2.reserve(_matches.size());
+	_mpts_1.clear();
+	_mpts_2.clear();
+	_mpts_1.reserve(_matches.size());
+	_mpts_2.reserve(_matches.size());
 	for (size_t i = 0; i < _matches.size(); i++)
 	{
 		const DMatch& match = _matches[i];
-		mpts_1.push_back(_keyPts1[match.queryIdx].pt);
-		mpts_2.push_back(_keyPts2[match.trainIdx].pt);
+		_mpts_1.push_back(_keyPts1[match.queryIdx].pt);
+		_mpts_2.push_back(_keyPts2[match.trainIdx].pt);
 	}
 }//outlierRejection
 
-void CVideo::calcHomographyMatrix(Mat& _matCurr, vector<KeyPoint>& _keyPtCurr, Mat& _matPrev, vector<KeyPoint>& _keyPtPrev)
+void CVideo::transformFrame(Mat _homographyMatrix)
 {
-	//Descriptor Extraction
-	Mat descriptorPrev, descriptorCurr;
-	//Mat H = findHomography(mpts_2, mpts_1, RANSAC, 1, outlier_mask);
-}//calcHomography
+	Mat warped;
+	warpPerspective(_homographyMatrix, warped, _homographyMatrix, _homographyMatrix.size());
+}//transformFrame

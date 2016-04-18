@@ -106,7 +106,7 @@ bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 		m_Data[3*i+2] = Rbuf[i];
 	}
 
-	m_pDetector = new FastFeatureDetector(50);
+	m_pDetector = new SurfFeatureDetector(400);//threshold
 
 	// Clean up and return
 	delete Rbuf;
@@ -294,7 +294,7 @@ double MyImage::xSquaredHistogramDifference(MyImage &previousFrame)
 }
 
 //Using OpenCV, compute FAST features
-void MyImage::fastFeaturesDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
+void MyImage::featuresDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
 {
 	if (!_dataMat.empty())
 	{

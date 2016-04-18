@@ -6,6 +6,7 @@
 #include "CDoubleBuffer.h"
 
 #define DEBUG_FILE 0
+#define CORRECT 0
 
 typedef enum
 {
@@ -57,14 +58,20 @@ private:
 	DWORD m_dwThreadId;
 	bool m_bPlaying;
 	unsigned int m_unVideoDurationSubSec;//at 15Hz, 67ms
+	BFMatcher *m_pMatcher;
+	vector<DMatch> matches;
+	Mat descriptorPrev, descriptorCurr;
+	vector<Point2f> mpts1, mpts2;
+	vector<char> outlier_mask;
+	Mat homographyMatrix;
 
 	bool copyVideoFrame(MyImage&, unsigned int _nFrame);
 
 	bool m_bCorrect;//TODO change into function??
 	bool videoSummarization(unsigned long);
-	void featuresMatch(Mat, vector<KeyPoint>&, Mat, vector<KeyPoint>&);
-	void outlierRejection(vector<DMatch>&, vector<KeyPoint>&, vector<KeyPoint>&);
-	void calcHomographyMatrix(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
+	void featuresMatch(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
+	void outlierRejection(vector<DMatch>&, vector<KeyPoint>&, vector<KeyPoint>&, vector<Point2f>&, vector<Point2f>&);
+	void transformFrame(Mat);
 
 	//Thread Procesing
 	static void spawnPlayingThread(CVideo* _pThis) { _pThis->threadPlayingLoop(); }
