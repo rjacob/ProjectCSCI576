@@ -70,6 +70,13 @@ private:
 	vector<char> outlier_mask;
 	Mat homographyMatrix;
 
+	double *entropyValues;
+	double *templateValues;
+	int *colorHistValues;
+	double *xSquaredValues;
+	FILE* debugOutput;
+	vector<unsigned long> iFrames;
+
 	bool copyVideoFrame(MyImage&, unsigned int _nFrame);
 
 	bool m_bCorrect;//TODO change into function??

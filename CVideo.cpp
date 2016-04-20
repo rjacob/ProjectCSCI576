@@ -67,6 +67,11 @@ void CVideo::createVideo(int _nWidth, int _nHeight)
 		m_ulNoFrames = nFileSize / (m_unWidth*m_unHeight * 3);
 	}
 
+	entropyValues = new double[m_ulNoFrames];
+	templateValues = new double[m_ulNoFrames];
+	colorHistValues = new int[m_ulNoFrames];
+	xSquaredValues = new double[m_ulNoFrames];
+
 	m_pCurrentFrame = new MyImage();
 	m_pCurrentFrame->setWidth(m_unWidth);
 	m_pCurrentFrame->setHeight(m_unHeight);
@@ -95,6 +100,22 @@ CVideo::~CVideo()
 
 	//if (m_pMatcher)
 		//delete m_pMatcher;
+
+	if (m_pMatcher)
+		delete m_pMatcher;
+
+	if (entropyValues)
+		delete entropyValues;
+
+	if (templateValues)
+		delete templateValues;
+
+	if (colorHistValues)
+		delete colorHistValues;
+
+	if (xSquaredValues)
+		delete xSquaredValues;
+
 }//destructor
 
 /*************************************
@@ -237,14 +258,15 @@ void CVideo::threadAnalyzingLoop()
 	vector<KeyPoint> keypointsCurr, keypointsPrev;
 
 #if DEBUG_FILE
-	//Create output file of data
-	outFile = fopen("Video Data.txt", "w");
-	fprintf(outFile, "Number of frames: %d\n", m_ulNoFrames);
-	fprintf(outFile, "Frame:\t");
-	fprintf(outFile, "Entropy:\t");
-	fprintf(outFile, "Template:\t");
-	fprintf(outFile, "Color:\t");
-	fprintf(outFile, "X2:\n");
+	debugOutput = fopen("Video Data.txt", "w");
+	fprintf(debugOutput, "Number of frames: %d\n", m_ulNoFrames);
+	fprintf(debugOutput, "Frame:\t");
+	fprintf(debugOutput, "Entropy:\t");
+	fprintf(debugOutput, "Template:\t");
+	fprintf(debugOutput, "Color:\t");
+	fprintf(debugOutput, "X2:\n");
+	fclose(debugOutput);
+	debugOutput = fopen("Video Data.txt", "a");
 #endif
 
 	copyVideoFrame(*m_pPrevFrame, 0);//Get first frame, one step ahead
@@ -254,7 +276,7 @@ void CVideo::threadAnalyzingLoop()
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
 			copyVideoFrame(*m_pCurrentFrame, i);
-			//videoSummarization(i);
+			videoSummarization(i);
 
 #if CORRECT
 			// Open CV data matrices
@@ -334,8 +356,7 @@ void CVideo::threadAnalyzingLoop()
 	m_ulCurrentFrameIndex = 0;
 
 #if DEBUG_FILE
-	fclose(outFile);
-	printf("Done!");
+	fclose(debugOutput);
 #endif
 }
 
@@ -350,10 +371,10 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 
 	//Cycle through each frame in video
 	//Apply RGB histogram, entropy here
-	double *entropyValues = new double[m_ulNoFrames];
-	double *templateValues = new double[m_ulNoFrames];
-	int *colorHistValues = new int[m_ulNoFrames];
-	double *xSquaredValues = new double[m_ulNoFrames];
+	//double *entropyValues = new double[m_ulNoFrames];
+	//double *templateValues = new double[m_ulNoFrames];
+	//int *colorHistValues = new int[m_ulNoFrames];
+	//double *xSquaredValues = new double[m_ulNoFrames];
 
 	//Add analysis values to arrays
 	entropyValues[_ulFrameIndex] = m_pCurrentFrame->calcEntropy();//70ms
@@ -362,23 +383,33 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 	xSquaredValues[_ulFrameIndex] = m_pCurrentFrame->xSquaredHistogramDifference(*m_pPrevFrame);
 
 #if DEBUG_FILE
-	fprintf(outFile, "%d\t", _ulFrameIndex);
-	fprintf(outFile, "%f\t", entropyValues[_ulFrameIndex]);
-	fprintf(outFile, "%f\t", templateValues[_ulFrameIndex]);
-	fprintf(outFile, "%d\t", colorHistValues[_ulFrameIndex]);
-	fprintf(outFile, "%f\n", xSquaredValues[_ulFrameIndex]);
+	//Create array of "I-frames" here
+
+	//Create output file of data
+	fprintf(debugOutput, "%d\t", _ulFrameIndex);
+	fprintf(debugOutput, "%f\t", entropyValues[_ulFrameIndex]);
+	fprintf(debugOutput, "%f\t", templateValues[_ulFrameIndex]);
+	fprintf(debugOutput, "%d\t", colorHistValues[_ulFrameIndex]);
+	fprintf(debugOutput, "%f\n", xSquaredValues[_ulFrameIndex]);
 #endif
 
+	/*
 	//Create array of "I-frames" here
+	FILE *outFile;
+	outFile = fopen("Average.txt", "w");
+	iFrames.push_back(0);	//Frame 0 is always an I-frame
+	double average = 0;
+	for (unsigned long i = 0; i < m_ulNoFrames; i++) {
+		fprintf(outFile, "%f\n", xSquaredValues[i] / m_ulNoFrames);
+		average += (xSquaredValues[i] / m_ulNoFrames);
+	}
+
+	fprintf(outFile, "%f", average);
+	fclose(outFile);*/
 
 	//Choose best "GOPs" here
 
 	//Output summarized video (or "I-frame" array) here
-
-	delete entropyValues;
-	delete templateValues;
-	delete colorHistValues;
-	delete xSquaredValues;
 
 	return true;
 }//videoSummarization
