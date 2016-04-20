@@ -5,7 +5,7 @@
 #include "Image.h"
 #include "CDoubleBuffer.h"
 
-#define DEBUG_FILE 0
+#define DEBUG_FILE 1
 #define CORRECT 0
 
 typedef enum
@@ -64,6 +64,13 @@ private:
 	vector<Point2f> mpts1, mpts2;
 	vector<char> outlier_mask;
 	Mat homographyMatrix;
+
+	double *entropyValues;
+	double *templateValues;
+	int *colorHistValues;
+	double *xSquaredValues;
+	FILE* debugOutput;
+	vector<unsigned long> iFrames;
 
 	bool copyVideoFrame(MyImage&, unsigned int _nFrame);
 
