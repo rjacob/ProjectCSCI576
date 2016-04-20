@@ -25,8 +25,8 @@ MyImage::~MyImage()
 	if (m_pDataMat)
 		delete m_pDataMat;
 
-	if (m_pDetector)
-		delete m_pDetector;
+	//if (m_pDetector)
+	//	delete m_pDetector;
 }
 
 // Copy constructor, TODO: this is not called yet???

@@ -6,7 +6,7 @@
 #include "CDoubleBuffer.h"
 
 #define DEBUG_FILE 0
-#define CORRECT 0
+#define CORRECT 1
 
 typedef enum
 {
@@ -26,6 +26,9 @@ public:
 	CVideo(char*, int, int);
 	~CVideo();
 
+	void createVideo(int, int);
+	void setVideoPath(char* _videoPath) { m_pVideoPath = _videoPath; }
+
 	//accessors
 	unsigned int getVideoWidth() const { return m_unWidth;}
 	unsigned int getVideoHeight() const { return m_unHeight; }
@@ -44,6 +47,7 @@ public:
 	bool analyzeVideo();
 	
 private:
+	char* m_pVideoPath;
 	unsigned long m_ulNoFrames;
 	MyImage *m_pCurrentFrame, *m_pPrevFrame;
 	MyImage *m_pOutputFrame;
@@ -55,7 +59,8 @@ private:
 	VIDEO_STATE_E m_eVideoState;
 	HANDLE m_threadPlayingHandle;
 	HANDLE m_threadAnalysisHandle;
-	DWORD m_dwThreadId;
+	DWORD m_dwThreadIdPlay;
+	DWORD m_dwThreadIdAnalysis;
 	bool m_bPlaying;
 	unsigned int m_unVideoDurationSubSec;//at 15Hz, 67ms
 	BFMatcher *m_pMatcher;

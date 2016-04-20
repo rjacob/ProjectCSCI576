@@ -24,22 +24,25 @@ CVideo::CVideo()
 * Function: Constructor
 * Description:
 *************************************/
-CVideo::CVideo(char* _cstrVideoPath, int _nWidth, int _nHeight)
-:
-	m_ulNoFrames(0),
-	m_pCurrentFrame(NULL),
-	m_pPrevFrame(NULL),
-	m_pOutputFrame(NULL),
-	m_ulCurrentFrameIndex(0),
-	m_unWidth(_nWidth),
-	m_unHeight(_nHeight),
-	m_eVideoState(VIDEO_STATE_UNKNOWN),
-	m_bPlaying(FALSE),
-	m_bCorrect(false)
+void CVideo::createVideo(int _nWidth, int _nHeight)
 {
-	strncpy(m_videoPath, _cstrVideoPath, strlen(_cstrVideoPath));
+	m_ulNoFrames = 0;
+	m_pCurrentFrame = NULL;
+	m_pPrevFrame = NULL;
+	m_pOutputFrame = NULL;
+	m_ulCurrentFrameIndex = 0;
+	m_unWidth = _nWidth;
+	m_unHeight = _nHeight;
+	m_eVideoState = VIDEO_STATE_UNKNOWN;
+	m_bPlaying=FALSE;
+	m_bCorrect = false;
+
+	if (m_pVideoPath == NULL)
+		return;
+
+	strncpy(m_videoPath, m_pVideoPath, strlen(m_pVideoPath));
 	// Create a valid output file pointer
-	m_pFile = fopen(_cstrVideoPath, "rb");
+	m_pFile = fopen(m_pVideoPath, "rb");
 
 	if (m_pFile == NULL)
 	{
@@ -90,9 +93,8 @@ CVideo::~CVideo()
 	if (m_pPrevFrame)
 		delete m_pPrevFrame;
 
-	if (m_pMatcher)
-		delete m_pMatcher;
-
+	//if (m_pMatcher)
+		//delete m_pMatcher;
 }//destructor
 
 /*************************************
@@ -103,6 +105,7 @@ void CVideo::threadPlayingLoop()
 {
 	clock_t iterationTime;
 	unsigned short unOnTime_ms;
+	static unsigned int unTotal = 0;
 
 	do
 	{
@@ -121,15 +124,16 @@ void CVideo::threadPlayingLoop()
 
 			unOnTime_ms = (clock() - iterationTime);
 
-			if (unOnTime_ms > 1000 / 15)
+			if (unOnTime_ms > round(1000 / 15))
 			{
 				char str[128] = { 0 };
-				sprintf(str, "[%d] %d\n", m_ulCurrentFrameIndex, unOnTime_ms);
-				unOnTime_ms = (1000 / 15);//clamp
+				sprintf(str, "[%d] %d %d\n", m_ulCurrentFrameIndex, unOnTime_ms, unTotal);
+				unTotal += (unOnTime_ms - (1000 / 15));
+				unOnTime_ms = round(1000 / 15);//clamp
 				OutputDebugString(_T(str));
 			}
 		}
-		Sleep(1000/15 - unOnTime_ms);
+		Sleep(round(1000/15) - unOnTime_ms);
 	} while(m_eVideoState != VIDEO_STATE_STOPPED && m_ulCurrentFrameIndex < m_ulNoFrames);
 }//threadProcessingLoop
 
@@ -161,7 +165,7 @@ bool CVideo::playVideo(bool _bCorrect)
 			(LPTHREAD_START_ROUTINE)&spawnPlayingThread,       // thread function name
 			this,						// argument to thread function 
 			0,                      // use default creation flags 
-			&m_dwThreadId);   // returns the thread identifier
+			&m_dwThreadIdPlay);   // returns the thread identifier
 	}
 
 	if (m_threadPlayingHandle == NULL)
@@ -215,7 +219,7 @@ bool CVideo::analyzeVideo()
 		(LPTHREAD_START_ROUTINE)&spawnAnalyzingThread,       // thread function name
 		this,						// argument to thread function 
 		0,                      // use default creation flags 
-		&m_dwThreadId);   // returns the thread identifier
+		&m_dwThreadIdAnalysis);   // returns the thread identifier
 
 	return true;
 }
@@ -224,12 +228,24 @@ bool CVideo::analyzeVideo()
 * Function: threadAnalyzingLoop
 * Description:
 *************************************/
+FILE *outFile;
 void CVideo::threadAnalyzingLoop()
 {
 	m_eVideoState = VIDEO_STATE_ANALYZING;
 	m_ulCurrentFrameIndex = 0;
 	m_unVideoDurationSubSec = m_ulNoFrames * 15;
 	vector<KeyPoint> keypointsCurr, keypointsPrev;
+
+#if DEBUG_FILE
+	//Create output file of data
+	outFile = fopen("Video Data.txt", "w");
+	fprintf(outFile, "Number of frames: %d\n", m_ulNoFrames);
+	fprintf(outFile, "Frame:\t");
+	fprintf(outFile, "Entropy:\t");
+	fprintf(outFile, "Template:\t");
+	fprintf(outFile, "Color:\t");
+	fprintf(outFile, "X2:\n");
+#endif
 
 	copyVideoFrame(*m_pPrevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
@@ -272,14 +288,11 @@ void CVideo::threadAnalyzingLoop()
 
 				m_pMatcher->match(descriptorCurr, descriptorPrev, matches);
 
-				//char str[128] = { 0 };
-				//sprintf(str, "[%d, %d] %d\n", keypointsPrev.size(), keypointsCurr.size(), matches.size());
-				//OutputDebugString(_T(str));
-
 				mpts1.clear();
 				mpts2.clear();
 				mpts1.reserve(matches.size());
 				mpts2.reserve(matches.size());
+
 				for (size_t i = 0; i < matches.size(); i++)
 				{
 					const DMatch& match = matches[i];
@@ -287,10 +300,28 @@ void CVideo::threadAnalyzingLoop()
 					mpts2.push_back(keypointsCurr[match.trainIdx].pt);
 				}
 
-				//homographyMatrix = findHomography(mpts2, mpts1, RANSAC, 1, outlier_mask);
 
-				//featuresMatch(greyMatPrev, keypointsPrev, greyMatCurr, keypointsCurr);
-				//	calcHomographyMatrix(dataMatCurrent, keypointsCurr, dataMatPrev, keypointsPrev);
+				//can use RANSAC to determine the highly unreliable correspondences(the outliers)
+				//then use all of the remaining(still noisy) correspondences
+
+				try
+				{
+					homographyMatrix = findHomography(mpts1, mpts2, RANSAC);
+					//homographyMatrix = getPerspectiveTransform(mpts1, mpts2);
+				}
+				catch (...)
+				{
+					char str[128] = { 0 };
+					sprintf(str, "Exception: 0x%X\n", 0);
+
+					OutputDebugString(_T(str));
+				}
+
+				Mat warped;
+				//Mat M = np.float32([[1, 0, 100], [0, 1, 50]])
+				warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
+				imshow("warped", warped);
+				waitKey();
 			}
 #endif
 
@@ -301,6 +332,11 @@ void CVideo::threadAnalyzingLoop()
 	}
 	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
 	m_ulCurrentFrameIndex = 0;
+
+#if DEBUG_FILE
+	fclose(outFile);
+	printf("Done!");
+#endif
 }
 
  /*************************************
@@ -326,26 +362,11 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 	xSquaredValues[_ulFrameIndex] = m_pCurrentFrame->xSquaredHistogramDifference(*m_pPrevFrame);
 
 #if DEBUG_FILE
-	//Create output file of data
-	FILE *outFile;
-	outFile = fopen("Video Data.txt", "w");
-	fprintf(outFile, "Number of frames: %d\n", m_ulNoFrames);
-	fprintf(outFile, "Frame:\t");
-	fprintf(outFile, "Entropy:\t");
-	fprintf(outFile, "Template:\t");
-	fprintf(outFile, "Color:\t");
-	fprintf(outFile, "X2:\n");
-
-	for (unsigned long i = 0; i < m_ulNoFrames; i++) {
-		fprintf(outFile, "%d\t", i);
-		fprintf(outFile, "%f\t", entropyValues[i]);
-		fprintf(outFile, "%f\t", templateValues[i]);
-		fprintf(outFile, "%d\t", colorHistValues[i]);
-		fprintf(outFile, "%f\n", xSquaredValues[i]);
-	}
-
-	fclose(outFile);
-	printf("Done!");
+	fprintf(outFile, "%d\t", _ulFrameIndex);
+	fprintf(outFile, "%f\t", entropyValues[_ulFrameIndex]);
+	fprintf(outFile, "%f\t", templateValues[_ulFrameIndex]);
+	fprintf(outFile, "%d\t", colorHistValues[_ulFrameIndex]);
+	fprintf(outFile, "%f\n", xSquaredValues[_ulFrameIndex]);
 #endif
 
 	//Create array of "I-frames" here

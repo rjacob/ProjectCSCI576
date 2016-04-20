@@ -40,6 +40,7 @@ BOOL           g_bBufferPaused;
 CVideo		   *g_pMyVideo;
 MyImage		   outImage;
 vector <MyImage> thumbnails;
+int g_w, g_h;
 
 char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];
@@ -53,8 +54,7 @@ BITMAPINFO g_bmi;
 INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine, 
                       INT nCmdShow )
 {
-	int w, h;
-	w = 480; h = 270;
+	g_w = 480; g_h = 270;
 
 	sscanf(pCmdLine, "%s %s", &FramePath, &AudioPath);
 
@@ -68,7 +68,8 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 	}
 	else
 	{
-		g_pMyVideo = new CVideo(FramePath, w, h);
+		g_pMyVideo = new CVideo();
+		g_pMyVideo->setVideoPath(FramePath);
 
 		if (g_pMyVideo == NULL)
 		{
@@ -102,6 +103,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
         case WM_INITDIALOG:
             OnInitDialog( hDlg );
 			OnOpenSoundFile(hDlg);
+			g_pMyVideo->createVideo(g_w, g_h);
             break;
 
         case WM_COMMAND:
