@@ -356,10 +356,11 @@ void CVideo::threadAnalyzingLoop()
 	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
 	m_ulCurrentFrameIndex = 0;
 
-#if DEBUG_FILE
-	fclose(debugOutput);
 	generateIFrames();	//Generate vector of I frames
 	generateSummarizationFrames();	//Generate vector of summarization frames
+
+#if DEBUG_FILE
+	fclose(debugOutput);
 #endif
 }
 
