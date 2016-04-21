@@ -359,6 +359,7 @@ void CVideo::threadAnalyzingLoop()
 #if DEBUG_FILE
 	fclose(debugOutput);
 	generateIFrames();	//Generate vector of I frames
+	generateSummarizationFrames();	//Generate vector of summarization frames
 #endif
 }
 
@@ -395,24 +396,6 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 	fprintf(debugOutput, "%f\n", xSquaredValues[_ulFrameIndex]);
 #endif
 
-	/*
-	//Create array of "I-frames" here
-	FILE *outFile;
-	outFile = fopen("Average.txt", "w");
-	iFrames.push_back(0);	//Frame 0 is always an I-frame
-	double average = 0;
-	for (unsigned long i = 0; i < m_ulNoFrames; i++) {
-		fprintf(outFile, "%f\n", xSquaredValues[i] / m_ulNoFrames);
-		average += (xSquaredValues[i] / m_ulNoFrames);
-	}
-
-	fprintf(outFile, "%f", average);
-	fclose(outFile);*/
-
-	//Choose best "GOPs" here
-
-	//Output summarized video (or "I-frame" array) here
-
 	return true;
 }//videoSummarization
 
@@ -436,14 +419,27 @@ bool CVideo::generateIFrames()
 
 	//Generate I-frames
 	double limit = average + standardDeviation;		//Need to figure this out
-	iFrames.push_back(0);	//Frame 0 is always an I-frame
+	iFrames.push_back(0);	//Frame 0 is always an I-frame (Maybe?)
 	for (unsigned long i = 1; i < m_ulNoFrames; i++) {
 		if (xSquaredValues[i] > limit) {
 			iFrames.push_back(i);
 		}
 	}
 
-	//Generate summarization frames
+#if DEBUG_FILE
+	debugOutput = fopen("Video Data.txt", "a");
+	fprintf(debugOutput, "\nI-Frames:\n");
+	for (unsigned long i = 0; i < iFrames.size(); i++) {
+		fprintf(debugOutput, "%d\t%f\n", iFrames[i], xSquaredValues[iFrames[i]]);
+	}
+	fclose(debugOutput);
+#endif
+
+	return true;
+}//generateIFrames
+
+//Generate summarization frames using I-frames
+bool CVideo::generateSummarizationFrames() {
 	//If there is an I-frame within the GOP of another I-frame
 	//increase the GOP length instead of creating new GOP
 	unsigned long minGOPLength = 3 * 15;	//Make minimum GOP size to 3 seconds
@@ -461,11 +457,6 @@ bool CVideo::generateIFrames()
 
 #if DEBUG_FILE
 	debugOutput = fopen("Video Data.txt", "a");
-	fprintf(debugOutput, "\nI-Frames:\n");
-	for (unsigned long i = 0; i < iFrames.size(); i++) {
-		fprintf(debugOutput, "%d\t%f\n", iFrames[i], xSquaredValues[iFrames[i]]);
-	}
-
 	fprintf(debugOutput, "\nSummarization frames:\n");
 	for (unsigned long i = 0; i < summarizationFrames.size(); i++) {
 		fprintf(debugOutput, "%d\n", summarizationFrames[i]);
@@ -474,7 +465,7 @@ bool CVideo::generateIFrames()
 #endif
 
 	return true;
-}//generateIFrames
+}//generateSummarizationFrames
 
 //Brute-Force Matching (Hamming)
 void CVideo::featuresMatch(Mat& _framePrev, vector<KeyPoint>& _keyPtsPrev, Mat&  _framCurr, vector<KeyPoint>& _keyPtsCurr)

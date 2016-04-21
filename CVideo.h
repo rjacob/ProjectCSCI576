@@ -5,7 +5,7 @@
 #include "Image.h"
 #include "CDoubleBuffer.h"
 
-#define DEBUG_FILE 1
+#define DEBUG_FILE 0
 #define CORRECT 0
 
 typedef enum
@@ -83,6 +83,7 @@ private:
 	bool m_bCorrect;//TODO change into function??
 	bool videoSummarization(unsigned long);
 	bool generateIFrames();
+	bool generateSummarizationFrames();
 	void featuresMatch(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
 	void outlierRejection(vector<DMatch>&, vector<KeyPoint>&, vector<KeyPoint>&, vector<Point2f>&, vector<Point2f>&);
 	void transformFrame(Mat);
