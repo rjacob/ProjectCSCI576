@@ -6,7 +6,7 @@
 #include "CDoubleBuffer.h"
 
 #define DEBUG_FILE 0
-#define CORRECT 1
+#define CORRECT 0
 
 typedef enum
 {
@@ -74,13 +74,16 @@ private:
 	double *templateValues;
 	int *colorHistValues;
 	double *xSquaredValues;
-	FILE* debugOutput;
 	vector<unsigned long> iFrames;
+	vector<unsigned long> summarizationFrames;
+	FILE* debugOutput;
 
 	bool copyVideoFrame(MyImage&, unsigned int _nFrame);
 
 	bool m_bCorrect;//TODO change into function??
 	bool videoSummarization(unsigned long);
+	bool generateIFrames();
+	bool generateSummarizationFrames();
 	void featuresMatch(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
 	void outlierRejection(vector<DMatch>&, vector<KeyPoint>&, vector<KeyPoint>&, vector<Point2f>&, vector<Point2f>&);
 	void transformFrame(Mat);
