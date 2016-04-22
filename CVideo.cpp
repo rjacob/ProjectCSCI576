@@ -101,9 +101,6 @@ CVideo::~CVideo()
 	//if (m_pMatcher)
 		//delete m_pMatcher;
 
-	if (m_pMatcher)
-		delete m_pMatcher;
-
 	if (entropyValues)
 		delete entropyValues;
 
@@ -290,14 +287,15 @@ void CVideo::threadAnalyzingLoop()
 				cvtColor(dataMatPrev, greyMatPrev, CV_BGR2GRAY);
 				cvtColor(dataMatCurrent, greyMatCurr, CV_BGR2GRAY);
 
+				//Feature detection
 				//Train
 				m_pPrevFrame->featuresDetec(dataMatPrev, keypointsPrev);
 
 				//Query
 				m_pCurrentFrame->featuresDetec(dataMatCurrent, keypointsCurr);
 
+				//Descriptor Extaction
 				SurfDescriptorExtractor extractor;
-
 				try
 				{
 					extractor.compute(greyMatPrev, keypointsPrev, descriptorPrev);
@@ -308,18 +306,20 @@ void CVideo::threadAnalyzingLoop()
 					OutputDebugString(_T("Exception"));
 				}
 
+				//Descriptor Match
 				m_pMatcher->match(descriptorCurr, descriptorPrev, matches);
 
-				mpts1.clear();
-				mpts2.clear();
+				mpts1.clear();//Current
+				mpts2.clear();//Train
 				mpts1.reserve(matches.size());
 				mpts2.reserve(matches.size());
 
+				//extact points from keypoints based on matches
 				for (size_t i = 0; i < matches.size(); i++)
 				{
 					const DMatch& match = matches[i];
-					mpts1.push_back(keypointsPrev[match.queryIdx].pt);
-					mpts2.push_back(keypointsCurr[match.trainIdx].pt);
+					mpts1.push_back(keypointsPrev[match.queryIdx].pt);//Query (Curr)
+					mpts2.push_back(keypointsCurr[match.trainIdx].pt);//Train (Train)
 				}
 
 
@@ -340,7 +340,6 @@ void CVideo::threadAnalyzingLoop()
 				}
 
 				Mat warped;
-				//Mat M = np.float32([[1, 0, 100], [0, 1, 50]])
 				warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
 				imshow("warped", warped);
 				waitKey();

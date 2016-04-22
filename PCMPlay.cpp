@@ -425,7 +425,7 @@ VOID OnTimer( HWND hDlg )
 	unsigned short unMin, unSec, unSubSec;
 	char str[32] = { 0 };
 
-	if (++ulTimerCount % (15 / 4) == 0)//Check only at 4hz, when timer is at 15Hz
+	if (++ulTimerCount % 15 == 0)//Check only at 4hz, when timer is at 15Hz
 	{
 		if (IsWindowEnabled(GetDlgItem(hDlg, IDC_STOP)))
 		{
