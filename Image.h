@@ -65,7 +65,7 @@ public:
 
 	// Input Output operations
 	bool	ReadImage(FILE*, unsigned int);
-	bool	WriteImage(FILE*);
+	bool	WriteImage(FILE*, char*);
 
 	// Modifications
 	bool	Modify();

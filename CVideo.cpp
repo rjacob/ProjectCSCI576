@@ -26,16 +26,8 @@ CVideo::CVideo()
 *************************************/
 void CVideo::createVideo(int _nWidth, int _nHeight)
 {
-	m_ulNoFrames = 0;
-	m_pCurrentFrame = NULL;
-	m_pPrevFrame = NULL;
-	m_pOutputFrame = NULL;
-	m_ulCurrentFrameIndex = 0;
 	m_unWidth = _nWidth;
 	m_unHeight = _nHeight;
-	m_eVideoState = VIDEO_STATE_UNKNOWN;
-	m_bPlaying=FALSE;
-	m_bCorrect = false;
 
 	if (m_pVideoPath == NULL)
 		return;
@@ -98,9 +90,6 @@ CVideo::~CVideo()
 	if (m_pPrevFrame)
 		delete m_pPrevFrame;
 
-	//if (m_pMatcher)
-		//delete m_pMatcher;
-
 	if (entropyValues)
 		delete entropyValues;
 
@@ -113,6 +102,9 @@ CVideo::~CVideo()
 	if (xSquaredValues)
 		delete xSquaredValues;
 
+	//if (m_pMatcher)
+	//	delete m_pMatcher;
+
 }//destructor
 
 /*************************************
@@ -124,6 +116,9 @@ void CVideo::threadPlayingLoop()
 	clock_t iterationTime;
 	unsigned short unOnTime_ms;
 	static unsigned int unTotal = 0;
+
+	if (m_bCorrect)
+		m_pFile = fopen(m_pVideoPath, "rb");
 
 	do
 	{
@@ -266,6 +261,16 @@ void CVideo::threadAnalyzingLoop()
 	debugOutput = fopen("Video Data.txt", "a");
 #endif
 
+	if (1)
+	{
+		char pCorrectedFilePath[128] = { 0 };
+		char* addr;
+		sprintf(pCorrectedFilePath, "%s", m_pVideoPath);
+		addr = strchr(pCorrectedFilePath, 'r');
+		sprintf(--addr, "%s", "C.rgb");
+		m_correctFile = fopen(pCorrectedFilePath, "a");
+	}
+
 	copyVideoFrame(*m_pPrevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
 	for (unsigned long i = 0; i < m_ulNoFrames; i++)
@@ -275,7 +280,8 @@ void CVideo::threadAnalyzingLoop()
 			copyVideoFrame(*m_pCurrentFrame, i);
 			videoSummarization(i);
 
-#if CORRECT
+if(1)
+{
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
 			Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
@@ -309,42 +315,69 @@ void CVideo::threadAnalyzingLoop()
 				//Descriptor Match
 				m_pMatcher->match(descriptorCurr, descriptorPrev, matches);
 
-				mpts1.clear();//Current
-				mpts2.clear();//Train
-				mpts1.reserve(matches.size());
-				mpts2.reserve(matches.size());
+char buff[32] = { 0 };
+sprintf(buff, "[%d] Matches %d, ",i, matches.size());
+OutputDebugString(_T(buff));
+
+				m_pts1.clear();//Current
+				m_pts2.clear();//Train
+				m_pts1.reserve(matches.size());
+				m_pts2.reserve(matches.size());
 
 				//extact points from keypoints based on matches
 				for (size_t i = 0; i < matches.size(); i++)
 				{
 					const DMatch& match = matches[i];
-					mpts1.push_back(keypointsPrev[match.queryIdx].pt);//Query (Curr)
-					mpts2.push_back(keypointsCurr[match.trainIdx].pt);//Train (Train)
+					Point2f query, train;
+
+					query = keypointsPrev[match.queryIdx].pt;
+					train = keypointsCurr[match.trainIdx].pt;
+
+					double dist = sqrt((train.x - query.x) * (train.x - query.x) +
+						(train.y - query.y) * (train.y - query.y));
+
+					if (dist < 12.0f)
+					{
+						m_pts1.push_back(keypointsPrev[match.queryIdx].pt);//Query (Curr)
+						m_pts2.push_back(keypointsCurr[match.trainIdx].pt);//Train (Train)
+					}
 				}
 
+sprintf(buff, "(%d,%d)\n", m_pts1.size(), m_pts2.size());
+OutputDebugString(_T(buff));
 
-				//can use RANSAC to determine the highly unreliable correspondences(the outliers)
-				//then use all of the remaining(still noisy) correspondences
-
-				try
+				if (m_pts1.size() >= 20)
 				{
-					homographyMatrix = findHomography(mpts1, mpts2, RANSAC);
-					//homographyMatrix = getPerspectiveTransform(mpts1, mpts2);
+					//Use RANSAC to determine the highly unreliable correspondences(the outliers)
+					//then use all of the remaining(still noisy) correspondences
+					try
+					{
+						homographyMatrix = findHomography(m_pts1, m_pts2, RANSAC);
+						//homographyMatrix = getPerspectiveTransform(mpts1, mpts2);
+					}
+					catch (...)
+					{
+						char str[128] = { 0 };
+						sprintf(str, "Exception: 0x%X\n", 0);
+
+						OutputDebugString(_T(str));
+					}
+
+					Mat warped;
+					warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
+imshow("warped", warped);
+//m_pCurrentFrame->WriteImage(m_correctFile, (char*)dataMatCurrent.data);
+					fclose(m_correctFile);
 				}
-				catch (...)
+				else
 				{
-					char str[128] = { 0 };
-					sprintf(str, "Exception: 0x%X\n", 0);
-
-					OutputDebugString(_T(str));
+imshow("warped", dataMatCurrent);
+					//m_pCurrentFrame->WriteImage(m_correctFile, (char*)dataMatCurrent.data);
+					//fwrite(dataMatCurrent.data, CV_8UC3, m_unWidth*m_unHeight, m_correctFile);
 				}
-
-				Mat warped;
-				warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
-				imshow("warped", warped);
-				waitKey();
+waitKey(60);
 			}
-#endif
+}
 
 			*m_pPrevFrame = *m_pCurrentFrame;
 			m_ulCurrentFrameIndex = i;
@@ -361,6 +394,9 @@ void CVideo::threadAnalyzingLoop()
 #if DEBUG_FILE
 	fclose(debugOutput);
 #endif
+
+if(1)
+	fclose(m_correctFile);
 }
 
  /*************************************
@@ -373,11 +409,6 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 		return false;
 
 	//Cycle through each frame in video
-	//Apply RGB histogram, entropy here
-	//double *entropyValues = new double[m_ulNoFrames];
-	//double *templateValues = new double[m_ulNoFrames];
-	//int *colorHistValues = new int[m_ulNoFrames];
-	//double *xSquaredValues = new double[m_ulNoFrames];
 
 	//Add analysis values to arrays
 	entropyValues[_ulFrameIndex] = m_pCurrentFrame->calcEntropy();//70ms
@@ -499,23 +530,9 @@ void CVideo::featuresMatch(Mat& _framePrev, vector<KeyPoint>& _keyPtsPrev, Mat& 
 	//homographyMatrix = findHomography(mpts2, mpts1, RANSAC, 1, outlier_mask);
 }//featuresMatch
 
-void CVideo::outlierRejection(
-	vector<DMatch>& _matches,
-	vector<KeyPoint>& _keyPts1,
-	vector<KeyPoint>& _keyPts2,
-	vector<Point2f>& _mpts_1,
-	vector<Point2f>& _mpts_2)
+void CVideo::outlierRejection(vector<DMatch>& _matches, vector<KeyPoint>&_keyPts1,  vector<KeyPoint>&_keyPts2)
 {
-	_mpts_1.clear();
-	_mpts_2.clear();
-	_mpts_1.reserve(_matches.size());
-	_mpts_2.reserve(_matches.size());
-	for (size_t i = 0; i < _matches.size(); i++)
-	{
-		const DMatch& match = _matches[i];
-		_mpts_1.push_back(_keyPts1[match.queryIdx].pt);
-		_mpts_2.push_back(_keyPts2[match.trainIdx].pt);
-	}
+
 }//outlierRejection
 
 void CVideo::transformFrame(Mat _homographyMatrix)

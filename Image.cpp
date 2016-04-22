@@ -117,7 +117,7 @@ bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 }
 
 // MyImage functions defined here
-bool MyImage::WriteImage(FILE* _pImageFile)
+bool MyImage::WriteImage(FILE* _pImageFile, char* _data)
 {
 	// Create and populate RGB buffers
 	int i;
@@ -127,9 +127,9 @@ bool MyImage::WriteImage(FILE* _pImageFile)
 
 	for (i = 0; i < m_nHeight*m_nWidth; i++)
 	{
-		Bbuf[i] = m_Data[3*i];
-		Gbuf[i] = m_Data[3*i+1];
-		Rbuf[i] = m_Data[3*i+2];
+		Bbuf[i] = _data[3*i];
+		Gbuf[i] = _data[3*i+1];
+		Rbuf[i] = _data[3*i+2];
 	}
 
 	// Write data to file

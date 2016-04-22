@@ -135,6 +135,16 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						g_pMyVideo->pauseVideo();
 					else
 					{
+						if (checked)
+						{
+							char pCorrectedFilePath[128] = { 0 };
+							char* addr;
+							sprintf(pCorrectedFilePath, "%s", FramePath);
+							addr = strchr(pCorrectedFilePath, 'r');
+							sprintf(--addr, "%s", "C.rgb");
+							g_pMyVideo->setVideoPath(pCorrectedFilePath);
+						}
+
 						g_pMyVideo->playVideo((bool)checked);
 						g_pMyVideo->setOutputFrame(&outImage);
 					}
