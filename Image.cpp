@@ -117,7 +117,7 @@ bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 }
 
 // MyImage functions defined here
-bool MyImage::WriteImage(FILE* _pImageFile, char* _data)
+bool MyImage::WriteImage(FILE* _pImageFile, Mat& _data)
 {
 	// Create and populate RGB buffers
 	int i;
@@ -125,11 +125,16 @@ bool MyImage::WriteImage(FILE* _pImageFile, char* _data)
 	unsigned char *Gbuf = new unsigned char[m_nHeight*m_nWidth];
 	unsigned char *Bbuf = new unsigned char[m_nHeight*m_nWidth];
 
-	for (i = 0; i < m_nHeight*m_nWidth; i++)
+	char buff[8] = { 0 };
+
+	for (i = 0; i < m_nHeight; i++)
 	{
-		Bbuf[i] = _data[3*i];
-		Gbuf[i] = _data[3*i+1];
-		Rbuf[i] = _data[3*i+2];
+		for (int j = 0; j < m_nWidth; j++)
+		{
+			Bbuf[i*m_nWidth + j] = _data.at<Vec3b>(i, j)[0];
+			Gbuf[i*m_nWidth + j] = _data.at<Vec3b>(i, j)[1];
+			Rbuf[i*m_nWidth + j] = _data.at<Vec3b>(i,j)[2];
+		}
 	}
 
 	// Write data to file
@@ -137,14 +142,17 @@ bool MyImage::WriteImage(FILE* _pImageFile, char* _data)
 	{
 		fputc(Rbuf[i], _pImageFile);
 	}
+	fflush(_pImageFile);
 	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
 		fputc(Gbuf[i], _pImageFile);
 	}
+	fflush(_pImageFile);
 	for (i = 0; i < m_nWidth*m_nHeight; i ++)
 	{
 		fputc(Bbuf[i], _pImageFile);
 	}
+	fflush(_pImageFile);
 	
 	// Clean up and return
 	delete Rbuf;

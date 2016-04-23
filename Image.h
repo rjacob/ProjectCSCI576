@@ -18,6 +18,7 @@
 //#include "afxwin.h"
 
 // C RunTime Header Files
+#include <windows.h>//REMOVE
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
@@ -65,7 +66,7 @@ public:
 
 	// Input Output operations
 	bool	ReadImage(FILE*, unsigned int);
-	bool	WriteImage(FILE*, char*);
+	bool	WriteImage(FILE*, Mat&);
 
 	// Modifications
 	bool	Modify();

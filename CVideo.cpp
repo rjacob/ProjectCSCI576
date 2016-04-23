@@ -20,6 +20,38 @@ CVideo::CVideo()
 	m_videoPath[0] = 0;
 }//constructor
 
+ /*************************************
+ * Function: Destructor
+ * Description:
+ *************************************/
+CVideo::~CVideo()
+{
+	fclose(m_pFile);
+	m_pFile = 0;
+
+	if (m_pCurrentFrame)
+		delete m_pCurrentFrame;
+
+	if (m_pPrevFrame)
+		delete m_pPrevFrame;
+
+	if (entropyValues)
+		delete entropyValues;
+
+	if (templateValues)
+		delete templateValues;
+
+	if (colorHistValues)
+		delete colorHistValues;
+
+	if (xSquaredValues)
+		delete xSquaredValues;
+
+	//if (m_pMatcher)
+	//	delete m_pMatcher;
+
+}//destructor
+
 /*************************************
 * Function: Constructor
 * Description:
@@ -74,38 +106,6 @@ void CVideo::createVideo(int _nWidth, int _nHeight)
 
 	m_pMatcher = new BFMatcher(NORM_L2);
 }//constructor
-
-/*************************************
-* Function:
-* Description:
-*************************************/
-CVideo::~CVideo()
-{
-	fclose(m_pFile);
-	m_pFile = 0;
-
-	if(m_pCurrentFrame)
-		delete m_pCurrentFrame;
-
-	if (m_pPrevFrame)
-		delete m_pPrevFrame;
-
-	if (entropyValues)
-		delete entropyValues;
-
-	if (templateValues)
-		delete templateValues;
-
-	if (colorHistValues)
-		delete colorHistValues;
-
-	if (xSquaredValues)
-		delete xSquaredValues;
-
-	//if (m_pMatcher)
-	//	delete m_pMatcher;
-
-}//destructor
 
 /*************************************
 * Function: threadPlayingLoop
@@ -304,8 +304,8 @@ if(1)
 				SurfDescriptorExtractor extractor;
 				try
 				{
-					extractor.compute(greyMatPrev, keypointsPrev, descriptorPrev);
-					extractor.compute(greyMatCurr, keypointsCurr, descriptorCurr);
+					extractor.compute(greyMatPrev, keypointsPrev, m_descriptorPrev);
+					extractor.compute(greyMatCurr, keypointsCurr, m_descriptorCurr);
 				}
 				catch (...)
 				{
@@ -313,21 +313,17 @@ if(1)
 				}
 
 				//Descriptor Match
-				m_pMatcher->match(descriptorCurr, descriptorPrev, matches);
-
-char buff[32] = { 0 };
-sprintf(buff, "[%d] Matches %d, ",i, matches.size());
-OutputDebugString(_T(buff));
-
+				//Brute-Force Matching (Hamming)
+				m_pMatcher->match(m_descriptorCurr, m_descriptorPrev, m_matches);
 				m_pts1.clear();//Current
 				m_pts2.clear();//Train
-				m_pts1.reserve(matches.size());
-				m_pts2.reserve(matches.size());
+				m_pts1.reserve(m_matches.size());
+				m_pts2.reserve(m_matches.size());
 
 				//extact points from keypoints based on matches
-				for (size_t i = 0; i < matches.size(); i++)
+				for (size_t i = 0; i < m_matches.size(); i++)
 				{
-					const DMatch& match = matches[i];
+					const DMatch& match = m_matches[i];
 					Point2f query, train;
 
 					query = keypointsPrev[match.queryIdx].pt;
@@ -343,17 +339,14 @@ OutputDebugString(_T(buff));
 					}
 				}
 
-sprintf(buff, "(%d,%d)\n", m_pts1.size(), m_pts2.size());
-OutputDebugString(_T(buff));
-
 				if (m_pts1.size() >= 20)
 				{
+					Mat homographyMatrix;
 					//Use RANSAC to determine the highly unreliable correspondences(the outliers)
 					//then use all of the remaining(still noisy) correspondences
 					try
 					{
 						homographyMatrix = findHomography(m_pts1, m_pts2, RANSAC);
-						//homographyMatrix = getPerspectiveTransform(mpts1, mpts2);
 					}
 					catch (...)
 					{
@@ -363,11 +356,15 @@ OutputDebugString(_T(buff));
 						OutputDebugString(_T(str));
 					}
 
-					Mat warped;
+					Mat warped(m_unHeight, m_unWidth, CV_8UC3, Scalar(0, 0, 0));
 					warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
 imshow("warped", warped);
-//m_pCurrentFrame->WriteImage(m_correctFile, (char*)dataMatCurrent.data);
-					fclose(m_correctFile);
+//Mat delt(m_unHeight,m_unWidth, CV_8UC3, Scalar(255,0,0));
+//Mat delt = imread("C:/Users/RJ/Desktop/USC/CSCI 576 - Multimedia System Desgin/Project/Videos/Alin_Day1_002/D.bmp");
+//d = dataMatCurrent.type();//CV_8SC2
+//sprintf(buff, "(%d,%d)\n", d, CV_8UC3);
+//OutputDebugString(_T(buff));
+					m_pCurrentFrame->WriteImage(m_correctFile, greyMatCurr);
 				}
 				else
 				{
@@ -375,10 +372,10 @@ imshow("warped", dataMatCurrent);
 					//m_pCurrentFrame->WriteImage(m_correctFile, (char*)dataMatCurrent.data);
 					//fwrite(dataMatCurrent.data, CV_8UC3, m_unWidth*m_unHeight, m_correctFile);
 				}
-waitKey(60);
+
+				waitKey(60);
 			}
 }
-
 			*m_pPrevFrame = *m_pCurrentFrame;
 			m_ulCurrentFrameIndex = i;
 		}
@@ -430,7 +427,10 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 	return true;
 }//videoSummarization
 
-//Generate vector of I-Frames based on xSquared values
+/*************************************
+* Function: generateIFrames
+* Description: Generate vector of I-Frames based on xSquared values
+*************************************/
 bool CVideo::generateIFrames() 
 {
 	//Find average of xSquared values
@@ -469,8 +469,12 @@ bool CVideo::generateIFrames()
 	return true;
 }//generateIFrames
 
-//Generate summarization frames using I-frames
-bool CVideo::generateSummarizationFrames() {
+/*************************************
+* Function: generateSummarizationFrames
+* Description: Generate summarization frames using I-frames
+*************************************/
+bool CVideo::generateSummarizationFrames()
+{
 	//If there is an I-frame within the GOP of another I-frame
 	//increase the GOP length instead of creating new GOP
 	unsigned long minGOPLength = 3 * 15;	//Make minimum GOP size to 3 seconds
@@ -497,46 +501,3 @@ bool CVideo::generateSummarizationFrames() {
 
 	return true;
 }//generateSummarizationFrames
-
-//Brute-Force Matching (Hamming)
-void CVideo::featuresMatch(Mat& _framePrev, vector<KeyPoint>& _keyPtsPrev, Mat&  _framCurr, vector<KeyPoint>& _keyPtsCurr)
-{
-	SurfDescriptorExtractor extractor;
-	BFMatcher matcher(NORM_L2);
-
-	vector<DMatch> matches;
-	Mat descriptorPrev, descriptorCurr;
-
-	try
-	{
-		extractor.compute(_framePrev, _keyPtsPrev, descriptorPrev);
-		extractor.compute(_framCurr, _keyPtsCurr, descriptorCurr);
-	}
-	catch (...)
-	{
-		OutputDebugString(_T("Exception"));
-	}
-
-	matcher.match(descriptorCurr, descriptorPrev, matches);
-
-	//char str[128] = { 0 };
-	//sprintf(str, "[%d, %d] %d\n", _keyPtsPrev.size(), _keyPtsCurr.size(), matches.size());
-	//OutputDebugString(_T(str));
-
-	//vector<Point2f> mpts1, mpts2;
-	//vector<char> outlier_mask;
-	//Mat homographyMatrix;
-	//outlierRejection(matches, _keyPtsPrev, _keyPtsCurr, mpts1, mpts2);
-	//homographyMatrix = findHomography(mpts2, mpts1, RANSAC, 1, outlier_mask);
-}//featuresMatch
-
-void CVideo::outlierRejection(vector<DMatch>& _matches, vector<KeyPoint>&_keyPts1,  vector<KeyPoint>&_keyPts2)
-{
-
-}//outlierRejection
-
-void CVideo::transformFrame(Mat _homographyMatrix)
-{
-	Mat warped;
-	warpPerspective(_homographyMatrix, warped, _homographyMatrix, _homographyMatrix.size());
-}//transformFrame

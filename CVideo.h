@@ -63,11 +63,9 @@ private:
 	bool m_bPlaying;
 	unsigned int m_unVideoDurationSubSec;//at 15Hz, 67ms
 	BFMatcher *m_pMatcher;
-	vector<DMatch> matches;
-	Mat descriptorPrev, descriptorCurr;
+	vector<DMatch> m_matches;
+	Mat m_descriptorPrev, m_descriptorCurr;
 	vector<Point2f> m_pts1, m_pts2;
-	vector<char> outlier_mask;
-	Mat homographyMatrix;
 
 	double *entropyValues;
 	double *templateValues;
@@ -85,9 +83,9 @@ private:
 	bool videoSummarization(unsigned long);
 	bool generateIFrames();
 	bool generateSummarizationFrames();
-	void featuresMatch(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
-	void outlierRejection(vector<DMatch>&, vector<KeyPoint>&, vector<KeyPoint>&);
-	void transformFrame(Mat);
+	//void featuresMatch(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
+	//void outlierRejection(vector<DMatch>&, vector<KeyPoint>&, vector<KeyPoint>&);
+	//void transformFrame(Mat);
 
 	//Thread Procesing
 	static void spawnPlayingThread(CVideo* _pThis) { _pThis->threadPlayingLoop(); }
