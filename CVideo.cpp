@@ -142,6 +142,8 @@ void CVideo::threadPlayingLoop()
 				unOnTime_ms = round(1000 / 15);//clamp
 				OutputDebugString(_T(str));
 			}
+
+			nCircularIndex = ++nCircularIndex % CIRCULAR_BUFFER_SIZE;
 		}
 		Sleep(round(1000/15) - unOnTime_ms);
 	} while(m_eVideoState != VIDEO_STATE_STOPPED && m_ulCurrentFrameIndex < m_ulNoFrames);
@@ -277,7 +279,7 @@ void CVideo::threadAnalyzingLoop()
 			copyVideoFrame(m_pFrameBuffer[1].image, i);
 			videoSummarization(i);
 
-if(1)
+if(0)
 {
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pFrameBuffer[1].image.getImageData());

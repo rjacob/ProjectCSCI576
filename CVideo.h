@@ -9,6 +9,7 @@
 
 #define DEBUG_FILE 0
 
+
 typedef enum
 {
 	VIDEO_STATE_UNKNOWN = 0,
@@ -34,6 +35,7 @@ public:
 	unsigned int getVideoDuration() const { return m_unVideoDurationSubSec; }
 	VIDEO_STATE_E getVideoState() const { return m_eVideoState; }
 	unsigned long getCurrentFrameNo() const { return (m_ulCurrentFrameIndex); }//TODO: m_ulCurrentFrameIndex
+	vector<unsigned short> getIFrames() const { return m_iFrames; }
 
 	//mutators
 	void createVideo(int, int);

@@ -38,8 +38,8 @@ CSoundManager* g_pSoundManager = NULL;
 CSound*        g_pSound = NULL;
 BOOL           g_bBufferPaused;
 CVideo		   *g_pMyVideo;
-MyImage		   outImage;
-vector <MyImage> thumbnails;
+BUFFER_STYPE	g_outImage;
+vector <unsigned short> g_IFrames;
 int g_w, g_h;
 
 char FramePath[_MAX_PATH];
@@ -146,7 +146,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						}
 
 						g_pMyVideo->playVideo((bool)checked);
-						g_pMyVideo->setOutputFrame(&outImage);
+						g_pMyVideo->setOutputFrame(&g_outImage.image);
 					}
 
 					int noFrames = g_pMyVideo->getNoFrames();
@@ -234,15 +234,18 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 			g_bmi.bmiHeader.biSizeImage = g_pMyVideo->getVideoWidth()*g_pMyVideo->getVideoHeight();
 
 			SetDIBitsToDevice(hdc,
-				34, 20, outImage.getWidth(), outImage.getHeight(),
-				0, 0, 0, outImage.getHeight(),
-				outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+				34, 20, g_outImage.image.getWidth(), g_outImage.image.getHeight(),
+				0, 0, 0, g_outImage.image.getHeight(),
+				g_outImage.image.getImageData(), &g_bmi, DIB_RGB_COLORS);
 
-			for (int i = 0; i < thumbnails.size(); ++i)
+			for (int i = 0; i < g_IFrames.size(); ++i)
 			{
 				g_bmi.bmiHeader.biWidth = g_pMyVideo->getVideoWidth() / 4;
 				g_bmi.bmiHeader.biHeight = -g_pMyVideo->getVideoHeight() / 4;
 
+				//g_pMyVideo->copyVideoFrame(g_outImage, g_IFrames.at(i));
+
+				/*
 				SetDIBitsToDevice(hdc,
 					34+i*thumbnails.at(i).getWidth() / 4, 310,
 					thumbnails.at(i).getWidth()/4,
@@ -250,6 +253,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 					0, 0, 0,
 					thumbnails.at(i).getHeight() / 4,//Scan Lines
 					thumbnails.at(i).getImageData(), &g_bmi, DIB_RGB_COLORS);
+				*/
 			}
 
 			EndPaint(hDlg, &ps);
@@ -455,9 +459,9 @@ VOID OnTimer( HWND hDlg )
 	{
 		//This is very we draw subsequent frames to display
 		SetDIBitsToDevice(GetDC(hDlg),
-			34, 20, outImage.getWidth(), outImage.getHeight(),
-			0, 0, 0, outImage.getHeight(),
-			outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+			34, 20, g_outImage.image.getWidth(), g_outImage.image.getHeight(),
+			0, 0, 0, g_outImage.image.getHeight(),
+			g_outImage.image.getImageData(), &g_bmi, DIB_RGB_COLORS);
 
 		int noFrames = g_pMyVideo->getCurrentFrameNo();
 		unMin = floor((noFrames / 15) / 60);
@@ -477,6 +481,8 @@ VOID OnTimer( HWND hDlg )
 	}
 	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYSIS_COMPLETE)
 	{
+		g_IFrames = g_pMyVideo->getIFrames();
+		g_pMyVideo->stopVideo();
 		EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
 	}
 }//OnTimer
@@ -507,6 +513,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), TRUE);
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), TRUE);
 		EnableWindow(GetDlgItem(hDlg, IDC_STATIC_PER), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDCANCEL), TRUE);
 		SetFocus(GetDlgItem(hDlg, IDC_PLAY));
 		if(g_pMyVideo->getCurrentFrameNo() != g_pMyVideo->getNoFrames())
 		{
@@ -525,6 +532,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 
         EnableWindow(  GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDCANCEL), FALSE);
         SetDlgItemText( hDlg, IDC_PLAY, "&Pause" );
     }
 	else if (_eVideoState == VIDEO_STATE_ANALYZING)

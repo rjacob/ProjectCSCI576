@@ -1,24 +1,23 @@
 #include "CDoubleBuffer.h"
 
-CDoubleBuffer::CDoubleBuffer(int _w, int _h)
+CVideoBuffer::CVideoBuffer(int _w, int _h)
 	: m_usCurrentIndex(0)
 {
-	for (int i = 0; i < NO_BUFFERS; ++i)
+	for (int i = 0; i < CIRCULAR_BUFFER_SIZE; ++i)
 	{
-		m_doubleBuffer[i].image.setHeight(_h);
-		m_doubleBuffer[i].image.setWidth(_w);
-		m_doubleBuffer[i].eBuffState = BUFFER_EMPTY;
+		m_videoBuffer[i].image.setHeight(_h);
+		m_videoBuffer[i].image.setWidth(_w);
+		m_videoBuffer[i].eBuffState = BUFFER_EMPTY;
 	}
 }//Default Constructor
 
 //Driven by processling loop/ thread
-void CDoubleBuffer::write(const MyImage& _image)
+void CVideoBuffer::write(const MyImage& _image)
 {
-	if (m_doubleBuffer[m_usCurrentIndex].eBuffState == BUFFER_EMPTY)
+	if (m_videoBuffer[m_usCurrentIndex].eBuffState == BUFFER_EMPTY)
 	{
-		m_doubleBuffer[m_usCurrentIndex].image = _image;
-		m_doubleBuffer[m_usCurrentIndex].eBuffState = BUFFER_READY;
-		swap();
+		m_videoBuffer[m_usCurrentIndex].image = _image;
+		m_videoBuffer[m_usCurrentIndex].eBuffState = BUFFER_READY;
 	}
 	else
 	{
@@ -30,23 +29,15 @@ void CDoubleBuffer::write(const MyImage& _image)
 
 //Driven by timer in PCMPlay
 //Read the one that's not being written to
-MyImage& CDoubleBuffer::read()
+MyImage& CVideoBuffer::read()
 {
-	if(m_doubleBuffer[m_usCurrentIndex].eBuffState == BUFFER_READY)
+	if(m_videoBuffer[m_usCurrentIndex].eBuffState == BUFFER_READY)
 	{
-		m_doubleBuffer[m_usCurrentIndex].eBuffState = BUFFER_EMPTY;
-		return m_doubleBuffer[m_usCurrentIndex].image;
+		m_videoBuffer[m_usCurrentIndex].eBuffState = BUFFER_EMPTY;
+		return m_videoBuffer[m_usCurrentIndex].image;
 	}
 	else
 	{
 		//how often are we underflowing?
 	}
 }//read
-
-bool CDoubleBuffer::swap()
-{
-	m_usCurrentIndex++;
-	m_usCurrentIndex %= NO_BUFFERS;
-
-	return true;
-}//swap

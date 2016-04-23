@@ -2,12 +2,7 @@
 #include "CMutexExclusiveLock.h"
 #include "Image.h"
 
-enum
-{
-	OUT_BUFFER = 0,
-	IN_BUFFER,
-	NO_BUFFERS
-};
+#define CIRCULAR_BUFFER_SIZE 100
 
 typedef enum
 {
@@ -22,17 +17,15 @@ typedef struct
 	BUFF_STATE eBuffState;
 }BUFFER_STYPE;
 
-class CDoubleBuffer
+class CVideoBuffer
 {
 private:
-	BUFFER_STYPE m_doubleBuffer[NO_BUFFERS];
+	BUFFER_STYPE m_videoBuffer[CIRCULAR_BUFFER_SIZE];
 	unsigned short m_usCurrentIndex;
-
-	bool swap();
 public:
-	CDoubleBuffer(int, int);
-	virtual ~CDoubleBuffer() {}
+	CVideoBuffer(int, int);
+	virtual ~CVideoBuffer() {}
 
 	void write(const MyImage&);
 	MyImage& read();
-};//CDoubleBuffer
+};//CVideoBuffer
