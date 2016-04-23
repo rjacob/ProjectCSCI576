@@ -118,16 +118,6 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
                 case IDC_PLAY:
 				{
-                    // The 'play'/'pause' button was pressed
-                    if( FAILED( hr = OnPlaySound( hDlg ) ) )
-                    {
-                        DXTRACE_ERR( TEXT("OnPlaySound"), hr );
-                        MessageBox( hDlg, "Error playing DirectSound buffer. "
-                                    "Sample will now exit.", "DirectSound Sample", 
-                                    MB_OK | MB_ICONERROR );
-                        EndDialog( hDlg, IDABORT );
-                    }
-
 					BOOL checked = IsDlgButtonChecked(hDlg, IDC_CORRECT_CHECK);
 
 					if (g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
@@ -296,7 +286,7 @@ VOID OnInitDialog( HWND hDlg )
     g_bBufferPaused = FALSE;
 
     // Create a timer, so we can check for when the soundbuffer is stopped
-    SetTimer( hDlg, 0, 33, NULL );
+    SetTimer( hDlg, 0, 1000/15, NULL );
 }//OnInitDialog
 
 //-----------------------------------------------------------------------------
@@ -431,6 +421,7 @@ VOID OnTimer( HWND hDlg )
 	static unsigned long ulTimerCount = 0;
 	unsigned short unMin, unSec, unSubSec;
 	char str[32] = { 0 };
+	HRESULT hr;
 
 	if (++ulTimerCount % 15 == 0)//Check only at 4hz, when timer is at 15Hz
 	{
@@ -450,6 +441,16 @@ VOID OnTimer( HWND hDlg )
 
 	if(g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
 	{
+		// The 'play'/'pause' button was pressed
+		if (FAILED(hr = OnPlaySound(hDlg)))
+		{
+			DXTRACE_ERR(TEXT("OnPlaySound"), hr);
+			MessageBox(hDlg, "Error playing DirectSound buffer. "
+				"Sample will now exit.", "DirectSound Sample",
+				MB_OK | MB_ICONERROR);
+			EndDialog(hDlg, IDABORT);
+		}
+
 		if(g_pMyVideo->copyVideoFrame(g_outImage))
 		{
 			//This is very we draw subsequent frames to display

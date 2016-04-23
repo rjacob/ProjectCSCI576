@@ -114,19 +114,24 @@ void CVideo::threadPlayingLoop()
 
 		if (m_eVideoState != VIDEO_STATE_PAUSED)
 		{
+			MyImage* pRef = NULL;
 			iterationTime = clock();
-			readVideoFrame(m_pVideoBuffer->temporary(0).image, m_ulCurrentFrameIndex++);
-			m_pVideoBuffer->temporary(0).eBuffElemState = BUFFER_ELEM_READY;//TEMP Should be in CVideoBuffer
+			pRef = m_pVideoBuffer->nextFrame();
 
-			unOnTime_ms = (clock() - iterationTime);
-
-			if (unOnTime_ms > round(1000 / 15))
+			if (pRef)
 			{
-				char str[128] = { 0 };
-				sprintf(str, "[%d] %d %d\n", m_ulCurrentFrameIndex, unOnTime_ms, unTotal);
-				unTotal += (unOnTime_ms - (1000 / 15));
-				unOnTime_ms = round(1000 / 15);//clamp
-				OutputDebugString(_T(str));
+				readVideoFrame(*pRef, m_ulCurrentFrameIndex++);
+
+				unOnTime_ms = (clock() - iterationTime);
+
+				if (unOnTime_ms > round(1000 / 15))
+				{
+					char str[128] = { 0 };
+					sprintf(str, "[%d] %d %d\n", m_ulCurrentFrameIndex, unOnTime_ms, unTotal);
+					unTotal += (unOnTime_ms - (1000 / 15));
+					unOnTime_ms = round(1000 / 15);//clamp
+					OutputDebugString(_T(str));
+				}
 			}
 		}
 		Sleep(round(1000/15) - unOnTime_ms);
@@ -149,7 +154,11 @@ bool CVideo::readVideoFrame(MyImage& _image, unsigned int _nFrameNo)
  *************************************/
 bool CVideo::copyVideoFrame(MyImage& _buff)
 {
-	_buff = *m_pVideoBuffer->read();
+	MyImage *pRef = m_pVideoBuffer->read();
+	if (pRef)
+		_buff = *pRef;
+	else
+		return false;
 	return true;
 }//copyVideoFrame
 
@@ -356,7 +365,7 @@ if(1)
 					//Transformation (Rotation or a Projection)
 					Mat warped(m_unVideoHeight, m_unVideoWidth, CV_8UC3, Scalar(0, 0, 0));
 					warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
-					m_pVideoBuffer->temporary(1).image.WriteImage(m_correctFile, greyMatCurr);
+					currentFrame.WriteImage(m_correctFile, greyMatCurr);
 imshow("warped", warped);
 				}//if #pts
 				else

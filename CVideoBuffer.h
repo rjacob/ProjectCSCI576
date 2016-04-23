@@ -13,8 +13,8 @@ typedef enum
 
 typedef struct
 {
+	CMutexLock mutex;
 	MyImage image;
-	//CMutexLock mutex;
 	BUFF_ELEM_ESTATE eBuffElemState;
 }BUFFER_STYPE;
 
@@ -24,11 +24,13 @@ private:
 	BUFFER_STYPE m_videoBuffer[BUFFER_SIZE];
 	unsigned short m_usCurrentWriteIndex;
 	unsigned short m_usCurrentReadIndex;
+
+	bool m_bRead2Read;
 public:
 	CVideoBuffer(int, int);
 	virtual ~CVideoBuffer();
 
-	MyImage& nextFrame();
-	BUFFER_STYPE& temporary(unsigned short);//Replace with nextFrame or Write
+	void reset();
+	MyImage* nextFrame();
 	MyImage* read();
 };//CVideoBuffer
