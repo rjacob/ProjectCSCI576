@@ -233,11 +233,6 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 			g_bmi.bmiHeader.biCompression = BI_RGB;
 			g_bmi.bmiHeader.biSizeImage = g_pMyVideo->getVideoWidth()*g_pMyVideo->getVideoHeight();
 
-			SetDIBitsToDevice(hdc,
-				34, 20, g_outImage.image.getWidth(), g_outImage.image.getHeight(),
-				0, 0, 0, g_outImage.image.getHeight(),
-				g_outImage.image.getImageData(), &g_bmi, DIB_RGB_COLORS);
-
 			for (int i = 0; i < g_IFrames.size(); ++i)
 			{
 				g_bmi.bmiHeader.biWidth = g_pMyVideo->getVideoWidth() / 4;

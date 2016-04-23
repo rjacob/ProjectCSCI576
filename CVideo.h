@@ -47,6 +47,8 @@ public:
 	bool pauseVideo();
 	bool stopVideo();
 	bool analyzeVideo();
+
+	bool copyVideoFrame(MyImage&);
 	
 private:
 	char* m_pVideoPath;
@@ -78,7 +80,7 @@ private:
 	vector<unsigned short> m_summarizationFrames;
 	FILE* debugOutput;
 
-	bool copyVideoFrame(MyImage&, unsigned int _nFrame);
+	bool readVideoFrame(MyImage&, unsigned int _nFrame);
 
 	FILE* m_correctFile;
 

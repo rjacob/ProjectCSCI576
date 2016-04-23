@@ -123,14 +123,15 @@ void CVideo::threadPlayingLoop()
 		if (m_eVideoState != VIDEO_STATE_PAUSED)
 		{
 			iterationTime = clock();
-			copyVideoFrame(m_pFrameBuffer[nCircularIndex].image, m_ulCurrentFrameIndex++);
-			m_pFrameBuffer[nCircularIndex].eBuffState = BUFFER_READY;
+			readVideoFrame(m_pFrameBuffer[nCircularIndex].image, m_ulCurrentFrameIndex++);
 
 			if(m_bCorrect)
 				m_pFrameBuffer[nCircularIndex].image.Modify();
 
 			if(m_pOutputFrame)//is there a output buffer pointer...
 				*m_pOutputFrame = m_pFrameBuffer[nCircularIndex].image;//TODO:ZERO-copy
+
+			m_pFrameBuffer[nCircularIndex].eBuffState = BUFFER_READY;
 
 			unOnTime_ms = (clock() - iterationTime);
 
@@ -153,7 +154,7 @@ void CVideo::threadPlayingLoop()
 * Function: copyVideoFrame
 * Description: 
 *************************************/
-bool CVideo::copyVideoFrame(MyImage& _image, unsigned int _nFrameNo)
+bool CVideo::readVideoFrame(MyImage& _image, unsigned int _nFrameNo)
 {
 	return _image.ReadImage(m_pFile, _nFrameNo);
 }//copyVideoFrame
@@ -270,13 +271,13 @@ void CVideo::threadAnalyzingLoop()
 		m_correctFile = fopen(pCorrectedFilePath, "a");
 	}
 
-	copyVideoFrame(m_pFrameBuffer[0].image, 0);//Get first frame, one step ahead
+	readVideoFrame(m_pFrameBuffer[0].image, 0);//Get first frame, one step ahead
 	//Analyze All frames
 	for (unsigned long i = 0; i < m_ulNoFrames; i++)
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
-			copyVideoFrame(m_pFrameBuffer[1].image, i);
+			readVideoFrame(m_pFrameBuffer[1].image, i);
 			videoSummarization(i);
 
 if(0)
