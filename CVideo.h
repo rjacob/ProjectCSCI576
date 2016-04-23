@@ -27,9 +27,6 @@ public:
 	CVideo(char*, int, int);
 	~CVideo();
 
-	void createVideo(int, int);
-	void setVideoPath(char* _videoPath) { m_pVideoPath = _videoPath; }
-
 	//accessors
 	unsigned int getVideoWidth() const { return m_unWidth;}
 	unsigned int getVideoHeight() const { return m_unHeight; }
@@ -39,7 +36,9 @@ public:
 	unsigned long getCurrentFrameNo() const { return (m_ulCurrentFrameIndex); }//TODO: m_ulCurrentFrameIndex
 
 	//mutators
-	void setOutputFrame(MyImage* _outputFrame) { m_pOutputFrame = _outputFrame; }
+	void createVideo(int, int);
+	void setVideoPath(char* _videoPath) { m_pVideoPath = _videoPath; }
+	void setOutputFrame(MyImage* _outputFrame) { m_pOutputFrame = _outputFrame; }//TODO: Zero-Copy
 
 	//Interface + summarization functions
 	bool playVideo(bool _bCorrect);
@@ -73,8 +72,8 @@ private:
 	double *templateValues;
 	int *colorHistValues;
 	double *xSquaredValues;
-	vector<unsigned long> iFrames;
-	vector<unsigned long> summarizationFrames;
+	vector<unsigned short> m_iFrames;
+	vector<unsigned short> m_summarizationFrames;
 	FILE* debugOutput;
 
 	bool copyVideoFrame(MyImage&, unsigned int _nFrame);

@@ -64,13 +64,13 @@ void CVideo::createVideo(int _nWidth, int _nHeight)
 
 	if (m_pFile == NULL)
 	{
-		fprintf(stderr, "Error Opening File for Reading");
+		OutputDebugString(_T("Error Opening File for Reading"));
 		return;
 	}
 
 	if (m_unWidth < 0 || m_unHeight < 0)
 	{
-		fprintf(stderr, "Image or Image properties not defined");
+		OutputDebugString(_T("Image or Image properties not defined"));
 		return;
 	}
 
@@ -129,8 +129,8 @@ void CVideo::threadPlayingLoop()
 			if(m_bCorrect)
 				m_pFrameBuffer[nCircularIndex].image.Modify();
 
-			if(m_pOutputFrame)//is there a output buffer we can write to?
-				*m_pOutputFrame = m_pFrameBuffer[nCircularIndex].image;
+			if(m_pOutputFrame)//is there a output buffer pointer...
+				*m_pOutputFrame = m_pFrameBuffer[nCircularIndex].image;//TODO:ZERO-copy
 
 			unOnTime_ms = (clock() - iterationTime);
 
@@ -334,7 +334,7 @@ if(1)
 						m_pts1.push_back(keypointsPrev[match.queryIdx].pt);//Query (Curr)
 						m_pts2.push_back(keypointsCurr[match.trainIdx].pt);//Train (Train)
 					}
-				}
+				}//for matches
 
 				if (m_pts1.size() >= 20)
 				{
@@ -355,29 +355,31 @@ if(1)
 
 					Mat warped(m_unHeight, m_unWidth, CV_8UC3, Scalar(0, 0, 0));
 					warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
-imshow("warped", warped);
-//Mat delt(m_unHeight,m_unWidth, CV_8UC3, Scalar(255,0,0));
-//Mat delt = imread("C:/Users/RJ/Desktop/USC/CSCI 576 - Multimedia System Desgin/Project/Videos/Alin_Day1_002/D.bmp");
-//d = dataMatCurrent.type();//CV_8SC2
-//sprintf(buff, "(%d,%d)\n", d, CV_8UC3);
-//OutputDebugString(_T(buff));
 					m_pFrameBuffer[1].image.WriteImage(m_correctFile, greyMatCurr);
-				}
+imshow("warped", warped);
+				}//if #pts
 				else
 				{
 imshow("warped", dataMatCurrent);
 					//m_pCurrentFrame->WriteImage(m_correctFile, (char*)dataMatCurrent.data);
 					//fwrite(dataMatCurrent.data, CV_8UC3, m_unWidth*m_unHeight, m_correctFile);
-				}
 
-				waitKey(60);
+//=================================
+//Mat delt(m_unHeight,m_unWidth, CV_8UC3, Scalar(255,0,0));
+//Mat delt = imread("C:/Users/RJ/Desktop/USC/CSCI 576 - Multimedia System Desgin/Project/Videos/Alin_Day1_002/D.bmp");
+//d = dataMatCurrent.type();//CV_8SC2
+//sprintf(buff, "(%d,%d)\n", d, CV_8UC3);
+//OutputDebugString(_T(buff));
+//================================
+
+				}//else
+waitKey(60);
 			}
-}
+}//if 1
 			m_pFrameBuffer[0].image = m_pFrameBuffer[1].image;
 			m_ulCurrentFrameIndex = i;
-		}
-
-	}
+		}//if Video has not stopped
+	}//for frames
 
 	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
 	m_ulCurrentFrameIndex = 0;
@@ -447,10 +449,10 @@ bool CVideo::generateIFrames()
 
 	//Generate I-frames
 	double limit = average + standardDeviation;		//Need to figure this out
-	iFrames.push_back(0);	//Frame 0 is always an I-frame (Maybe?)
+	m_iFrames.push_back(0);	//Frame 0 is always an I-frame (Maybe?)
 	for (unsigned long i = 1; i < m_ulNoFrames; i++) {
 		if (xSquaredValues[i] > limit) {
-			iFrames.push_back(i);
+			m_iFrames.push_back(i);
 		}
 	}
 
@@ -474,17 +476,17 @@ bool CVideo::generateSummarizationFrames()
 {
 	//If there is an I-frame within the GOP of another I-frame
 	//increase the GOP length instead of creating new GOP
-	unsigned long minGOPLength = 3 * 15;	//Make minimum GOP size to 3 seconds
+	unsigned short minGOPLength = 3 * 15;	//Make minimum GOP size to 3 seconds
 	unsigned long lastFrameIndex = 0;
-	for (int iFrameIndex = 0; iFrameIndex < iFrames.size(); iFrameIndex++) {
-		unsigned long currentIFrame = iFrames[iFrameIndex];
+	for (int iFrameIndex = 0; iFrameIndex < m_iFrames.size(); iFrameIndex++) {
+		unsigned long currentIFrame = m_iFrames[iFrameIndex];
 		for (int i = 0; i < minGOPLength; i++) {
 			if (currentIFrame + i >= lastFrameIndex) {
-				summarizationFrames.push_back(currentIFrame + i);
+				m_summarizationFrames.push_back(currentIFrame + i);
 			}
 		}
 
-		lastFrameIndex = iFrames[iFrameIndex] + minGOPLength;
+		lastFrameIndex = m_iFrames[iFrameIndex] + minGOPLength;
 	}
 
 #if DEBUG_FILE
