@@ -5,8 +5,6 @@
 #include "Image.h"
 #include "CVideoBuffer.h"
 
-#define DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
-
 #define DEBUG_FILE 0
 
 
@@ -29,8 +27,8 @@ public:
 	~CVideo();
 
 	//accessors
-	unsigned int getVideoWidth() const { return m_unWidth;}
-	unsigned int getVideoHeight() const { return m_unHeight; }
+	unsigned int getVideoWidth() const { return m_unVideoWidth;}
+	unsigned int getVideoHeight() const { return m_unVideoHeight; }
 	long getNoFrames() const { return m_ulNoFrames;}
 	unsigned int getVideoDuration() const { return m_unVideoDurationSubSec; }
 	VIDEO_STATE_E getVideoState() const { return m_eVideoState; }
@@ -52,10 +50,10 @@ public:
 private:
 	char* m_pVideoPath;
 	unsigned long m_ulNoFrames;
-	BUFFER_STYPE *m_pFrameBuffer;
+	CVideoBuffer *m_pVideoBuffer;
 	unsigned long m_ulCurrentFrameIndex;//0-Indexed
-	unsigned int m_unWidth;
-	unsigned int m_unHeight;
+	unsigned int m_unVideoWidth;
+	unsigned int m_unVideoHeight;
 	char m_videoPath[_MAX_PATH];	// Video location
 	FILE* m_pFile;
 	VIDEO_STATE_E m_eVideoState;

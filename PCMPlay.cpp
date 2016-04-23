@@ -15,7 +15,6 @@
 #include <dxerr.h>
 #include <dsound.h>
 #include "resource.h"
-#include "CVideoBuffer.h"
 #include "CVideo.h"
 #include "Image.h"
 #include "CS576SoundUtil.h"

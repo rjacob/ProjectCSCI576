@@ -61,7 +61,7 @@ MyImage& MyImage::operator= (const MyImage &otherImage)
 	}
 
 	return *this;
-}
+}//operator=
 
 // MyImage::ReadImage
 // Function to read the image given a path
@@ -161,16 +161,6 @@ bool MyImage::WriteImage(FILE* _pImageFile, Mat& _data)
 
 	return true;
 }//WriteImage
-
-
-// Here is where you would place your code to modify an image
-// eg Filtering, Transformation, Cropping, etc.
-bool MyImage::Modify()
-{
-	//calcEntropy();
-	frameWarping();
-	return false;
-}//Modify
 
 void MyImage::countSymbols()
 {
@@ -309,9 +299,3 @@ void MyImage::featuresDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
 		m_pDetector->detect(_dataMat, _keypoints);
 	}
 }//siftFeatures
-
- //Transformation (Rotation or a Projection)
-void MyImage::frameWarping()
-{
-
-}//frameWarping

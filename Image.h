@@ -67,9 +67,6 @@ public:
 	// Input Output operations
 	bool	ReadImage(FILE*, unsigned int);
 	bool	WriteImage(FILE*, Mat&);
-
-	// Modifications
-	bool	Modify();
 	
 	// Calculations
 	void	countSymbols();
@@ -78,7 +75,6 @@ public:
 	int		colorHistogramDifference(MyImage &previousFrame);
 	double	xSquaredHistogramDifference(MyImage &previousFrame);
 	void	featuresDetec(Mat&, vector<KeyPoint>&);
-	void	frameWarping();
 };
 
 #endif //IMAGE_DISPLAY
