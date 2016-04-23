@@ -7,8 +7,6 @@
 CVideo::CVideo()
 	:
 	m_ulNoFrames(0),
-	m_pCurrentFrame(NULL),
-	m_pPrevFrame(NULL),
 	m_pOutputFrame(NULL),
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(0),
@@ -29,11 +27,7 @@ CVideo::~CVideo()
 	fclose(m_pFile);
 	m_pFile = 0;
 
-	if (m_pCurrentFrame)
-		delete m_pCurrentFrame;
-
-	if (m_pPrevFrame)
-		delete m_pPrevFrame;
+	DELETE_ARRAY(m_pFrameBuffer);
 
 	if (entropyValues)
 		delete entropyValues;
@@ -96,13 +90,14 @@ void CVideo::createVideo(int _nWidth, int _nHeight)
 	colorHistValues = new int[m_ulNoFrames];
 	xSquaredValues = new double[m_ulNoFrames];
 
-	m_pCurrentFrame = new MyImage();
-	m_pCurrentFrame->setWidth(m_unWidth);
-	m_pCurrentFrame->setHeight(m_unHeight);
+	m_pFrameBuffer = new BUFFER_STYPE[100];//480*270*3*100 = 38.88 Mb RAM
 
-	m_pPrevFrame = new MyImage();
-	m_pPrevFrame->setHeight(m_unHeight);
-	m_pPrevFrame->setWidth(m_unWidth);
+	for (int i = 0; i < 100; i++)
+	{
+		m_pFrameBuffer[i].eBuffState = BUFFER_EMPTY;
+		m_pFrameBuffer[i].image.setHeight(m_unHeight);
+		m_pFrameBuffer[i].image.setWidth(m_unWidth);
+	}
 
 	m_pMatcher = new BFMatcher(NORM_L2);
 }//constructor
@@ -116,6 +111,7 @@ void CVideo::threadPlayingLoop()
 	clock_t iterationTime;
 	unsigned short unOnTime_ms;
 	static unsigned int unTotal = 0;
+	int nCircularIndex = 0;
 
 	if (m_bCorrect)
 		m_pFile = fopen(m_pVideoPath, "rb");
@@ -127,13 +123,14 @@ void CVideo::threadPlayingLoop()
 		if (m_eVideoState != VIDEO_STATE_PAUSED)
 		{
 			iterationTime = clock();
-			copyVideoFrame(*m_pCurrentFrame, m_ulCurrentFrameIndex++);
+			copyVideoFrame(m_pFrameBuffer[nCircularIndex].image, m_ulCurrentFrameIndex++);
+			m_pFrameBuffer[nCircularIndex].eBuffState = BUFFER_READY;
 
 			if(m_bCorrect)
-				m_pCurrentFrame->Modify();
+				m_pFrameBuffer[nCircularIndex].image.Modify();
 
 			if(m_pOutputFrame)//is there a output buffer we can write to?
-				*m_pOutputFrame = *m_pCurrentFrame;
+				*m_pOutputFrame = m_pFrameBuffer[nCircularIndex].image;
 
 			unOnTime_ms = (clock() - iterationTime);
 
@@ -271,20 +268,20 @@ void CVideo::threadAnalyzingLoop()
 		m_correctFile = fopen(pCorrectedFilePath, "a");
 	}
 
-	copyVideoFrame(*m_pPrevFrame, 0);//Get first frame, one step ahead
+	copyVideoFrame(m_pFrameBuffer[0].image, 0);//Get first frame, one step ahead
 	//Analyze All frames
 	for (unsigned long i = 0; i < m_ulNoFrames; i++)
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
-			copyVideoFrame(*m_pCurrentFrame, i);
+			copyVideoFrame(m_pFrameBuffer[1].image, i);
 			videoSummarization(i);
 
 if(1)
 {
 			// Open CV data matrices
-			Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pCurrentFrame->getImageData());
-			Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pPrevFrame->getImageData());
+			Mat	dataMatCurrent(m_unHeight, m_unWidth, CV_8UC3, m_pFrameBuffer[1].image.getImageData());
+			Mat dataMatPrev(m_unHeight, m_unWidth, CV_8UC3, m_pFrameBuffer[0].image.getImageData());
 
 			if(!dataMatPrev.empty() && !dataMatCurrent.empty())
 			{
@@ -295,10 +292,10 @@ if(1)
 
 				//Feature detection
 				//Train
-				m_pPrevFrame->featuresDetec(dataMatPrev, keypointsPrev);
+				m_pFrameBuffer[0].image.featuresDetec(dataMatPrev, keypointsPrev);
 
 				//Query
-				m_pCurrentFrame->featuresDetec(dataMatCurrent, keypointsCurr);
+				m_pFrameBuffer[1].image.featuresDetec(dataMatCurrent, keypointsCurr);
 
 				//Descriptor Extaction
 				SurfDescriptorExtractor extractor;
@@ -364,7 +361,7 @@ imshow("warped", warped);
 //d = dataMatCurrent.type();//CV_8SC2
 //sprintf(buff, "(%d,%d)\n", d, CV_8UC3);
 //OutputDebugString(_T(buff));
-					m_pCurrentFrame->WriteImage(m_correctFile, greyMatCurr);
+					m_pFrameBuffer[1].image.WriteImage(m_correctFile, greyMatCurr);
 				}
 				else
 				{
@@ -376,7 +373,7 @@ imshow("warped", dataMatCurrent);
 				waitKey(60);
 			}
 }
-			*m_pPrevFrame = *m_pCurrentFrame;
+			m_pFrameBuffer[0].image = m_pFrameBuffer[1].image;
 			m_ulCurrentFrameIndex = i;
 		}
 
@@ -408,10 +405,10 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 	//Cycle through each frame in video
 
 	//Add analysis values to arrays
-	entropyValues[_ulFrameIndex] = m_pCurrentFrame->calcEntropy();//70ms
-	templateValues[_ulFrameIndex] = m_pCurrentFrame->templateMatchDifference(*m_pPrevFrame);
-	colorHistValues[_ulFrameIndex] = m_pCurrentFrame->colorHistogramDifference(*m_pPrevFrame);//50ms
-	xSquaredValues[_ulFrameIndex] = m_pCurrentFrame->xSquaredHistogramDifference(*m_pPrevFrame);
+	entropyValues[_ulFrameIndex] = m_pFrameBuffer[1].image.calcEntropy();//70ms
+	templateValues[_ulFrameIndex] = m_pFrameBuffer[1].image.templateMatchDifference(m_pFrameBuffer[0].image);
+	colorHistValues[_ulFrameIndex] = m_pFrameBuffer[1].image.colorHistogramDifference(m_pFrameBuffer[0].image);//50ms
+	xSquaredValues[_ulFrameIndex] = m_pFrameBuffer[1].image.xSquaredHistogramDifference(m_pFrameBuffer[0].image);
 
 #if DEBUG_FILE
 	//Create array of "I-frames" here

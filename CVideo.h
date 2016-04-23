@@ -5,6 +5,8 @@
 #include "Image.h"
 #include "CDoubleBuffer.h"
 
+#define DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
+
 #define DEBUG_FILE 0
 
 typedef enum
@@ -48,7 +50,7 @@ public:
 private:
 	char* m_pVideoPath;
 	unsigned long m_ulNoFrames;
-	MyImage *m_pCurrentFrame, *m_pPrevFrame;
+	BUFFER_STYPE *m_pFrameBuffer;
 	MyImage *m_pOutputFrame;
 	unsigned long m_ulCurrentFrameIndex;//0-Indexed
 	unsigned int m_unWidth;
