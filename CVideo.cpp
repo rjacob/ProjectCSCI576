@@ -7,7 +7,6 @@
 CVideo::CVideo()
 	:
 	m_ulNoFrames(0),
-	m_pOutputFrame(NULL),
 	m_ulCurrentFrameIndex(0),
 	m_unWidth(0),
 	m_unHeight(0),
@@ -128,9 +127,6 @@ void CVideo::threadPlayingLoop()
 			if(m_bCorrect)
 				m_pFrameBuffer[nCircularIndex].image.Modify();
 
-			if(m_pOutputFrame)//is there a output buffer pointer...
-				*m_pOutputFrame = m_pFrameBuffer[nCircularIndex].image;//TODO:ZERO-copy
-
 			m_pFrameBuffer[nCircularIndex].eBuffState = BUFFER_READY;
 
 			unOnTime_ms = (clock() - iterationTime);
@@ -151,13 +147,24 @@ void CVideo::threadPlayingLoop()
 }//threadProcessingLoop
 
 /*************************************
-* Function: copyVideoFrame
+* Function: readVideoFrame
 * Description: 
 *************************************/
 bool CVideo::readVideoFrame(MyImage& _image, unsigned int _nFrameNo)
 {
 	return _image.ReadImage(m_pFile, _nFrameNo);
-}//copyVideoFrame
+}//readVideoFrame
+
+ /*************************************
+ * Function: copyVideoFrame
+ * Description: This is executed from the scope of another thread
+ *				TODO: Mutex protect
+ *************************************/
+bool CVideo::copyVideoFrame(BUFFER_STYPE& _buff)
+{
+	_buff.image = m_pFrameBuffer[0].image;
+	return true;
+}
 
 /*************************************
 * Function: playVideo

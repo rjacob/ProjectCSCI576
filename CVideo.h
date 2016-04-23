@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <time.h>
 #include "Image.h"
-#include "CDoubleBuffer.h"
+#include "CVideoBuffer.h"
 
 #define DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
 
@@ -40,7 +40,6 @@ public:
 	//mutators
 	void createVideo(int, int);
 	void setVideoPath(char* _videoPath) { m_pVideoPath = _videoPath; }
-	void setOutputFrame(MyImage* _outputFrame) { m_pOutputFrame = _outputFrame; }//TODO: Zero-Copy
 
 	//Interface + summarization functions
 	bool playVideo(bool _bCorrect);
@@ -48,13 +47,12 @@ public:
 	bool stopVideo();
 	bool analyzeVideo();
 
-	bool copyVideoFrame(MyImage&);
+	bool copyVideoFrame(BUFFER_STYPE&);
 	
 private:
 	char* m_pVideoPath;
 	unsigned long m_ulNoFrames;
 	BUFFER_STYPE *m_pFrameBuffer;
-	MyImage *m_pOutputFrame;
 	unsigned long m_ulCurrentFrameIndex;//0-Indexed
 	unsigned int m_unWidth;
 	unsigned int m_unHeight;

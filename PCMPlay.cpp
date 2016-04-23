@@ -15,7 +15,7 @@
 #include <dxerr.h>
 #include <dsound.h>
 #include "resource.h"
-#include "CDoubleBuffer.h"
+#include "CVideoBuffer.h"
 #include "CVideo.h"
 #include "Image.h"
 #include "CS576SoundUtil.h"
@@ -146,7 +146,6 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						}
 
 						g_pMyVideo->playVideo((bool)checked);
-						g_pMyVideo->setOutputFrame(&g_outImage.image);
 					}
 
 					int noFrames = g_pMyVideo->getNoFrames();
@@ -452,6 +451,7 @@ VOID OnTimer( HWND hDlg )
 
 	if(g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
 	{
+		g_pMyVideo->copyVideoFrame(g_outImage);
 		//This is very we draw subsequent frames to display
 		SetDIBitsToDevice(GetDC(hDlg),
 			34, 20, g_outImage.image.getWidth(), g_outImage.image.getHeight(),
