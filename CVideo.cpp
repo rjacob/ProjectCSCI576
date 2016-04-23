@@ -147,16 +147,11 @@ bool CVideo::readVideoFrame(MyImage& _image, unsigned int _nFrameNo)
  * Description: This is executed from the scope of another thread
  *				TODO: Mutex protect
  *************************************/
-bool CVideo::copyVideoFrame(BUFFER_STYPE& _buff)
+bool CVideo::copyVideoFrame(MyImage& _buff)
 {
-	if (m_pVideoBuffer->temporary(0).eBuffElemState == BUFFER_ELEM_READY)
-	{
-		_buff = m_pVideoBuffer->temporary(0);
-		return true;
-	}
-	else
-		return false;
-}
+	_buff = *m_pVideoBuffer->read();
+	return true;
+}//copyVideoFrame
 
 /*************************************
 * Function: playVideo
@@ -240,13 +235,16 @@ bool CVideo::analyzeVideo()
 * Function: threadAnalyzingLoop
 * Description:
 *************************************/
-FILE *outFile;
 void CVideo::threadAnalyzingLoop()
 {
 	m_eVideoState = VIDEO_STATE_ANALYZING;
 	m_ulCurrentFrameIndex = 0;
 	m_unVideoDurationSubSec = m_ulNoFrames * 15;
 	vector<KeyPoint> keypointsCurr, keypointsPrev;
+
+	//For Analysis we dont have to worry about buffering
+	MyImage currentFrame(m_unVideoWidth, m_unVideoHeight);
+	MyImage prevFrame(m_unVideoWidth, m_unVideoHeight);
 
 #if DEBUG_FILE
 	debugOutput = fopen("Video Data.txt", "w");
@@ -270,20 +268,20 @@ void CVideo::threadAnalyzingLoop()
 		m_correctFile = fopen(pCorrectedFilePath, "a");
 	}
 
-	readVideoFrame(m_pVideoBuffer->temporary(0).image, 0);//Get first frame, one step ahead
+	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
 	for (unsigned long i = 0; i < m_ulNoFrames; i++)
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
-			readVideoFrame(m_pVideoBuffer->temporary(1).image, i);
-			videoSummarization(i);
+			readVideoFrame(currentFrame, i);
+			videoSummarization(i, prevFrame, currentFrame);
 
 if(1)
 {
 			// Open CV data matrices
-			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, m_pVideoBuffer->temporary(1).image.getImageData());
-			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, m_pVideoBuffer->temporary(0).image.getImageData());
+			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
+			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());
 
 			if(!dataMatPrev.empty() && !dataMatCurrent.empty())
 			{
@@ -294,10 +292,10 @@ if(1)
 
 				//Feature detection
 				//Train
-				m_pVideoBuffer->temporary(0).image.featuresDetec(dataMatPrev, keypointsPrev);
+				prevFrame.featuresDetec(greyMatPrev, keypointsPrev);
 
 				//Query
-				m_pVideoBuffer->temporary(1).image.featuresDetec(dataMatCurrent, keypointsCurr);
+				currentFrame.featuresDetec(greyMatCurr, keypointsCurr);
 
 				//Descriptor Extaction
 				SurfDescriptorExtractor extractor;
@@ -379,7 +377,7 @@ imshow("warped", dataMatCurrent);
 waitKey(60);
 			}
 }//if 1
-			m_pVideoBuffer->temporary(0) = m_pVideoBuffer->temporary(1);
+			prevFrame = currentFrame;
 			m_ulCurrentFrameIndex = i;
 		}//if Video has not stopped
 	}//for frames
@@ -402,7 +400,7 @@ if(1)
  * Function: videoSummarization
  * Description:
  *************************************/
-bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
+bool CVideo::videoSummarization(unsigned long _ulFrameIndex, MyImage& _prev, MyImage&_curr)
 {
 	if (m_ulNoFrames == 0)
 		return false;
@@ -410,10 +408,10 @@ bool CVideo::videoSummarization(unsigned long _ulFrameIndex)
 	//Cycle through each frame in video
 
 	//Add analysis values to arrays
-	entropyValues[_ulFrameIndex] = m_pVideoBuffer->temporary(1).image.calcEntropy();//70ms
-	templateValues[_ulFrameIndex] = m_pVideoBuffer->temporary(1).image.templateMatchDifference(m_pVideoBuffer->temporary(0).image);
-	colorHistValues[_ulFrameIndex] = m_pVideoBuffer->temporary(1).image.colorHistogramDifference(m_pVideoBuffer->temporary(0).image);//50ms
-	xSquaredValues[_ulFrameIndex] = m_pVideoBuffer->temporary(1).image.xSquaredHistogramDifference(m_pVideoBuffer->temporary(0).image);
+	entropyValues[_ulFrameIndex] = _curr.calcEntropy();//70ms
+	templateValues[_ulFrameIndex] = _curr.templateMatchDifference(_prev);
+	colorHistValues[_ulFrameIndex] = _curr.colorHistogramDifference(_prev);//50ms
+	xSquaredValues[_ulFrameIndex] = _curr.xSquaredHistogramDifference(_prev);
 
 #if DEBUG_FILE
 	//Create array of "I-frames" here

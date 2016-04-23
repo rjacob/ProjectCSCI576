@@ -49,6 +49,7 @@ private:
 public:
 	// Constructor
 	MyImage();
+	MyImage(int,int);//Overloaded Constructor
 	// Copy Constructor
 	//MyImage::MyImage( MyImage *otherImage);
 	// Destructor

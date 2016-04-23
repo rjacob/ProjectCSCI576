@@ -36,8 +36,8 @@ VOID    EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eState);
 CSoundManager* g_pSoundManager = NULL;
 CSound*        g_pSound = NULL;
 BOOL           g_bBufferPaused;
-CVideo		   *g_pMyVideo;
-BUFFER_STYPE	g_outImage;
+CVideo*        g_pMyVideo;
+MyImage        g_outImage;
 vector <unsigned short> g_IFrames;
 int g_w, g_h;
 
@@ -450,20 +450,22 @@ VOID OnTimer( HWND hDlg )
 
 	if(g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
 	{
-		g_pMyVideo->copyVideoFrame(g_outImage);
-		//This is very we draw subsequent frames to display
-		SetDIBitsToDevice(GetDC(hDlg),
-			34, 20, g_outImage.image.getWidth(), g_outImage.image.getHeight(),
-			0, 0, 0, g_outImage.image.getHeight(),
-			g_outImage.image.getImageData(), &g_bmi, DIB_RGB_COLORS);
+		if(g_pMyVideo->copyVideoFrame(g_outImage))
+		{
+			//This is very we draw subsequent frames to display
+			SetDIBitsToDevice(GetDC(hDlg),
+				34, 20, g_outImage.getWidth(), g_outImage.getHeight(),
+				0, 0, 0, g_outImage.getHeight(),
+				g_outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
 
-		int noFrames = g_pMyVideo->getCurrentFrameNo();
-		unMin = floor((noFrames / 15) / 60);
-		unSec = floor((noFrames / 15) % 60);
-		unSubSec = (noFrames % 15);
+			int noFrames = g_pMyVideo->getCurrentFrameNo();
+			unMin = floor((noFrames / 15) / 60);
+			unSec = floor((noFrames / 15) % 60);
+			unSubSec = (noFrames % 15);
 
-		sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
-		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
+			sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
+		}
 	}
 	else if(g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYZING)
 	{

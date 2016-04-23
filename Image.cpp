@@ -18,6 +18,16 @@ MyImage::MyImage()
 	m_bFeatureDet = false;
 }
 
+//Overloaded Constructor
+MyImage::MyImage(int _w, int _h)
+{
+	m_Data = NULL;
+	m_pDataMat = NULL;
+	m_nWidth = _w;
+	m_nHeight = _h;
+	m_bFeatureDet = false;
+}
+
 MyImage::~MyImage()
 {
 	if (m_Data)

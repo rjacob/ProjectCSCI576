@@ -30,5 +30,5 @@ public:
 
 	MyImage& nextFrame();
 	BUFFER_STYPE& temporary(unsigned short);//Replace with nextFrame or Write
-	MyImage& read();
+	MyImage* read();
 };//CVideoBuffer

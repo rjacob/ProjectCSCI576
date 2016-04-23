@@ -45,7 +45,7 @@ public:
 	bool stopVideo();
 	bool analyzeVideo();
 
-	bool copyVideoFrame(BUFFER_STYPE&);
+	bool copyVideoFrame(MyImage&);
 	
 private:
 	char* m_pVideoPath;
@@ -81,7 +81,7 @@ private:
 	FILE* m_correctFile;
 
 	bool m_bCorrect;//TODO change into function??
-	bool videoSummarization(unsigned long);
+	bool videoSummarization(unsigned long, MyImage&, MyImage&);
 	bool generateIFrames();
 	bool generateSummarizationFrames();
 	//void featuresMatch(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
