@@ -138,9 +138,9 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 					}
 
 					int noFrames = g_pMyVideo->getNoFrames();
-					unMin = floor((noFrames / 15) / 60);
-					unSec = floor((noFrames / 15) % 60);
-					unSubSec = (noFrames % 15);
+					unMin = floor((noFrames / FRAME_RATE_HZ) / 60);
+					unSec = floor((noFrames / FRAME_RATE_HZ) % 60);
+					unSubSec = (noFrames % FRAME_RATE_HZ);
 
 					sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 					SetWindowText(GetDlgItem(hDlg, IDC_STATIC_END), str);
@@ -182,9 +182,9 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						*/
 
 						int noFrames = g_pMyVideo->getNoFrames();
-						unMin = floor((noFrames / 15) / 60);
-						unSec = floor((noFrames / 15) % 60);
-						unSubSec = (noFrames % 15);
+						unMin = floor((noFrames / FRAME_RATE_HZ) / 60);
+						unSec = floor((noFrames / FRAME_RATE_HZ) % 60);
+						unSubSec = (noFrames % FRAME_RATE_HZ);
 
 						sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 						SetWindowText(GetDlgItem(hDlg, IDC_STATIC_END), str);
@@ -286,7 +286,7 @@ VOID OnInitDialog( HWND hDlg )
     g_bBufferPaused = FALSE;
 
     // Create a timer, so we can check for when the soundbuffer is stopped
-    SetTimer( hDlg, 0, 1000/15, NULL );
+    SetTimer( hDlg, 0, 1000/ FRAME_RATE_HZ, NULL );
 }//OnInitDialog
 
 //-----------------------------------------------------------------------------
@@ -423,7 +423,7 @@ VOID OnTimer( HWND hDlg )
 	char str[32] = { 0 };
 	HRESULT hr;
 
-	if (++ulTimerCount % 15 == 0)//Check only at 4hz, when timer is at 15Hz
+	if (++ulTimerCount % FRAME_RATE_HZ == 0)//Check only at 4hz, when timer is at 15Hz
 	{
 		if (IsWindowEnabled(GetDlgItem(hDlg, IDC_STOP)))
 		{
@@ -441,32 +441,39 @@ VOID OnTimer( HWND hDlg )
 
 	if(g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
 	{
-		// The 'play'/'pause' button was pressed
-		if (FAILED(hr = OnPlaySound(hDlg)))
+		unsigned short usCurrentFrameNo = 0;
+		if ((usCurrentFrameNo = g_pMyVideo->copyVideoFrame(g_outImage)))
 		{
-			DXTRACE_ERR(TEXT("OnPlaySound"), hr);
-			MessageBox(hDlg, "Error playing DirectSound buffer. "
-				"Sample will now exit.", "DirectSound Sample",
-				MB_OK | MB_ICONERROR);
-			EndDialog(hDlg, IDABORT);
-		}
+			if (!g_pSound->IsSoundPlaying())
+			{
+				// The 'play'/'pause' button was pressed
+				if (FAILED(hr = OnPlaySound(hDlg)))
+				{
+					DXTRACE_ERR(TEXT("OnPlaySound"), hr);
+					MessageBox(hDlg, "Error playing DirectSound buffer. "
+						"Sample will now exit.", "DirectSound Sample",
+						MB_OK | MB_ICONERROR);
+					EndDialog(hDlg, IDABORT);
+				}
+			}
 
-		if(g_pMyVideo->copyVideoFrame(g_outImage))
-		{
 			//This is very we draw subsequent frames to display
 			SetDIBitsToDevice(GetDC(hDlg),
 				34, 20, g_outImage.getWidth(), g_outImage.getHeight(),
 				0, 0, 0, g_outImage.getHeight(),
 				g_outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
 
-			int noFrames = g_pMyVideo->getCurrentFrameNo();
-			unMin = floor((noFrames / 15) / 60);
-			unSec = floor((noFrames / 15) % 60);
-			unSubSec = (noFrames % 15);
+			unMin = floor((usCurrentFrameNo / FRAME_RATE_HZ) / 60);
+			unSec = floor((usCurrentFrameNo / FRAME_RATE_HZ) % 60);
+			unSubSec = (usCurrentFrameNo % FRAME_RATE_HZ);
 
 			sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
 		}
+	}
+	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_BUFFERING)
+	{
+		EnablePlayUI(hDlg, VIDEO_STATE_BUFFERING);
 	}
 	else if(g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYZING)
 	{
@@ -490,7 +497,24 @@ VOID OnTimer( HWND hDlg )
 //-----------------------------------------------------------------------------
 VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 {
-    if(_eVideoState == VIDEO_STATE_PAUSED)
+	if (_eVideoState == VIDEO_STATE_PLAYING)
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_LOOP_CHECK), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_STOP), TRUE);
+		SetFocus(GetDlgItem(hDlg, IDC_STOP));
+
+		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDCANCEL), FALSE);
+		SetDlgItemText(hDlg, IDC_PLAY, "&Pause");
+	}
+	else if (_eVideoState == VIDEO_STATE_BUFFERING)
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
+		SetDlgItemText(hDlg, IDC_PLAY, "&Buffering");
+	}
+    else if(_eVideoState == VIDEO_STATE_PAUSED)
     {
         EnableWindow(   GetDlgItem( hDlg, IDC_LOOP_CHECK ), TRUE );
 		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), TRUE);
@@ -520,18 +544,6 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		}
 		SetDlgItemText(hDlg, IDC_PLAY, "&Play");
 	}
-    else if(_eVideoState == VIDEO_STATE_PLAYING)
-    {
-        EnableWindow(  GetDlgItem( hDlg, IDC_LOOP_CHECK ), FALSE );
-		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
-        EnableWindow(  GetDlgItem( hDlg, IDC_STOP ),       TRUE );
-        SetFocus(      GetDlgItem( hDlg, IDC_STOP ) );
-
-        EnableWindow(  GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
-		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
-		EnableWindow(GetDlgItem(hDlg, IDCANCEL), FALSE);
-        SetDlgItemText( hDlg, IDC_PLAY, "&Pause" );
-    }
 	else if (_eVideoState == VIDEO_STATE_ANALYZING)
 	{
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);

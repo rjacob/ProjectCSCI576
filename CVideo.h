@@ -6,11 +6,13 @@
 #include "CVideoBuffer.h"
 
 #define DEBUG_FILE 0
+#define FRAME_RATE_HZ 15
 
 
 typedef enum
 {
 	VIDEO_STATE_UNKNOWN = 0,
+	VIDEO_STATE_BUFFERING,
 	VIDEO_STATE_PLAYING,//Playing
 	VIDEO_STATE_PAUSED,//Paused
 	VIDEO_STATE_ANALYZING,//Analyzing
@@ -45,7 +47,7 @@ public:
 	bool stopVideo();
 	bool analyzeVideo();
 
-	bool copyVideoFrame(MyImage&);
+	unsigned short copyVideoFrame(MyImage&);
 	
 private:
 	char* m_pVideoPath;

@@ -114,27 +114,31 @@ void CVideo::threadPlayingLoop()
 
 		if (m_eVideoState != VIDEO_STATE_PAUSED)
 		{
-			MyImage* pRef = NULL;
+			BUFFER_STYPE* pRef = NULL;
 			iterationTime = clock();
 			pRef = m_pVideoBuffer->nextFrame();
 
 			if (pRef)
 			{
-				readVideoFrame(*pRef, m_ulCurrentFrameIndex++);
+				if(m_ulCurrentFrameIndex >= BUFFER_SIZE/2)
+					m_eVideoState = VIDEO_STATE_PLAYING;
+
+				pRef->unFrameId = m_ulCurrentFrameIndex;
+				readVideoFrame(pRef->image, m_ulCurrentFrameIndex++);
 
 				unOnTime_ms = (clock() - iterationTime);
 
-				if (unOnTime_ms > round(1000 / 15))
+				if (unOnTime_ms > round(1000 / FRAME_RATE_HZ))
 				{
 					char str[128] = { 0 };
 					sprintf(str, "[%d] %d %d\n", m_ulCurrentFrameIndex, unOnTime_ms, unTotal);
-					unTotal += (unOnTime_ms - (1000 / 15));
-					unOnTime_ms = round(1000 / 15);//clamp
+					unTotal += (unOnTime_ms - (1000 / FRAME_RATE_HZ));
+					unOnTime_ms = round(1000 / FRAME_RATE_HZ);//clamp
 					OutputDebugString(_T(str));
 				}
 			}
 		}
-		Sleep(round(1000/15) - unOnTime_ms);
+		Sleep(round(1000/ FRAME_RATE_HZ) - unOnTime_ms);
 	} while(m_eVideoState != VIDEO_STATE_STOPPED && m_ulCurrentFrameIndex < m_ulNoFrames);
 }//threadProcessingLoop
 
@@ -152,14 +156,16 @@ bool CVideo::readVideoFrame(MyImage& _image, unsigned int _nFrameNo)
  * Description: This is executed from the scope of another thread
  *				TODO: Mutex protect
  *************************************/
-bool CVideo::copyVideoFrame(MyImage& _buff)
+unsigned short CVideo::copyVideoFrame(MyImage& _buff)
 {
-	MyImage *pRef = m_pVideoBuffer->read();
+	BUFFER_STYPE *pRef = m_pVideoBuffer->read();
 	if (pRef)
-		_buff = *pRef;
+	{
+		_buff = pRef->image;
+		return pRef->unFrameId;
+	}
 	else
-		return false;
-	return true;
+		return 0;
 }//copyVideoFrame
 
 /*************************************
@@ -191,7 +197,7 @@ bool CVideo::playVideo(bool _bCorrect)
 	}
 	else
 	{
-		m_eVideoState = VIDEO_STATE_PLAYING;
+		m_eVideoState = VIDEO_STATE_BUFFERING;
 		m_bPlaying = true;
 		bReturn = true;
 	}
@@ -207,8 +213,8 @@ bool CVideo::stopVideo()
 {
 	m_eVideoState = VIDEO_STATE_STOPPED;
 	m_ulCurrentFrameIndex = 0;
+	m_pVideoBuffer->reset();
 	m_bPlaying = false;
-	//Clean-up
 	return true;
 }//stopVideo
 
@@ -224,8 +230,8 @@ bool CVideo::pauseVideo()
 }//pauseVideo
 
 /*************************************
-* Function: pauseVideo
-* Description:
+* Function: analyzeVideo
+* Description: Spawns Video analyzing Thread
 *************************************/
 bool CVideo::analyzeVideo()
 {
@@ -238,7 +244,7 @@ bool CVideo::analyzeVideo()
 		&m_dwThreadIdAnalysis);   // returns the thread identifier
 
 	return true;
-}
+}//analyzeVideo
 
 /*************************************
 * Function: threadAnalyzingLoop
@@ -248,7 +254,7 @@ void CVideo::threadAnalyzingLoop()
 {
 	m_eVideoState = VIDEO_STATE_ANALYZING;
 	m_ulCurrentFrameIndex = 0;
-	m_unVideoDurationSubSec = m_ulNoFrames * 15;
+	m_unVideoDurationSubSec = m_ulNoFrames * FRAME_RATE_HZ;
 	vector<KeyPoint> keypointsCurr, keypointsPrev;
 
 	//For Analysis we dont have to worry about buffering
@@ -286,8 +292,7 @@ void CVideo::threadAnalyzingLoop()
 			readVideoFrame(currentFrame, i);
 			videoSummarization(i, prevFrame, currentFrame);
 
-if(1)
-{
+#if 1
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
 			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());
@@ -385,7 +390,7 @@ imshow("warped", dataMatCurrent);
 				}//else
 waitKey(60);
 			}
-}//if 1
+#endif
 			prevFrame = currentFrame;
 			m_ulCurrentFrameIndex = i;
 		}//if Video has not stopped
@@ -486,7 +491,7 @@ bool CVideo::generateSummarizationFrames()
 {
 	//If there is an I-frame within the GOP of another I-frame
 	//increase the GOP length instead of creating new GOP
-	unsigned short minGOPLength = 3 * 15;	//Make minimum GOP size to 3 seconds
+	unsigned short minGOPLength = 3 * FRAME_RATE_HZ;	//Make minimum GOP size to 3 seconds
 	unsigned long lastFrameIndex = 0;
 	for (int iFrameIndex = 0; iFrameIndex < m_iFrames.size(); iFrameIndex++) {
 		unsigned long currentIFrame = m_iFrames[iFrameIndex];

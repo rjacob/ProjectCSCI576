@@ -2,7 +2,7 @@
 #include "CMutexExclusiveLock.h"
 #include "Image.h"
 
-#define BUFFER_SIZE 100 //480*270*3*100 = 38.88 Mb RAM
+#define BUFFER_SIZE 1000 //480*270*3*1000 = 388.8 Mb RAM
 #define DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
 
 typedef enum
@@ -14,6 +14,7 @@ typedef enum
 typedef struct
 {
 	CMutexLock mutex;
+	unsigned short unFrameId;
 	MyImage image;
 	BUFF_ELEM_ESTATE eBuffElemState;
 }BUFFER_STYPE;
@@ -31,6 +32,6 @@ public:
 	virtual ~CVideoBuffer();
 
 	void reset();
-	MyImage* nextFrame();
-	MyImage* read();
+	BUFFER_STYPE* nextFrame();
+	BUFFER_STYPE* read();
 };//CVideoBuffer
