@@ -170,17 +170,6 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETSTEP, (WPARAM)1, 0);
 						g_pMyVideo->analyzeVideo();
 
-						/*
-						MyImage image;
-						g_pMyVideo->getVideoFrame(image, 10);
-						thumbnails.push_back(image);
-						g_pMyVideo->getVideoFrame(image, 100);
-						thumbnails.push_back(image);
-						g_pMyVideo->getVideoFrame(image, 100);
-						thumbnails.push_back(image);
-						g_pMyVideo->getVideoDuration();
-						*/
-
 						int noFrames = g_pMyVideo->getNoFrames();
 						unMin = floor((noFrames / FRAME_RATE_HZ) / 60);
 						unSec = floor((noFrames / FRAME_RATE_HZ) % 60);
@@ -221,23 +210,6 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 			g_bmi.bmiHeader.biCompression = BI_RGB;
 			g_bmi.bmiHeader.biSizeImage = g_pMyVideo->getVideoWidth()*g_pMyVideo->getVideoHeight();
 
-			for (int i = 0; i < g_IFrames.size(); ++i)
-			{
-				g_bmi.bmiHeader.biWidth = g_pMyVideo->getVideoWidth() / 4;
-				g_bmi.bmiHeader.biHeight = -g_pMyVideo->getVideoHeight() / 4;
-
-				//g_pMyVideo->copyVideoFrame(g_outImage, g_IFrames.at(i));
-
-				/*
-				SetDIBitsToDevice(hdc,
-					34+i*thumbnails.at(i).getWidth() / 4, 310,
-					thumbnails.at(i).getWidth()/4,
-					thumbnails.at(i).getHeight()/4,
-					0, 0, 0,
-					thumbnails.at(i).getHeight() / 4,//Scan Lines
-					thumbnails.at(i).getImageData(), &g_bmi, DIB_RGB_COLORS);
-				*/
-			}
 
 			EndPaint(hDlg, &ps);
 		}
@@ -485,6 +457,37 @@ VOID OnTimer( HWND hDlg )
 	}
 	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYSIS_COMPLETE)
 	{
+		BITMAPINFO bitmapinfo;
+		MyImage thumbnail;
+
+		memset(&bitmapinfo, 0, sizeof(bitmapinfo));
+		bitmapinfo.bmiHeader.biSize = sizeof(g_bmi.bmiHeader);
+		bitmapinfo.bmiHeader.biWidth = g_pMyVideo->getVideoWidth()/4;
+		bitmapinfo.bmiHeader.biHeight = -g_pMyVideo->getVideoHeight()/4;  // Use negative height.  DIB is top-down.
+		bitmapinfo.bmiHeader.biPlanes = 1;
+		bitmapinfo.bmiHeader.biBitCount = 24;
+		bitmapinfo.bmiHeader.biCompression = BI_RGB;
+		bitmapinfo.bmiHeader.biSizeImage = (g_pMyVideo->getVideoWidth()/4)*(g_pMyVideo->getVideoHeight()/4);
+
+		for (int i = 0; i < 4 /*g_IFrames.size()*/; ++i)
+		{
+			g_pMyVideo->readVideoFrame(thumbnail, g_IFrames.at(i));
+			StretchDIBits(
+				GetDC(hDlg),
+				34 + i*(g_pMyVideo->getVideoWidth()/4),
+				300,
+				g_pMyVideo->getVideoWidth()/4,
+				g_pMyVideo->getVideoHeight()/4,
+				0,
+				0,
+				480,
+				270,
+				thumbnail.getImageData(),
+				&bitmapinfo,
+				0,
+				0);
+		}
+
 		g_IFrames = g_pMyVideo->getIFrames();
 		g_pMyVideo->stopVideo();
 		EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);

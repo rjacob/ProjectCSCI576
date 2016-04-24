@@ -48,6 +48,7 @@ public:
 	bool analyzeVideo();
 
 	unsigned short copyVideoFrame(MyImage&);
+	bool readVideoFrame(MyImage&, unsigned int _nFrame);
 	
 private:
 	char* m_pVideoPath;
@@ -77,9 +78,6 @@ private:
 	vector<unsigned short> m_iFrames;
 	vector<unsigned short> m_summarizationFrames;
 	FILE* debugOutput;
-
-	bool readVideoFrame(MyImage&, unsigned int _nFrame);
-
 	FILE* m_correctFile;
 
 	bool m_bCorrect;//TODO change into function??

@@ -292,7 +292,7 @@ void CVideo::threadAnalyzingLoop()
 			readVideoFrame(currentFrame, i);
 			videoSummarization(i, prevFrame, currentFrame);
 
-#if 1
+#if 0
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
 			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());
