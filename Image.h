@@ -32,6 +32,8 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/nonfree/features2d.hpp"
 
+#define SCALE 4
+
 // Class structure of Image 
 // Use to encapsulate an RGB image
 using namespace cv;
@@ -42,6 +44,7 @@ private:
 	int		m_nWidth;					// Width of Image
 	int		m_nHeight;					// Height of Image
 	unsigned char*	m_Data;					// RGB data of the image
+	unsigned char*  m_DataThumbnail;		//RGB data at /4 scale
 	Mat*	m_pDataMat;				// Open CV data matrix
 	bool	m_bFeatureDet;
 	SurfFeatureDetector  *m_pDetector;//For real-time processing
@@ -63,7 +66,8 @@ public:
 	void	setHeight(const int h) { m_nHeight = h; };
 	int		getWidth() const { return m_nWidth; };
 	int		getHeight() const { return m_nHeight; };
-	unsigned char*	getImageData() { return m_Data; };
+	unsigned char* getImageData() { return m_Data; };
+	unsigned char* getImageThumbnailData();
 
 	// Input Output operations
 	bool	ReadImage(FILE*, unsigned int);

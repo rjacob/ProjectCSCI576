@@ -12,6 +12,7 @@
 MyImage::MyImage() 
 {
 	m_Data = NULL;
+	m_DataThumbnail = NULL;
 	m_pDataMat = NULL;
 	m_nWidth = -1;
 	m_nHeight = -1;
@@ -22,6 +23,7 @@ MyImage::MyImage()
 MyImage::MyImage(int _w, int _h)
 {
 	m_Data = NULL;
+	m_DataThumbnail = NULL;
 	m_pDataMat = NULL;
 	m_nWidth = _w;
 	m_nHeight = _h;
@@ -32,6 +34,8 @@ MyImage::~MyImage()
 {
 	if (m_Data)
 		delete m_Data;
+	if (m_DataThumbnail)
+		delete m_DataThumbnail;
 	if (m_pDataMat)
 		delete m_pDataMat;
 
@@ -126,49 +130,43 @@ bool MyImage::ReadImage(FILE* _inFile, unsigned int _nFrameNo)
 	return true;
 }
 
+//TODO: use bicubic, which has a natural sharpening effect.
+//Emphasizing the data that remains in the new, 
+//smaller image after discarding all that extra detail from the original image.
+//For ease, used Bilinear Interpolation
+unsigned char* MyImage::getImageThumbnailData()
+{
+	Mat	cvData(m_nHeight, m_nWidth, CV_8UC3, m_Data);
+	Mat cvDataThumbnail(m_nHeight / SCALE, m_nWidth / SCALE, CV_8UC3, Scalar(0, 0, 0));
+
+	if(m_DataThumbnail == NULL)
+		m_DataThumbnail = new unsigned char[(m_nWidth/ SCALE)*(m_nHeight/ SCALE) * 3];
+
+	resize(cvData, cvDataThumbnail, cvDataThumbnail.size(), INTER_LINEAR);
+
+	memcpy(m_DataThumbnail, cvDataThumbnail.data, cvDataThumbnail.rows*cvDataThumbnail.cols * 3);
+
+	return m_DataThumbnail;
+}//getImageThumbnailData
+
 // MyImage functions defined here
 bool MyImage::WriteImage(FILE* _pImageFile, Mat& _data)
 {
 	// Create and populate RGB buffers
 	int i;
-	unsigned char *Rbuf = new unsigned char[m_nHeight*m_nWidth];
-	unsigned char *Gbuf = new unsigned char[m_nHeight*m_nWidth];
-	unsigned char *Bbuf = new unsigned char[m_nHeight*m_nWidth];
+	unsigned char Data[480*270 * 3] = { 0 };
 
-	char buff[8] = { 0 };
+	memcpy(Data, _data.data, _data.rows*_data.cols * 3);
 
-	for (i = 0; i < m_nHeight; i++)
+	for (i = 0; i < m_nWidth*m_nHeight; i++)
 	{
-		for (int j = 0; j < m_nWidth; j++)
-		{
-			Bbuf[i*m_nWidth + j] = _data.at<Vec3b>(i, j)[0];
-			Gbuf[i*m_nWidth + j] = _data.at<Vec3b>(i, j)[1];
-			Rbuf[i*m_nWidth + j] = _data.at<Vec3b>(i,j)[2];
-		}
+		fputc(Data[i+2], _pImageFile);
+		fputc(Data[i+1], _pImageFile);
+		fputc(Data[i], _pImageFile);
 	}
 
-	// Write data to file
-	for (i = 0; i < m_nWidth*m_nHeight; i ++)
-	{
-		fputc(Rbuf[i], _pImageFile);
-	}
-	fflush(_pImageFile);
-	for (i = 0; i < m_nWidth*m_nHeight; i ++)
-	{
-		fputc(Gbuf[i], _pImageFile);
-	}
-	fflush(_pImageFile);
-	for (i = 0; i < m_nWidth*m_nHeight; i ++)
-	{
-		fputc(Bbuf[i], _pImageFile);
-	}
 	fflush(_pImageFile);
 	
-	// Clean up and return
-	delete Rbuf;
-	delete Gbuf;
-	delete Bbuf;
-
 	return true;
 }//WriteImage
 

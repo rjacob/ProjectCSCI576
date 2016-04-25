@@ -96,6 +96,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 	GetClientRect(hDlg, &rt);
 	unsigned short unMin, unSec, unSubSec;
 	char str[32] = { 0 };
+	static clock_t iterationTime;
 
     switch( msg ) 
     {
@@ -186,6 +187,9 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
             break;
 
         case WM_TIMER:
+			sprintf(str, "%d ms\n", clock() - iterationTime);
+			OutputDebugString(_T(str));
+			iterationTime = clock();
             OnTimer( hDlg );
             break;
 
@@ -212,6 +216,11 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 
 			EndPaint(hDlg, &ps);
+		}
+		break;
+		case WM_HSCROLL:
+		{
+			int i = GetScrollPos(hDlg, IDC_SCROLLBAR1);
 		}
 		break;
         default:
@@ -257,8 +266,9 @@ VOID OnInitDialog( HWND hDlg )
 
     g_bBufferPaused = FALSE;
 
-    // Create a timer, so we can check for when the soundbuffer is stopped
-    SetTimer( hDlg, 0, 1000/ FRAME_RATE_HZ, NULL );
+    //Create a timer, so we can check for when the soundbuffer is stopped
+	//also use for Video
+    SetTimer( hDlg, 0,63, NULL );//1000/ FRAME_RATE_HZ
 }//OnInitDialog
 
 //-----------------------------------------------------------------------------
@@ -269,45 +279,11 @@ VOID OnOpenSoundFile( HWND hDlg )
 {
     HRESULT hr;
 
-    //static TCHAR strFileName[MAX_PATH] = TEXT("");
-    //static TCHAR strPath[MAX_PATH] = TEXT("");
-
-    //// Setup the OPENFILENAME structure
-    //OPENFILENAME ofn = { sizeof(OPENFILENAME), hDlg, NULL,
-    //                     TEXT("WAV Files\0*.wav\0All Files\0*.*\0\0"), NULL,
-    //                     0, 1, strFileName, MAX_PATH, NULL, 0, strPath,
-    //                     TEXT("Open Sound File"),
-    //                     OFN_FILEMUSTEXIST|OFN_HIDEREADONLY, 0, 0,
-    //                     TEXT(".wav"), 0, NULL, NULL };
-
-    //// Get the default media path (something like C:\WINDOWS\MEDIA)
-    //if( '\0' == strPath[0] )
-    //{
-    //    GetWindowsDirectory( strPath, MAX_PATH );
-    //    if( strcmp( &strPath[strlen(strPath)], TEXT("\\") ) )
-    //        strcat( strPath, TEXT("\\") );
-    //    strcat( strPath, TEXT("MEDIA") );
-    //}
-
     if( g_pSound )
     {
         g_pSound->Stop();
         g_pSound->Reset();
     }
-
-    // Update the UI controls to show the sound as loading a file
-    //EnableWindow(  GetDlgItem( hDlg, IDC_PLAY ), FALSE);
-    //EnableWindow(  GetDlgItem( hDlg, IDC_STOP ), FALSE);
-    //SetDlgItemText( hDlg, IDC_FILENAME, TEXT("Loading file...") );
-
-    //// Display the OpenFileName dialog. Then, try to load the specified file
-    //if( TRUE != GetOpenFileName( &ofn ) )
-    //{
-    //    SetDlgItemText( hDlg, IDC_FILENAME, TEXT("Load aborted.") );
-    //    return;
-    //}
-
-    //SetDlgItemText( hDlg, IDC_FILENAME, TEXT("") );
 
     // Free any previous sound, and make a new one
     SAFE_DELETE( g_pSound );
@@ -324,11 +300,6 @@ VOID OnOpenSoundFile( HWND hDlg )
     // Update the UI controls to show the sound as the file is loaded
     //SetDlgItemText( hDlg, IDC_FILENAME, AudioPath);
     EnablePlayUI( hDlg, VIDEO_STATE_STOPPED);
-
-    // Remember the path for next time
-    //strcpy( strPath, AudioPath);
-    //char* strLastSlash = strrchr(AudioPath, '\\' );
-    //strLastSlash[0] = '\0';
 }
 
 
@@ -390,6 +361,7 @@ HRESULT OnPlaySound( HWND hDlg )
 //-----------------------------------------------------------------------------
 VOID OnTimer( HWND hDlg ) 
 {
+	static clock_t iterationTime;
 	static unsigned long ulTimerCount = 0;
 	unsigned short unMin, unSec, unSubSec;
 	char str[32] = { 0 };
@@ -457,40 +429,35 @@ VOID OnTimer( HWND hDlg )
 	}
 	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYSIS_COMPLETE)
 	{
+		BITMAP bm;
 		BITMAPINFO bitmapinfo;
-		MyImage thumbnail;
+		MyImage image;
+
+		image.setHeight(g_pMyVideo->getVideoHeight());
+		image.setWidth(g_pMyVideo->getVideoWidth());
 
 		memset(&bitmapinfo, 0, sizeof(bitmapinfo));
 		bitmapinfo.bmiHeader.biSize = sizeof(g_bmi.bmiHeader);
-		bitmapinfo.bmiHeader.biWidth = g_pMyVideo->getVideoWidth()/4;
-		bitmapinfo.bmiHeader.biHeight = -g_pMyVideo->getVideoHeight()/4;  // Use negative height.  DIB is top-down.
 		bitmapinfo.bmiHeader.biPlanes = 1;
 		bitmapinfo.bmiHeader.biBitCount = 24;
 		bitmapinfo.bmiHeader.biCompression = BI_RGB;
-		bitmapinfo.bmiHeader.biSizeImage = (g_pMyVideo->getVideoWidth()/4)*(g_pMyVideo->getVideoHeight()/4);
+		bitmapinfo.bmiHeader.biWidth = g_pMyVideo->getVideoWidth() / 4;
+		bitmapinfo.bmiHeader.biHeight = -(g_pMyVideo->getVideoHeight() / 4);  // Use negative height.  DIB is top-down.
+		bitmapinfo.bmiHeader.biSizeImage = (g_pMyVideo->getVideoWidth() / 4)*(g_pMyVideo->getVideoHeight() / 4);
 
 		for (int i = 0; i < 4 /*g_IFrames.size()*/; ++i)
 		{
-			g_pMyVideo->readVideoFrame(thumbnail, g_IFrames.at(i));
-			StretchDIBits(
-				GetDC(hDlg),
-				34 + i*(g_pMyVideo->getVideoWidth()/4),
-				300,
-				g_pMyVideo->getVideoWidth()/4,
-				g_pMyVideo->getVideoHeight()/4,
-				0,
-				0,
-				480,
-				270,
-				thumbnail.getImageData(),
-				&bitmapinfo,
-				0,
-				0);
+			g_pMyVideo->readVideoFrame(image, i);//g_IFrames.at(i)
+
+			SetDIBitsToDevice(GetDC(hDlg),
+				34+i*(g_pMyVideo->getVideoWidth()/4 +1), 320, image.getWidth()/4, image.getHeight()/4,
+				0, 0, 0, image.getHeight()/4,
+				image.getImageThumbnailData(), &bitmapinfo, DIB_RGB_COLORS);
 		}
 
 		g_IFrames = g_pMyVideo->getIFrames();
 		g_pMyVideo->stopVideo();
-		EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
+		EnablePlayUI(hDlg, VIDEO_STATE_ANALYSIS_COMPLETE);
 	}
 }//OnTimer
 
@@ -511,11 +478,13 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDCANCEL), FALSE);
 		SetDlgItemText(hDlg, IDC_PLAY, "&Pause");
+		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 	}
 	else if (_eVideoState == VIDEO_STATE_BUFFERING)
 	{
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
 		SetDlgItemText(hDlg, IDC_PLAY, "&Buffering");
+		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 	}
     else if(_eVideoState == VIDEO_STATE_PAUSED)
     {
@@ -526,6 +495,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
         EnableWindow(   GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
         SetFocus(       GetDlgItem( hDlg, IDC_PLAY ) );
+		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
         SetDlgItemText( hDlg, IDC_PLAY, "&Play" );
     }
 	else if (_eVideoState == VIDEO_STATE_STOPPED)
@@ -539,6 +509,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_STATIC_PER), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDCANCEL), TRUE);
 		SetFocus(GetDlgItem(hDlg, IDC_PLAY));
+		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 		if(g_pMyVideo->getCurrentFrameNo() != g_pMyVideo->getNoFrames())
 		{
 			//Stopped by user and not on completion
@@ -546,6 +517,10 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%%");
 		}
 		SetDlgItemText(hDlg, IDC_PLAY, "&Play");
+	}
+	else if (_eVideoState == VIDEO_STATE_ANALYSIS_COMPLETE)
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), TRUE);
 	}
 	else if (_eVideoState == VIDEO_STATE_ANALYZING)
 	{
@@ -555,6 +530,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDC_STOP), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 		SetFocus(GetDlgItem(hDlg, IDC_ANALYZE));
 	}
 }//EnablePlayUI

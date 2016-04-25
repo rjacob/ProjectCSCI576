@@ -285,14 +285,14 @@ void CVideo::threadAnalyzingLoop()
 
 	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
-	for (unsigned long i = 0; i < m_ulNoFrames; i++)
+	for (unsigned long i = 0; i < m_ulNoFrames; i++)//m_ulNoFrames
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
 			readVideoFrame(currentFrame, i);
 			videoSummarization(i, prevFrame, currentFrame);
 
-#if 0
+#if 1
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
 			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());

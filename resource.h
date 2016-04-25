@@ -18,6 +18,7 @@
 #define IDC_STATIC_END                  1027
 #define IDC_PROGRESS                    1028
 #define IDC_STATIC_PER                  1029
+#define IDC_MFCMENUBUTTON1              1030
 
 // Next default values for new objects
 // 
@@ -25,7 +26,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         32772
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
