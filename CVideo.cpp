@@ -285,14 +285,14 @@ void CVideo::threadAnalyzingLoop()
 
 	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
-	for (unsigned long i = 0; i < m_ulNoFrames; i++)//m_ulNoFrames
+	for (unsigned long i = 0; i < 100; i++)//m_ulNoFrames
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
 			readVideoFrame(currentFrame, i);
 			videoSummarization(i, prevFrame, currentFrame);
 
-#if 1
+#if 0
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
 			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());
@@ -370,14 +370,13 @@ void CVideo::threadAnalyzingLoop()
 					//Transformation (Rotation or a Projection)
 					Mat warped(m_unVideoHeight, m_unVideoWidth, CV_8UC3, Scalar(0, 0, 0));
 					warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
-					currentFrame.WriteImage(m_correctFile, greyMatCurr);
+					currentFrame.WriteImage(m_correctFile, warped);
 imshow("warped", warped);
 				}//if #pts
 				else
 				{
 imshow("warped", dataMatCurrent);
-					//m_pCurrentFrame->WriteImage(m_correctFile, (char*)dataMatCurrent.data);
-					//fwrite(dataMatCurrent.data, CV_8UC3, m_unWidth*m_unHeight, m_correctFile);
+					currentFrame.WriteImage(m_correctFile, dataMatCurrent);
 
 //=================================
 //Mat delt(m_unHeight,m_unWidth, CV_8UC3, Scalar(255,0,0));

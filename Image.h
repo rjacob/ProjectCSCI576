@@ -74,7 +74,6 @@ public:
 	bool	WriteImage(FILE*, Mat&);
 	
 	// Calculations
-	void	countSymbols();
 	double	calcEntropy();
 	double	templateMatchDifference(MyImage &previousFrame);
 	int		colorHistogramDifference(MyImage &previousFrame);

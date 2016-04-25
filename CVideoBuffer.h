@@ -2,7 +2,7 @@
 #include "CMutexExclusiveLock.h"
 #include "Image.h"
 
-#define BUFFER_SIZE 1000 //480*270*3*1000 = 388.8 Mb RAM
+#define BUFFER_SIZE 4 //480*270*3*1000 = 388.8 Mb RAM
 #define DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
 
 typedef enum
@@ -26,7 +26,7 @@ private:
 	unsigned short m_usCurrentWriteIndex;
 	unsigned short m_usCurrentReadIndex;
 
-	bool m_bRead2Read;
+	bool m_bReady2Read;
 public:
 	CVideoBuffer(int, int);
 	virtual ~CVideoBuffer();

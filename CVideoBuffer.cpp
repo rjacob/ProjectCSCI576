@@ -4,7 +4,7 @@ CVideoBuffer::CVideoBuffer(int _w, int _h)
 :
 	m_usCurrentWriteIndex(0),
 	m_usCurrentReadIndex(0),
-	m_bRead2Read(false)
+	m_bReady2Read(false)
 {
 	for (int i = 0; i < BUFFER_SIZE; ++i)
 	{
@@ -28,7 +28,7 @@ void CVideoBuffer::reset()
 
 	m_usCurrentWriteIndex = 0;
 	m_usCurrentReadIndex = 0;
-	m_bRead2Read = false;
+	m_bReady2Read = false;
 }//reset
 
 //Driven by processling loop/ thread
@@ -42,7 +42,7 @@ BUFFER_STYPE* CVideoBuffer::nextFrame()
 		m_videoBuffer[m_usCurrentWriteIndex].eBuffElemState = BUFFER_ELEM_READY;
 
 		if (m_usCurrentWriteIndex == BUFFER_SIZE / 2)
-			m_bRead2Read = true;
+			m_bReady2Read = true;
 
 		m_usCurrentWriteIndex = ++m_usCurrentWriteIndex % BUFFER_SIZE;
 	}
@@ -60,7 +60,7 @@ BUFFER_STYPE* CVideoBuffer::read()
 {
 	BUFFER_STYPE* pImage = NULL;
 
-	if(m_bRead2Read)
+	if(m_bReady2Read)
 	{
 		if(m_videoBuffer[m_usCurrentReadIndex].eBuffElemState == BUFFER_ELEM_READY)
 		{

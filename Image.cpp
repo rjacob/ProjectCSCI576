@@ -154,26 +154,41 @@ bool MyImage::WriteImage(FILE* _pImageFile, Mat& _data)
 {
 	// Create and populate RGB buffers
 	int i;
+	char *Rbuf = new char[m_nHeight*m_nWidth];
+	char *Gbuf = new char[m_nHeight*m_nWidth];
+	char *Bbuf = new char[m_nHeight*m_nWidth];
 	unsigned char Data[480*270 * 3] = { 0 };
 
 	memcpy(Data, _data.data, _data.rows*_data.cols * 3);
 
+	for (i = 0; i < m_nHeight*m_nWidth; i++)
+	{
+		Bbuf[i] = Data[3 * i];
+		Gbuf[i] = Data[3 * i + 1];
+		Rbuf[i] = Data[3 * i + 2];
+	}
+	
+	// Write data to file
 	for (i = 0; i < m_nWidth*m_nHeight; i++)
 	{
-		fputc(Data[i+2], _pImageFile);
-		fputc(Data[i+1], _pImageFile);
-		fputc(Data[i], _pImageFile);
+		fputc(Rbuf[i], _pImageFile);
+	}
+	for (i = 0; i < m_nWidth*m_nHeight; i++)
+	{
+		fputc(Gbuf[i], _pImageFile);
+	}
+	for (i = 0; i < m_nWidth*m_nHeight; i++)
+	{
+		fputc(Bbuf[i], _pImageFile);
 	}
 
 	fflush(_pImageFile);
+	delete Rbuf;
+	delete Gbuf;
+	delete Bbuf;
 	
 	return true;
 }//WriteImage
-
-void MyImage::countSymbols()
-{
-
-}//countSymbols
 
 // Calculate entropy of image
 // Calculation based on flattening RGB image into 1D array
@@ -304,6 +319,14 @@ void MyImage::featuresDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
 {
 	if (!_dataMat.empty())
 	{
-		m_pDetector->detect(_dataMat, _keypoints);
+		Mat mask = Mat::zeros(_dataMat.size(), _dataMat.type());
+		// select a ROI
+		Mat regionOfInterest(mask, Rect(0, 0, 240, 135));
+
+		// fill the ROI with (255, 255, 255) (which is white in RGB space);
+		// the original image will be modified
+		regionOfInterest = Scalar(255, 255, 255);
+
+		m_pDetector->detect(_dataMat, _keypoints, mask);
 	}
 }//siftFeatures

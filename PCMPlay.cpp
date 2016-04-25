@@ -29,6 +29,7 @@ VOID    OnOpenSoundFile( HWND hDlg );
 HRESULT OnPlaySound( HWND hDlg );
 VOID    OnTimer( HWND hDlg );
 VOID    EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eState);
+VOID	DrawThumbnails(HWND, int);
 
 //-----------------------------------------------------------------------------
 // Defines, constants, and global variables
@@ -220,7 +221,8 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 		break;
 		case WM_HSCROLL:
 		{
-			int i = GetScrollPos(hDlg, IDC_SCROLLBAR1);
+			//volatile int i = GetScrollPos(hDlg, IDC_SCROLLBAR1);
+			//DrawThumbnails(hDlg, i);
 		}
 		break;
         default:
@@ -265,6 +267,8 @@ VOID OnInitDialog( HWND hDlg )
     }
 
     g_bBufferPaused = FALSE;
+
+	SetScrollRange(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, 0, 400, FALSE);
 
     //Create a timer, so we can check for when the soundbuffer is stopped
 	//also use for Video
@@ -429,33 +433,8 @@ VOID OnTimer( HWND hDlg )
 	}
 	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYSIS_COMPLETE)
 	{
-		BITMAP bm;
-		BITMAPINFO bitmapinfo;
-		MyImage image;
 
-		image.setHeight(g_pMyVideo->getVideoHeight());
-		image.setWidth(g_pMyVideo->getVideoWidth());
-
-		memset(&bitmapinfo, 0, sizeof(bitmapinfo));
-		bitmapinfo.bmiHeader.biSize = sizeof(g_bmi.bmiHeader);
-		bitmapinfo.bmiHeader.biPlanes = 1;
-		bitmapinfo.bmiHeader.biBitCount = 24;
-		bitmapinfo.bmiHeader.biCompression = BI_RGB;
-		bitmapinfo.bmiHeader.biWidth = g_pMyVideo->getVideoWidth() / 4;
-		bitmapinfo.bmiHeader.biHeight = -(g_pMyVideo->getVideoHeight() / 4);  // Use negative height.  DIB is top-down.
-		bitmapinfo.bmiHeader.biSizeImage = (g_pMyVideo->getVideoWidth() / 4)*(g_pMyVideo->getVideoHeight() / 4);
-
-		for (int i = 0; i < 4 /*g_IFrames.size()*/; ++i)
-		{
-			g_pMyVideo->readVideoFrame(image, i);//g_IFrames.at(i)
-
-			SetDIBitsToDevice(GetDC(hDlg),
-				34+i*(g_pMyVideo->getVideoWidth()/4 +1), 320, image.getWidth()/4, image.getHeight()/4,
-				0, 0, 0, image.getHeight()/4,
-				image.getImageThumbnailData(), &bitmapinfo, DIB_RGB_COLORS);
-		}
-
-		g_IFrames = g_pMyVideo->getIFrames();
+		DrawThumbnails(hDlg,40);
 		g_pMyVideo->stopVideo();
 		EnablePlayUI(hDlg, VIDEO_STATE_ANALYSIS_COMPLETE);
 	}
@@ -478,13 +457,13 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDCANCEL), FALSE);
 		SetDlgItemText(hDlg, IDC_PLAY, "&Pause");
-		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
+		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 	}
 	else if (_eVideoState == VIDEO_STATE_BUFFERING)
 	{
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
 		SetDlgItemText(hDlg, IDC_PLAY, "&Buffering");
-		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
+		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 	}
     else if(_eVideoState == VIDEO_STATE_PAUSED)
     {
@@ -495,7 +474,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
         EnableWindow(   GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
         SetFocus(       GetDlgItem( hDlg, IDC_PLAY ) );
-		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
+		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
         SetDlgItemText( hDlg, IDC_PLAY, "&Play" );
     }
 	else if (_eVideoState == VIDEO_STATE_STOPPED)
@@ -509,7 +488,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_STATIC_PER), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDCANCEL), TRUE);
 		SetFocus(GetDlgItem(hDlg, IDC_PLAY));
-		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
+		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 		if(g_pMyVideo->getCurrentFrameNo() != g_pMyVideo->getNoFrames())
 		{
 			//Stopped by user and not on completion
@@ -520,7 +499,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 	}
 	else if (_eVideoState == VIDEO_STATE_ANALYSIS_COMPLETE)
 	{
-		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), TRUE);
+		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), TRUE);
 	}
 	else if (_eVideoState == VIDEO_STATE_ANALYZING)
 	{
@@ -530,7 +509,52 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDC_STOP), TRUE);
-		EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
+		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 		SetFocus(GetDlgItem(hDlg, IDC_ANALYZE));
 	}
 }//EnablePlayUI
+
+#define THUMBNAIL_X_OFFSET 34
+void DrawThumbnails(HWND _hDlg, int _nHShift)
+{
+	BITMAPINFO bitmapinfo;
+	MyImage image;
+	RECT rect;
+	int nWindowWidth;
+
+	if (GetWindowRect(_hDlg, &rect))
+	{
+		nWindowWidth = rect.right - rect.left;
+	}
+
+	image.setHeight(g_pMyVideo->getVideoHeight());
+	image.setWidth(g_pMyVideo->getVideoWidth());
+
+	memset(&bitmapinfo, 0, sizeof(bitmapinfo));
+	bitmapinfo.bmiHeader.biSize = sizeof(g_bmi.bmiHeader);
+	bitmapinfo.bmiHeader.biPlanes = 1;
+	bitmapinfo.bmiHeader.biBitCount = 24;
+	bitmapinfo.bmiHeader.biCompression = BI_RGB;
+	bitmapinfo.bmiHeader.biWidth = g_pMyVideo->getVideoWidth() / 4;
+	bitmapinfo.bmiHeader.biHeight = -(g_pMyVideo->getVideoHeight() / 4);  // Use negative height.  DIB is top-down.
+	bitmapinfo.bmiHeader.biSizeImage = (g_pMyVideo->getVideoWidth() / 4)*(g_pMyVideo->getVideoHeight() / 4);
+
+	if(!g_IFrames.size())
+		g_IFrames = g_pMyVideo->getIFrames();//First Time
+
+	for (int i = 0; i < g_IFrames.size(); ++i)
+	{
+		g_pMyVideo->readVideoFrame(image, g_IFrames.at(i));
+
+		volatile int nLeft = THUMBNAIL_X_OFFSET + (g_pMyVideo->getVideoWidth() / 4) - _nHShift;
+		volatile int nRight = THUMBNAIL_X_OFFSET - _nHShift + i*(g_pMyVideo->getVideoWidth() / 4 + 1);
+
+		if(nLeft >0 && nRight < nWindowWidth) //Not completely out of frame
+		{
+			SetDIBitsToDevice(GetDC(_hDlg),
+				THUMBNAIL_X_OFFSET - _nHShift + i*(g_pMyVideo->getVideoWidth() / 4 + 1), 320, image.getWidth() / 4, image.getHeight() / 4,
+				0, 0, 0, image.getHeight() / 4,
+				image.getImageThumbnailData(), &bitmapinfo, DIB_RGB_COLORS);
+		}
+	}
+}//DrawThumbnails
