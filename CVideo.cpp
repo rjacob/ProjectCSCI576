@@ -255,11 +255,13 @@ void CVideo::threadAnalyzingLoop()
 	m_eVideoState = VIDEO_STATE_ANALYZING;
 	m_ulCurrentFrameIndex = 0;
 	m_unVideoDurationSubSec = m_ulNoFrames * FRAME_RATE_HZ;
-	vector<KeyPoint> keypointsCurr, keypointsPrev;
 
 	//For Analysis we dont have to worry about buffering
 	MyImage currentFrame(m_unVideoWidth, m_unVideoHeight);
 	MyImage prevFrame(m_unVideoWidth, m_unVideoHeight);
+	vector<KeyPoint> keypointsCurr, keypointsPrev;
+	//Descriptor Extaction
+	SurfDescriptorExtractor extractor;
 
 #if DEBUG_FILE
 	debugOutput = fopen("Video Data.txt", "w");
@@ -282,14 +284,14 @@ void CVideo::threadAnalyzingLoop()
 
 	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
-	for (unsigned long i = 0; i < 100; i++)//m_ulNoFrames
+	for (unsigned long i = 0; i < m_ulNoFrames/4; i++)
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
 			readVideoFrame(currentFrame, i);
 			videoSummarization(i, prevFrame, currentFrame);
 
-#if 1
+#if 0
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
 			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());
@@ -308,8 +310,6 @@ void CVideo::threadAnalyzingLoop()
 				//Query
 				currentFrame.featuresDetec(greyMatCurr, keypointsCurr);
 
-				//Descriptor Extaction
-				SurfDescriptorExtractor extractor;
 				try
 				{
 					extractor.compute(greyMatPrev, keypointsPrev, m_descriptorPrev);

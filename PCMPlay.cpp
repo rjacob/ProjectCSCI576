@@ -98,6 +98,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 	unsigned short unMin, unSec, unSubSec;
 	char str[32] = { 0 };
 	static clock_t iterationTime;
+	volatile int nCurrentScrollbarPos;
 
     switch( msg ) 
     {
@@ -215,15 +216,38 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 			g_bmi.bmiHeader.biCompression = BI_RGB;
 			g_bmi.bmiHeader.biSizeImage = g_pMyVideo->getVideoWidth()*g_pMyVideo->getVideoHeight();
 
-
 			EndPaint(hDlg, &ps);
 		}
 		break;
 		case WM_HSCROLL:
 		{
-			//volatile int i = GetScrollPos(hDlg, IDC_SCROLLBAR1);
-			//DrawThumbnails(hDlg, i);
-		}
+			switch (LOWORD(wParam))
+			{
+				case SB_LINELEFT:
+				case SB_PAGELEFT:
+					nCurrentScrollbarPos = GetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL);
+					if (nCurrentScrollbarPos - 1 > 0)
+						nCurrentScrollbarPos -= 1;
+					else if (nCurrentScrollbarPos > 0)
+						nCurrentScrollbarPos = 0;
+					DrawThumbnails(hDlg, nCurrentScrollbarPos);
+					SetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, nCurrentScrollbarPos, TRUE);
+				break;
+				case SB_LINERIGHT:
+				case SB_PAGERIGHT:
+					nCurrentScrollbarPos = GetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL);
+					if (nCurrentScrollbarPos + 1 < g_IFrames.size())
+						nCurrentScrollbarPos += 1;
+					else if (nCurrentScrollbarPos < g_IFrames.size())
+						nCurrentScrollbarPos = g_IFrames.size();
+					DrawThumbnails(hDlg, nCurrentScrollbarPos);
+					SetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, nCurrentScrollbarPos, TRUE);
+				break;
+				case SB_ENDSCROLL:
+					break;
+			}//switch
+
+		}//WM_HSCROLL
 		break;
         default:
             return FALSE; // Didn't handle message
@@ -268,11 +292,11 @@ VOID OnInitDialog( HWND hDlg )
 
     g_bBufferPaused = FALSE;
 
-	//SetScrollPos(hDlg, IDC_SCROLLBAR1, 200, FALSE);
+	SetScrollRange(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, 0, 100, TRUE);
 
     //Create a timer, so we can check for when the soundbuffer is stopped
 	//also use for Video
-    SetTimer( hDlg, 0,63, NULL );//1000/ FRAME_RATE_HZ
+    SetTimer(hDlg, 0,63, NULL );//1000/ FRAME_RATE_HZ
 }//OnInitDialog
 
 //-----------------------------------------------------------------------------
@@ -433,8 +457,7 @@ VOID OnTimer( HWND hDlg )
 	}
 	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYSIS_COMPLETE)
 	{
-
-		DrawThumbnails(hDlg,40);
+		DrawThumbnails(hDlg,4);
 		g_pMyVideo->stopVideo();
 		EnablePlayUI(hDlg, VIDEO_STATE_ANALYSIS_COMPLETE);
 	}
@@ -521,6 +544,7 @@ void DrawThumbnails(HWND _hDlg, int _nHShift)
 	MyImage image;
 	RECT rect;
 	int nWindowWidth;
+	static int nFirstTime = 1;
 
 	if (GetWindowRect(_hDlg, &rect))
 	{
@@ -540,21 +564,26 @@ void DrawThumbnails(HWND _hDlg, int _nHShift)
 	bitmapinfo.bmiHeader.biSizeImage = (g_pMyVideo->getVideoWidth() / 4)*(g_pMyVideo->getVideoHeight() / 4);
 
 	if(!g_IFrames.size())
-		g_IFrames = g_pMyVideo->getIFrames();//First Time
-
-	for (int i = 0; i < g_IFrames.size(); ++i)
 	{
-		g_pMyVideo->readVideoFrame(image, g_IFrames.at(i));
+		g_IFrames = g_pMyVideo->getIFrames();//First Time
+		SetScrollRange(GetDlgItem(_hDlg, IDC_SCROLLBAR1), SB_CTL, 0, g_IFrames.size(), TRUE);
+	}
 
-		volatile int nLeft = THUMBNAIL_X_OFFSET + (g_pMyVideo->getVideoWidth() / 4) - _nHShift;
-		volatile int nRight = THUMBNAIL_X_OFFSET - _nHShift + i*(g_pMyVideo->getVideoWidth() / 4 + 1);
+	for (int i = 0; i < 4; ++i)
+	{
+		volatile int index = i + _nHShift;
 
-		if(nLeft >0 && nRight < nWindowWidth) //Not completely out of frame
-		{
-			SetDIBitsToDevice(GetDC(_hDlg),
-				THUMBNAIL_X_OFFSET - _nHShift + i*(g_pMyVideo->getVideoWidth() / 4 + 1), 320, image.getWidth() / 4, image.getHeight() / 4,
-				0, 0, 0, image.getHeight() / 4,
-				image.getImageThumbnailData(), &bitmapinfo, DIB_RGB_COLORS);
-		}
+		if (index >= g_IFrames.size())
+			index = g_IFrames.size() - 1;
+
+		g_pMyVideo->readVideoFrame(image, g_IFrames.at(index));
+
+		SetDIBitsToDevice(GetDC(_hDlg),
+			THUMBNAIL_X_OFFSET + i*(g_pMyVideo->getVideoWidth() / 4 + 1),
+			320,
+			image.getWidth() / 4,
+			image.getHeight() / 4,
+			0, 0, 0, image.getHeight() / 4,
+			image.getImageThumbnailData(), &bitmapinfo, DIB_RGB_COLORS);
 	}
 }//DrawThumbnails
