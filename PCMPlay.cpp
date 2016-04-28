@@ -20,6 +20,8 @@
 #include "CS576SoundUtil.h"
 #include "DXUtil.h"
 
+#define THUMBNAIL_X_OFFSET 34
+
 //-----------------------------------------------------------------------------
 // Function-prototypes
 //-----------------------------------------------------------------------------
@@ -248,6 +250,39 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 			}//switch
 
 		}//WM_HSCROLL
+		break;
+		case WM_LBUTTONDBLCLK:
+		{
+			if (g_pMyVideo)
+			{
+				POINT mousePos;
+				GetCursorPos(&mousePos);
+				if (mousePos.y > 320 && mousePos.y < 320 + 270 / 4 &&
+					mousePos.x > THUMBNAIL_X_OFFSET && mousePos.x < 480 + 4)
+				{
+					//1st
+					if (mousePos.x < THUMBNAIL_X_OFFSET + 270 / 4)
+					{
+						g_pMyVideo->setCurrentFrameNo(100);
+					}
+					//2nd
+					else if (mousePos.x < THUMBNAIL_X_OFFSET + 270 / 2)
+					{
+						g_pMyVideo->setCurrentFrameNo(200);
+					}
+					//3rd
+					else if (mousePos.x < THUMBNAIL_X_OFFSET + 3 * 270 / 4)
+					{
+						g_pMyVideo->setCurrentFrameNo(300);
+					}
+					//4th
+					else
+					{
+						g_pMyVideo->setCurrentFrameNo(400);
+					}
+				}
+			}
+		}//WM_LBUTTONDBLCLK
 		break;
         default:
             return FALSE; // Didn't handle message
@@ -537,7 +572,6 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 	}
 }//EnablePlayUI
 
-#define THUMBNAIL_X_OFFSET 34
 void DrawThumbnails(HWND _hDlg, int _nHShift)
 {
 	BITMAPINFO bitmapinfo;
