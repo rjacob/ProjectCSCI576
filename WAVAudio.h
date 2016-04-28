@@ -25,8 +25,7 @@ private:
 	int* wavData;
 
 	//Helper functions
-	bool parseWavHeader(FILE* inputWAV);
-	unsigned int parseWavHeaderSection(FILE* inputWAV, unsigned int numBytes);
+	unsigned int parseWavHeaderField(FILE* inputWAV, unsigned int numBytes);
 	int parseWavDataSample(FILE* inputWAV, unsigned int bytesPerSample);
 	int convertTwosComplement(unsigned int sample, unsigned int bytesPerSample);
 

@@ -31,16 +31,8 @@ WAVAudio::~WAVAudio()
 		delete wavData;
 }
 
-//Parse WAV header
-bool WAVAudio::parseWavHeader(FILE* inputWAV) {
-	unsigned char buffer[4];
-	fread(buffer, sizeof(unsigned char), 4, inputWAV);
-
-	return true;
-}
-
 //Parse each WAV header parameter
-unsigned int WAVAudio::parseWavHeaderSection(FILE* inputWAV, unsigned int numBytes) {
+unsigned int WAVAudio::parseWavHeaderField(FILE* inputWAV, unsigned int numBytes) {
 	//Read into buffer
 	unsigned char buffer[4];
 	fread(buffer, sizeof(unsigned char), numBytes, inputWAV);
@@ -73,6 +65,7 @@ int WAVAudio::parseWavDataSample(FILE* inputWAV, unsigned int bytesPerSample) {
 }
 
 //Convert unsigned byte data to signed two's complement integer data
+//Used to convert WAV sample data
 int WAVAudio::convertTwosComplement(unsigned int sample, unsigned int bytesPerSample) {
 	unsigned int significantBitMask = (1 << (bytesPerSample * 8 - 1));
 	if ((sample & significantBitMask) == significantBitMask) {
@@ -91,26 +84,26 @@ int WAVAudio::convertTwosComplement(unsigned int sample, unsigned int bytesPerSa
 bool WAVAudio::readWAV(FILE* inputWAV) {
 	unsigned char buffer[4];
 	//Get RIFF header data
-	chunkID = parseWavHeaderSection(inputWAV, 4);
-	chunkSize = parseWavHeaderSection(inputWAV, 4);
-	format = parseWavHeaderSection(inputWAV, 4);
+	chunkID = parseWavHeaderField(inputWAV, 4);
+	chunkSize = parseWavHeaderField(inputWAV, 4);
+	format = parseWavHeaderField(inputWAV, 4);
 
 	//Get WAVE format data
-	subChunk1ID = parseWavHeaderSection(inputWAV, 4);
-	subChunk1Size = parseWavHeaderSection(inputWAV, 4);
-	audioFormat = parseWavHeaderSection(inputWAV, 2);
-	numChannels = parseWavHeaderSection(inputWAV, 2);
-	sampleRate = parseWavHeaderSection(inputWAV, 4);
-	byteRate = parseWavHeaderSection(inputWAV, 4);
-	blockAlign = parseWavHeaderSection(inputWAV, 2);
-	bitsPerSample = parseWavHeaderSection(inputWAV, 2);
-	subChunk2ID = parseWavHeaderSection(inputWAV, 4);
-	subChunk2Size = parseWavHeaderSection(inputWAV, 4);
+	subChunk1ID = parseWavHeaderField(inputWAV, 4);
+	subChunk1Size = parseWavHeaderField(inputWAV, 4);
+	audioFormat = parseWavHeaderField(inputWAV, 2);
+	numChannels = parseWavHeaderField(inputWAV, 2);
+	sampleRate = parseWavHeaderField(inputWAV, 4);
+	byteRate = parseWavHeaderField(inputWAV, 4);
+	blockAlign = parseWavHeaderField(inputWAV, 2);
+	bitsPerSample = parseWavHeaderField(inputWAV, 2);
+	subChunk2ID = parseWavHeaderField(inputWAV, 4);
+	subChunk2Size = parseWavHeaderField(inputWAV, 4);
 
 	//Get WAVE audio data
 	wavData = new int[subChunk2Size / blockAlign];
 	for (unsigned int i = 0; i < subChunk2Size / blockAlign; i++) {
-		wavData[i] = parseWavDataSample(inputWAV, 2);
+		wavData[i] = parseWavDataSample(inputWAV, blockAlign);
 	}
 
 	return true;
