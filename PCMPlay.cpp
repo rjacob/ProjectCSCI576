@@ -457,7 +457,7 @@ VOID OnTimer( HWND hDlg )
 	}
 	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_ANALYSIS_COMPLETE)
 	{
-		DrawThumbnails(hDlg,4);
+		DrawThumbnails(hDlg,0);
 		g_pMyVideo->stopVideo();
 		EnablePlayUI(hDlg, VIDEO_STATE_ANALYSIS_COMPLETE);
 	}
@@ -573,17 +573,21 @@ void DrawThumbnails(HWND _hDlg, int _nHShift)
 	{
 		volatile int index = i + _nHShift;
 
-		if (index >= g_IFrames.size())
-			index = g_IFrames.size() - 1;
+		if (index < g_IFrames.size())
+		{
+			g_pMyVideo->readVideoFrame(image, g_IFrames.at(index));
 
-		g_pMyVideo->readVideoFrame(image, g_IFrames.at(index));
-
-		SetDIBitsToDevice(GetDC(_hDlg),
-			THUMBNAIL_X_OFFSET + i*(g_pMyVideo->getVideoWidth() / 4 + 1),
-			320,
-			image.getWidth() / 4,
-			image.getHeight() / 4,
-			0, 0, 0, image.getHeight() / 4,
-			image.getImageThumbnailData(), &bitmapinfo, DIB_RGB_COLORS);
-	}
+			SetDIBitsToDevice(GetDC(_hDlg),
+				THUMBNAIL_X_OFFSET + i*(g_pMyVideo->getVideoWidth() / 4 + 1),
+				320,
+				image.getWidth() / 4,
+				image.getHeight() / 4,
+				0, 0, 0, image.getHeight() / 4,
+				image.getImageThumbnailData(), &bitmapinfo, DIB_RGB_COLORS);
+		}
+		else
+		{
+			//DeleteObject
+		}
+	}//for
 }//DrawThumbnails
