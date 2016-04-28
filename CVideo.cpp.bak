@@ -13,7 +13,8 @@ CVideo::CVideo()
 	m_unVideoHeight(0),
 	m_eVideoState(VIDEO_STATE_UNKNOWN),
 	m_bPlaying(FALSE),
-	m_bCorrect(false)
+	m_bCorrect(false),
+	m_correctFile(NULL)
 {
 	m_videoPath[0] = 0;
 }//constructor
@@ -278,11 +279,10 @@ void CVideo::threadAnalyzingLoop()
 	sprintf(pCorrectedFilePath, "%s", m_pVideoPath);
 	addr = strchr(pCorrectedFilePath, 'r');
 	sprintf(--addr, "%s", "C.rgb");
-	m_correctFile = fopen(pCorrectedFilePath, "wb");
 
 	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
-	for (unsigned long i = 0; i < 100; i++)//m_ulNoFrames
+	for (unsigned long i = 0; i < 1; i++)//m_ulNoFrames
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
@@ -293,6 +293,9 @@ void CVideo::threadAnalyzingLoop()
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
 			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());
+
+			currentFrame.WriteImage(pCorrectedFilePath, currentFrame.getImageData());
+			//currentFrame.WriteImage(m_correctFile, dataMatCurrent);
 
 			if(!dataMatPrev.empty() && !dataMatCurrent.empty())
 			{
@@ -366,13 +369,25 @@ void CVideo::threadAnalyzingLoop()
 
 					//Transformation (Rotation or a Projection)
 					Mat warped(m_unVideoHeight, m_unVideoWidth, CV_8UC3, Scalar(0, 0, 0));
-					warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
-					currentFrame.WriteImage(m_correctFile, warped);
+					//warpPerspective(dataMatCurrent, warped, homographyMatrix, dataMatCurrent.size());
+					//currentFrame.WriteImage(m_correctFile, dataMatCurrent);
+//imshow("warped", warped);
 				}//if #pts
 				else
 				{
-					currentFrame.WriteImage(m_correctFile, dataMatCurrent);
+imshow("warped", dataMatCurrent);
+					//currentFrame.WriteImage(m_correctFile, dataMatCurrent);
+
+//=================================
+//Mat delt(m_unHeight,m_unWidth, CV_8UC3, Scalar(255,0,0));
+//Mat delt = imread("C:/Users/RJ/Desktop/USC/CSCI 576 - Multimedia System Desgin/Project/Videos/Alin_Day1_002/D.bmp");
+//d = dataMatCurrent.type();//CV_8SC2
+//sprintf(buff, "(%d,%d)\n", d, CV_8UC3);
+//OutputDebugString(_T(buff));
+//================================
+
 				}//else
+waitKey(60);
 			}
 #endif
 			prevFrame = currentFrame;

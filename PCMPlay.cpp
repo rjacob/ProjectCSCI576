@@ -268,7 +268,7 @@ VOID OnInitDialog( HWND hDlg )
 
     g_bBufferPaused = FALSE;
 
-	SetScrollRange(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, 0, 400, FALSE);
+	//SetScrollPos(hDlg, IDC_SCROLLBAR1, 200, FALSE);
 
     //Create a timer, so we can check for when the soundbuffer is stopped
 	//also use for Video

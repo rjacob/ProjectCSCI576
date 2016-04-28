@@ -153,40 +153,25 @@ unsigned char* MyImage::getImageThumbnailData()
 bool MyImage::WriteImage(FILE* _pImageFile, Mat& _data)
 {
 	// Create and populate RGB buffers
-	int i;
-	char *Rbuf = new char[m_nHeight*m_nWidth];
-	char *Gbuf = new char[m_nHeight*m_nWidth];
-	char *Bbuf = new char[m_nHeight*m_nWidth];
-	unsigned char Data[480*270 * 3] = { 0 };
+	unsigned char *Rbuf = new unsigned char[m_nHeight * m_nWidth];
+	unsigned char *Gbuf = new unsigned char[m_nHeight * m_nWidth];
+	unsigned char *Bbuf = new unsigned char[m_nHeight * m_nWidth];
 
-	memcpy(Data, _data.data, _data.rows*_data.cols * 3);
-
-	for (i = 0; i < m_nHeight*m_nWidth; i++)
-	{
-		Bbuf[i] = Data[3 * i];
-		Gbuf[i] = Data[3 * i + 1];
-		Rbuf[i] = Data[3 * i + 2];
+	for (int i = 0; i < m_nHeight * m_nWidth; i++) {
+		Rbuf[i] = _data.data[3 * i + 2];
+		Gbuf[i] = _data.data[3 * i + 1];
+		Bbuf[i] = _data.data[3 * i];
 	}
-	
+
 	// Write data to file
-	for (i = 0; i < m_nWidth*m_nHeight; i++)
-	{
-		fputc(Rbuf[i], _pImageFile);
-	}
-	for (i = 0; i < m_nWidth*m_nHeight; i++)
-	{
-		fputc(Gbuf[i], _pImageFile);
-	}
-	for (i = 0; i < m_nWidth*m_nHeight; i++)
-	{
-		fputc(Bbuf[i], _pImageFile);
-	}
+	fwrite(Rbuf, sizeof(unsigned char), m_nHeight * m_nWidth, _pImageFile);
+	fwrite(Gbuf, sizeof(unsigned char), m_nHeight * m_nWidth, _pImageFile);
+	fwrite(Bbuf, sizeof(unsigned char), m_nHeight * m_nWidth, _pImageFile);
 
-	fflush(_pImageFile);
 	delete Rbuf;
 	delete Gbuf;
 	delete Bbuf;
-	
+
 	return true;
 }//WriteImage
 
