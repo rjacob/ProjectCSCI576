@@ -274,13 +274,18 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						{
 							int index = g_IFrames.at(g_nCurrentScrollbarPos);
 							outputImage = g_pMyVideo->setCurrentFrameNo(index);
-							sprintf(str, "%d st\n", 1 + g_nCurrentScrollbarPos);
-							OutputDebugString(_T(str));
 
 							SetDIBitsToDevice(GetDC(hDlg),
 								34, 20, outputImage.getWidth(), outputImage.getHeight(),
 								0, 0, 0, outputImage.getHeight(),
 								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+
+							unMin = floor((index / FRAME_RATE_HZ) / 60);
+							unSec = floor((index / FRAME_RATE_HZ) % 60);
+							unSubSec = (index % FRAME_RATE_HZ);
+
+							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
 						}
 					}
 					//2nd
@@ -290,13 +295,18 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						{
 							int index = g_IFrames.at(g_nCurrentScrollbarPos+1);
 							outputImage = g_pMyVideo->setCurrentFrameNo(index);
-							sprintf(str, "%d st\n", 2 + g_nCurrentScrollbarPos);
-							OutputDebugString(_T(str));
 
 							SetDIBitsToDevice(GetDC(hDlg),
 								34, 20, outputImage.getWidth(), outputImage.getHeight(),
 								0, 0, 0, outputImage.getHeight(),
 								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+
+							unMin = floor((index / FRAME_RATE_HZ) / 60);
+							unSec = floor((index / FRAME_RATE_HZ) % 60);
+							unSubSec = (index % FRAME_RATE_HZ);
+
+							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
 						}
 					}
 					//3rd
@@ -306,13 +316,18 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						{
 							int index = g_IFrames.at(g_nCurrentScrollbarPos + 2);
 							outputImage = g_pMyVideo->setCurrentFrameNo(index);
-							sprintf(str, "%d st\n", 3 + g_nCurrentScrollbarPos);
-							OutputDebugString(_T(str));
 
 							SetDIBitsToDevice(GetDC(hDlg),
 								34, 20, outputImage.getWidth(), outputImage.getHeight(),
 								0, 0, 0, outputImage.getHeight(),
 								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+
+							unMin = floor((index / FRAME_RATE_HZ) / 60);
+							unSec = floor((index / FRAME_RATE_HZ) % 60);
+							unSubSec = (index % FRAME_RATE_HZ);
+
+							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
 						}
 					}
 					//4th
@@ -322,13 +337,18 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						{
 							int index = g_IFrames.at(g_nCurrentScrollbarPos + 3);
 							outputImage = g_pMyVideo->setCurrentFrameNo(index);
-							sprintf(str, "%d st\n", 4 + g_nCurrentScrollbarPos);
-							OutputDebugString(_T(str));
 
 							SetDIBitsToDevice(GetDC(hDlg),
 								34, 20, outputImage.getWidth(), outputImage.getHeight(),
 								0, 0, 0, outputImage.getHeight(),
 								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+
+							unMin = floor((index / FRAME_RATE_HZ) / 60);
+							unSec = floor((index / FRAME_RATE_HZ) % 60);
+							unSubSec = (index % FRAME_RATE_HZ);
+
+							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
 						}
 					}
 				}//if
