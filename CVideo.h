@@ -8,6 +8,8 @@
 #define DEBUG_FILE 0
 #define FRAME_RATE_HZ 15
 
+static vector<KeyPoint> g_keypointsCurr;
+static vector<KeyPoint> g_keypointsPrev;
 
 typedef enum
 {
@@ -40,7 +42,7 @@ public:
 	//mutators
 	void createVideo(int, int);
 	void setVideoPath(char* _videoPath) { m_pVideoPath = _videoPath; }
-	void setCurrentFrameNo(unsigned long _frameNo) {m_ulCurrentFrameIndex = _frameNo;}
+	MyImage setCurrentFrameNo(unsigned long _frameNo);
 
 	//Interface + summarization functions
 	bool playVideo(bool _bCorrect);

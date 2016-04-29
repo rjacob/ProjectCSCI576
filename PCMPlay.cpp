@@ -43,6 +43,7 @@ CVideo*        g_pMyVideo;
 MyImage        g_outImage;
 vector <unsigned short> g_IFrames;
 int g_w, g_h;
+int g_nCurrentScrollbarPos;
 
 char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];
@@ -95,12 +96,9 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
     HRESULT hr;
 	PAINTSTRUCT ps;
 	HDC hdc;
-	RECT rt;
-	GetClientRect(hDlg, &rt);
 	unsigned short unMin, unSec, unSubSec;
 	char str[32] = { 0 };
 	static clock_t iterationTime;
-	volatile int nCurrentScrollbarPos;
 
     switch( msg ) 
     {
@@ -192,7 +190,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
         case WM_TIMER:
 			sprintf(str, "%d ms\n", clock() - iterationTime);
-			OutputDebugString(_T(str));
+			//OutputDebugString(_T(str));
 			iterationTime = clock();
             OnTimer( hDlg );
             break;
@@ -227,23 +225,23 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 			{
 				case SB_LINELEFT:
 				case SB_PAGELEFT:
-					nCurrentScrollbarPos = GetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL);
-					if (nCurrentScrollbarPos - 1 > 0)
-						nCurrentScrollbarPos -= 1;
-					else if (nCurrentScrollbarPos > 0)
-						nCurrentScrollbarPos = 0;
-					DrawThumbnails(hDlg, nCurrentScrollbarPos);
-					SetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, nCurrentScrollbarPos, TRUE);
+					g_nCurrentScrollbarPos = GetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL);
+					if (g_nCurrentScrollbarPos - 1 > 0)
+						g_nCurrentScrollbarPos -= 1;
+					else if (g_nCurrentScrollbarPos > 0)
+						g_nCurrentScrollbarPos = 0;
+					DrawThumbnails(hDlg, g_nCurrentScrollbarPos);
+					SetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, g_nCurrentScrollbarPos, TRUE);
 				break;
 				case SB_LINERIGHT:
 				case SB_PAGERIGHT:
-					nCurrentScrollbarPos = GetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL);
-					if (nCurrentScrollbarPos + 1 < g_IFrames.size())
-						nCurrentScrollbarPos += 1;
-					else if (nCurrentScrollbarPos < g_IFrames.size())
-						nCurrentScrollbarPos = g_IFrames.size();
-					DrawThumbnails(hDlg, nCurrentScrollbarPos);
-					SetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, nCurrentScrollbarPos, TRUE);
+					g_nCurrentScrollbarPos = GetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL);
+					if (g_nCurrentScrollbarPos + 1 < g_IFrames.size())
+						g_nCurrentScrollbarPos += 1;
+					else if (g_nCurrentScrollbarPos < g_IFrames.size())
+						g_nCurrentScrollbarPos = g_IFrames.size();
+					DrawThumbnails(hDlg, g_nCurrentScrollbarPos);
+					SetScrollPos(GetDlgItem(hDlg, IDC_SCROLLBAR1), SB_CTL, g_nCurrentScrollbarPos, TRUE);
 				break;
 				case SB_ENDSCROLL:
 					break;
@@ -251,36 +249,89 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 		}//WM_HSCROLL
 		break;
-		case WM_LBUTTONDBLCLK:
+		case WM_LBUTTONUP:
 		{
 			if (g_pMyVideo)
 			{
 				POINT mousePos;
 				GetCursorPos(&mousePos);
+				ScreenToClient(hDlg, &mousePos);
+
+				char str[32] = { 0 };
+				sprintf(str, "(%d,%d)\n", mousePos.x, mousePos.y);
+				OutputDebugString(_T(str));
+
 				if (mousePos.y > 320 && mousePos.y < 320 + 270 / 4 &&
 					mousePos.x > THUMBNAIL_X_OFFSET && mousePos.x < 480 + 4)
 				{
+					MyImage outputImage;
+					outputImage.setHeight(g_pMyVideo->getVideoHeight());
+					outputImage.setWidth(g_pMyVideo->getVideoWidth());
 					//1st
-					if (mousePos.x < THUMBNAIL_X_OFFSET + 270 / 4)
+					if (mousePos.x < THUMBNAIL_X_OFFSET + 480 / 4 + 1)
 					{
-						g_pMyVideo->setCurrentFrameNo(100);
+						if (g_IFrames.size())
+						{
+							int index = g_IFrames.at(g_nCurrentScrollbarPos);
+							outputImage = g_pMyVideo->setCurrentFrameNo(index);
+							sprintf(str, "%d st\n", 1 + g_nCurrentScrollbarPos);
+							OutputDebugString(_T(str));
+
+							SetDIBitsToDevice(GetDC(hDlg),
+								34, 20, outputImage.getWidth(), outputImage.getHeight(),
+								0, 0, 0, outputImage.getHeight(),
+								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+						}
 					}
 					//2nd
-					else if (mousePos.x < THUMBNAIL_X_OFFSET + 270 / 2)
+					else if (mousePos.x < THUMBNAIL_X_OFFSET + 480 / 2 + 2)
 					{
-						g_pMyVideo->setCurrentFrameNo(200);
+						if (g_IFrames.size())
+						{
+							int index = g_IFrames.at(g_nCurrentScrollbarPos+1);
+							outputImage = g_pMyVideo->setCurrentFrameNo(index);
+							sprintf(str, "%d st\n", 2 + g_nCurrentScrollbarPos);
+							OutputDebugString(_T(str));
+
+							SetDIBitsToDevice(GetDC(hDlg),
+								34, 20, outputImage.getWidth(), outputImage.getHeight(),
+								0, 0, 0, outputImage.getHeight(),
+								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+						}
 					}
 					//3rd
-					else if (mousePos.x < THUMBNAIL_X_OFFSET + 3 * 270 / 4)
+					else if (mousePos.x < THUMBNAIL_X_OFFSET + 3 * 480 / 4 + 3)
 					{
-						g_pMyVideo->setCurrentFrameNo(300);
+						if (g_IFrames.size())
+						{
+							int index = g_IFrames.at(g_nCurrentScrollbarPos + 2);
+							outputImage = g_pMyVideo->setCurrentFrameNo(index);
+							sprintf(str, "%d st\n", 3 + g_nCurrentScrollbarPos);
+							OutputDebugString(_T(str));
+
+							SetDIBitsToDevice(GetDC(hDlg),
+								34, 20, outputImage.getWidth(), outputImage.getHeight(),
+								0, 0, 0, outputImage.getHeight(),
+								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+						}
 					}
 					//4th
 					else
 					{
-						g_pMyVideo->setCurrentFrameNo(400);
+						if (g_IFrames.size())
+						{
+							int index = g_IFrames.at(g_nCurrentScrollbarPos + 3);
+							outputImage = g_pMyVideo->setCurrentFrameNo(index);
+							sprintf(str, "%d st\n", 4 + g_nCurrentScrollbarPos);
+							OutputDebugString(_T(str));
+
+							SetDIBitsToDevice(GetDC(hDlg),
+								34, 20, outputImage.getWidth(), outputImage.getHeight(),
+								0, 0, 0, outputImage.getHeight(),
+								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
+						}
 					}
-				}
+				}//if
 			}
 		}//WM_LBUTTONDBLCLK
 		break;

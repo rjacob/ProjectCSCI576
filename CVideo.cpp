@@ -168,6 +168,21 @@ unsigned short CVideo::copyVideoFrame(MyImage& _buff)
 		return 0;
 }//copyVideoFrame
 
+ /*************************************
+ * Function: setCurrentFrameNo
+ * Description:
+ *************************************/
+MyImage CVideo::setCurrentFrameNo(unsigned long _frameNo)
+{
+	MyImage image(m_unVideoWidth, m_unVideoHeight);
+	if (_frameNo < m_ulNoFrames)
+	{
+		m_ulCurrentFrameIndex = _frameNo;
+		readVideoFrame(image, m_ulCurrentFrameIndex);
+	}
+	return image;
+}//setCurrentFrameNo
+
 /*************************************
 * Function: playVideo
 * Description:
@@ -250,6 +265,7 @@ bool CVideo::analyzeVideo()
 * Function: threadAnalyzingLoop
 * Description:
 *************************************/
+//Descriptor Extaction
 void CVideo::threadAnalyzingLoop()
 {
 	m_eVideoState = VIDEO_STATE_ANALYZING;
@@ -259,7 +275,6 @@ void CVideo::threadAnalyzingLoop()
 	//For Analysis we dont have to worry about buffering
 	MyImage currentFrame(m_unVideoWidth, m_unVideoHeight);
 	MyImage prevFrame(m_unVideoWidth, m_unVideoHeight);
-	vector<KeyPoint> keypointsCurr, keypointsPrev;
 	//Descriptor Extaction
 	SurfDescriptorExtractor extractor;
 
@@ -284,14 +299,14 @@ void CVideo::threadAnalyzingLoop()
 
 	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
-	for (unsigned long i = 0; i < m_ulNoFrames/4; i++)
+	for (unsigned long i = 0; i < m_ulNoFrames; i++)
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
 			readVideoFrame(currentFrame, i);
 			videoSummarization(i, prevFrame, currentFrame);
 
-#if 0
+#if 1
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
 			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());
@@ -305,15 +320,15 @@ void CVideo::threadAnalyzingLoop()
 
 				//Feature detection
 				//Train
-				prevFrame.featuresDetec(greyMatPrev, keypointsPrev);
+				prevFrame.featuresDetec(greyMatPrev, g_keypointsPrev);
 
 				//Query
-				currentFrame.featuresDetec(greyMatCurr, keypointsCurr);
+				currentFrame.featuresDetec(greyMatCurr, g_keypointsCurr);
 
 				try
 				{
-					extractor.compute(greyMatPrev, keypointsPrev, m_descriptorPrev);
-					extractor.compute(greyMatCurr, keypointsCurr, m_descriptorCurr);
+					extractor.compute(greyMatPrev, g_keypointsPrev, m_descriptorPrev);
+					extractor.compute(greyMatCurr, g_keypointsCurr, m_descriptorCurr);
 				}
 				catch (...)
 				{
@@ -334,20 +349,20 @@ void CVideo::threadAnalyzingLoop()
 					const DMatch& match = m_matches[i];
 					Point2f query, train;
 
-					query = keypointsPrev[match.queryIdx].pt;
-					train = keypointsCurr[match.trainIdx].pt;
+					query = g_keypointsPrev[match.queryIdx].pt;
+					train = g_keypointsCurr[match.trainIdx].pt;
 
 					double dist = sqrt((train.x - query.x) * (train.x - query.x) +
 						(train.y - query.y) * (train.y - query.y));
 
 					if (dist < 12.0f)
 					{
-						m_pts1.push_back(keypointsPrev[match.queryIdx].pt);//Query (Curr)
-						m_pts2.push_back(keypointsCurr[match.trainIdx].pt);//Train (Train)
+						m_pts1.push_back(g_keypointsPrev[match.queryIdx].pt);//Query (Curr)
+						m_pts2.push_back(g_keypointsCurr[match.trainIdx].pt);//Train (Train)
 					}
 				}//for matches
 
-				if (m_pts1.size() >= 20)
+				if (m_pts1.size() >= 30)
 				{
 					Mat homographyMatrix;
 					//Use RANSAC to determine the highly unreliable correspondences(the outliers)
