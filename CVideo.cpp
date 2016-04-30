@@ -104,6 +104,7 @@ void CVideo::threadPlayingLoop()
 	clock_t iterationTime;
 	unsigned short unOnTime_ms;
 	static unsigned int unTotal = 0;
+	unsigned int nBufferIndex = 0;
 
 	if (m_bCorrect)
 		m_pFile = fopen(m_pVideoPath, "rb");
@@ -120,11 +121,12 @@ void CVideo::threadPlayingLoop()
 
 			if (pRef)
 			{
-				if(m_ulCurrentFrameIndex >= BUFFER_SIZE/2)
+				if(nBufferIndex >= BUFFER_SIZE/2)
 					m_eVideoState = VIDEO_STATE_PLAYING;
 
 				pRef->unFrameId = m_ulCurrentFrameIndex;
 				readVideoFrame(pRef->image, m_ulCurrentFrameIndex++);
+				nBufferIndex++;
 
 				unOnTime_ms = (clock() - iterationTime);
 
