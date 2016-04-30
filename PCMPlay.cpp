@@ -286,6 +286,8 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
+
+							g_pSound->SetCurrentIndex((index/ FRAME_RATE_HZ)*2* 24000);
 						}
 					}
 					//2nd
@@ -307,6 +309,8 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
+
+							g_pSound->SetCurrentIndex((index / FRAME_RATE_HZ) * 2 * 24000);
 						}
 					}
 					//3rd
@@ -328,6 +332,8 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
+
+							g_pSound->SetCurrentIndex((index / FRAME_RATE_HZ) * 2 * 24000);
 						}
 					}
 					//4th
@@ -349,6 +355,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
+							g_pSound->SetCurrentIndex((index / FRAME_RATE_HZ) * 2 * 24000);
 						}
 					}
 				}//if
@@ -402,7 +409,7 @@ VOID OnInitDialog( HWND hDlg )
 
     //Create a timer, so we can check for when the soundbuffer is stopped
 	//also use for Video
-    SetTimer(hDlg, 0,63, NULL );//1000/ FRAME_RATE_HZ
+    SetTimer(hDlg, 0, 1000/FRAME_RATE_HZ, NULL );
 }//OnInitDialog
 
 //-----------------------------------------------------------------------------

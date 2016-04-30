@@ -93,6 +93,7 @@ public:
     HRESULT Stop();
     HRESULT Reset();
     BOOL    IsSoundPlaying();
+	BOOL SetCurrentIndex(unsigned long);
 };
 
 

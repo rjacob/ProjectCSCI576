@@ -589,6 +589,13 @@ HRESULT CSound::Reset()
     return hr;
 }
 
+BOOL CSound::SetCurrentIndex(unsigned long _index)
+{
+	for (DWORD i = 0; i<m_dwNumBuffers; i++)
+		m_apDSBuffer[i]->SetCurrentPosition(_index);
+
+	return TRUE;
+}
 
 
 
