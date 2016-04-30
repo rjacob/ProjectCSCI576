@@ -183,6 +183,40 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 					}
 				}
 				break;
+				case IDC_BUTTON_BROWSE:
+				{
+					OPENFILENAME fileName;
+					char szFile[256] = { 0 };
+
+					ZeroMemory(&fileName, sizeof(fileName));
+					fileName.lStructSize = sizeof(fileName);
+					fileName.hwndOwner = NULL;
+					fileName.lpstrFile = szFile;
+					fileName.lpstrFile[0] = '\0';
+					fileName.nMaxFile = sizeof(szFile);
+					fileName.lpstrFilter = "All\0*.*\0RGB\0*.rgb\0PNG\0*.png\0";
+					fileName.nFilterIndex = 1;
+					fileName.lpstrFileTitle = NULL;
+					fileName.nMaxFileTitle = 0;
+					fileName.lpstrInitialDir = NULL;
+					fileName.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+					GetOpenFileName(&fileName);
+
+					FILE* pFile = fopen(fileName.lpstrFile, "rb");
+					MyImage image;
+					image.setHeight(g_h);
+					image.setWidth(g_w);
+					image.ReadImage(pFile, 0);
+
+					fclose(pFile);
+					Mat	dataMatCurrent(g_w, g_h, CV_8UC3, image.getImageData());
+					char str[128] = { 0 };
+					sprintf(str, "Frame Index: %d\n", g_pMyVideo->videoIndex(dataMatCurrent));
+
+					OutputDebugString(_T(str));
+				}//IDC_BUTTON_BROWSE
+				break;
                 default:
                     return FALSE; // Didn't handle message
             }
@@ -597,12 +631,14 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), TRUE);
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDCANCEL), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_BROWSE), FALSE);
 		SetDlgItemText(hDlg, IDC_PLAY, "&Pause");
 		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 	}
 	else if (_eVideoState == VIDEO_STATE_BUFFERING)
 	{
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_BROWSE), FALSE);
 		SetDlgItemText(hDlg, IDC_PLAY, "&Buffering");
 		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 	}
@@ -641,6 +677,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 	else if (_eVideoState == VIDEO_STATE_ANALYSIS_COMPLETE)
 	{
 		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_BROWSE), TRUE);
 	}
 	else if (_eVideoState == VIDEO_STATE_ANALYZING)
 	{
@@ -650,6 +687,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		EnableWindow(GetDlgItem(hDlg, IDC_CORRECT_CHECK), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDC_PLAY), FALSE);
 		EnableWindow(GetDlgItem(hDlg, IDC_STOP), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_BROWSE), FALSE);
 		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
 		SetFocus(GetDlgItem(hDlg, IDC_ANALYZE));
 	}

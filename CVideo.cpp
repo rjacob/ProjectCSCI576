@@ -299,6 +299,10 @@ void CVideo::threadAnalyzingLoop()
 	sprintf(--addr, "%s", "C.rgb");
 	m_correctFile = fopen(pCorrectedFilePath, "wb");
 
+	if(m_correctFile == NULL)
+		OutputDebugString(_T("Shit!"));
+
+
 	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
 	for (unsigned long i = 0; i < m_ulNoFrames; i++)
@@ -336,6 +340,8 @@ void CVideo::threadAnalyzingLoop()
 				{
 					OutputDebugString(_T("Exception"));
 				}
+
+				m_descriptors.push_back(m_descriptorCurr);
 
 				//Descriptor Match
 				//Brute-Force Matching (Hamming)
@@ -401,7 +407,7 @@ void CVideo::threadAnalyzingLoop()
 	m_ulCurrentFrameIndex = 0;
 
 	generateIFrames();	//Generate vector of I frames
-	generateSummarizationFrames();	//Generate vector of summarization frames
+	//generateSummarizationFrames();	//Generate vector of summarization frames
 
 #if DEBUG_FILE
 	fclose(debugOutput);
@@ -515,3 +521,55 @@ bool CVideo::generateSummarizationFrames()
 
 	return true;
 }//generateSummarizationFrames
+
+ /*************************************
+ * Function: videoIndex
+ * Description: 
+ *************************************/
+unsigned long CVideo::videoIndex(Mat& _source)
+{
+	SurfDescriptorExtractor extractor;
+	SurfFeatureDetector  detector;//For real-time processing
+	KeyPoint keypoints;
+	unsigned long ulFrameIndex = 0;
+	Mat descriptors;
+	unsigned long ulFrameIndexMaxMatch = 0;
+	unsigned long ulMaxMatch = 0;
+
+	if (m_descriptors.size() == m_ulNoFrames)
+	{
+		Mat greyMat;
+		cvtColor(_source, greyMat, CV_BGR2GRAY);
+
+		g_keypointsPrev.resize(0);
+		detector.detect(_source, g_keypointsPrev);
+
+		try
+		{
+			extractor.compute(greyMat, g_keypointsPrev, descriptors);
+		}
+		catch (...)
+		{
+			OutputDebugString(_T("Exception"));
+		}
+
+		do
+		{
+			m_pMatcher->match(descriptors, m_descriptors.at(ulFrameIndex), m_matches);
+
+			char str[128] = { 0 };
+			sprintf(str, "[%d] Mathced: %d\n", ulFrameIndex, m_matches.size());
+			OutputDebugString(_T(str));
+
+			if (m_matches.size() > ulMaxMatch)
+			{
+				ulMaxMatch = m_matches.size();
+				ulFrameIndexMaxMatch = ulFrameIndex;
+			}
+			m_matches.clear();
+
+		}while (++ulFrameIndex < m_descriptors.size());
+	}
+
+	return ulFrameIndexMaxMatch;
+}//videoIndex

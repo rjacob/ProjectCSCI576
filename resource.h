@@ -18,6 +18,8 @@
 #define IDC_PROGRESS                    1028
 #define IDC_STATIC_PER                  1029
 #define IDC_SCROLLBAR1                  1031
+#define IDC_BUTTON1                     1032
+#define IDC_BUTTON_BROWSE               1032
 
 // Next default values for new objects
 // 
@@ -25,7 +27,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         32772
-#define _APS_NEXT_CONTROL_VALUE         1032
+#define _APS_NEXT_CONTROL_VALUE         1033
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

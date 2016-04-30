@@ -49,6 +49,7 @@ public:
 	bool pauseVideo();
 	bool stopVideo();
 	bool analyzeVideo();
+	unsigned long videoIndex(Mat&);
 
 	unsigned short copyVideoFrame(MyImage&);
 	bool readVideoFrame(MyImage&, unsigned int _nFrame);
@@ -72,6 +73,7 @@ private:
 	BFMatcher *m_pMatcher;
 	vector<DMatch> m_matches;
 	Mat m_descriptorPrev, m_descriptorCurr;
+	vector <Mat> m_descriptors;
 	vector<Point2f> m_pts1, m_pts2;
 
 	double *entropyValues;

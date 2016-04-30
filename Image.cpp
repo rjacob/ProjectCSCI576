@@ -331,7 +331,7 @@ void MyImage::featuresDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
 	{
 		Mat mask = Mat::zeros(_dataMat.size(), _dataMat.type());
 		// select a ROI
-		Mat regionOfInterest(mask, Rect(0, 0, 240, 135));
+		Mat regionOfInterest(mask, Rect(120, 67, 240, 135));
 
 		// fill the ROI with (255, 255, 255) (which is white in RGB space);
 		// the original image will be modified
