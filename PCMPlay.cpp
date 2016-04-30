@@ -542,6 +542,11 @@ VOID OnTimer( HWND hDlg )
 				}
 			}
 
+			//Snaps audio for every 75 frames 5 second
+			if(usCurrentFrameNo % 75 == 0)
+				g_pSound->SetCurrentIndex((usCurrentFrameNo / FRAME_RATE_HZ) * 2 * 24000);
+
+
 			//This is very we draw subsequent frames to display
 			SetDIBitsToDevice(GetDC(hDlg),
 				34, 20, g_outImage.getWidth(), g_outImage.getHeight(),
