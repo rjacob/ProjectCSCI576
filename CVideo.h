@@ -8,8 +8,8 @@
 #define DEBUG_FILE 0
 #define FRAME_RATE_HZ 15
 
-static vector<KeyPoint> g_keypointsCurr;
-static vector<KeyPoint> g_keypointsPrev;
+static vector<KeyPoint> keypointsCurr;
+static vector<KeyPoint> keypointsPrev;
 
 typedef enum
 {

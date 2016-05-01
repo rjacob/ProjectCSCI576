@@ -194,7 +194,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 					fileName.lpstrFile = szFile;
 					fileName.lpstrFile[0] = '\0';
 					fileName.nMaxFile = sizeof(szFile);
-					fileName.lpstrFilter = "All\0*.*\0RGB\0*.rgb\0PNG\0*.png\0";
+					fileName.lpstrFilter = "RGB\0*.rgb\0";// "All\0*.*\0RGB\0*.rgb\0PNG\0*.png\0";
 					fileName.nFilterIndex = 1;
 					fileName.lpstrFileTitle = NULL;
 					fileName.nMaxFileTitle = 0;
@@ -205,9 +205,14 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 					FILE* pFile = fopen(fileName.lpstrFile, "rb");
 					MyImage image;
-					image.setHeight(g_h);
-					image.setWidth(g_w);
-					image.ReadImage(pFile, 0);
+					image.setHeight(720);
+					image.setWidth(1280);
+					image.ReadImage(pFile, 0);//just one frame, read first
+
+					Mat	showImage(720, 1280, CV_8UC3, image.getImageData());
+
+					//imshow("1", showImage);
+					//waitKey(0);
 
 					int index = g_pMyVideo->videoIndex(image);
 					DrawSetFrame(hDlg,index);
@@ -515,8 +520,8 @@ VOID OnTimer( HWND hDlg )
 				}
 			}
 
-			//Snaps audio for every 75 frames 5 second
-			if(usCurrentFrameNo % 75 == 0)
+			//Snaps audio for every 150 frames 10 second (every 15 frames is 1 sec)
+			if(usCurrentFrameNo % 150 == 0)
 				g_pSound->SetCurrentIndex((usCurrentFrameNo / FRAME_RATE_HZ) * 2 * 24000);
 
 

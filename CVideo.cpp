@@ -95,7 +95,7 @@ void CVideo::createVideo(int _nWidth, int _nHeight)
 	xSquaredValues = new double[m_ulNoFrames];
 
 	m_pVideoBuffer = new CVideoBuffer(m_unVideoWidth, m_unVideoHeight);
-	m_pMatcher = new BFMatcher(NORM_L2);
+	m_pMatcher = new BFMatcher(NORM_L2SQR);
 }//constructor
 
 /*************************************
@@ -282,6 +282,9 @@ void CVideo::threadAnalyzingLoop()
 	MyImage prevFrame(m_unVideoWidth, m_unVideoHeight);
 	//Descriptor Extaction
 	SurfDescriptorExtractor extractor;
+	//vector<KeyPoint> keypointsCurr;
+	//vector<KeyPoint> keypointsPrev;
+
 
 #if DEBUG_FILE
 	debugOutput = fopen("Video Data.txt", "w");
@@ -308,7 +311,7 @@ void CVideo::threadAnalyzingLoop()
 
 	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
 	//Analyze All frames
-	for (unsigned long i = 0; i < m_ulNoFrames; i++)
+	for (unsigned long i = 0; i < m_ulNoFrames; i++)//m_ulNoFrames
 	{
 		if (m_eVideoState != VIDEO_STATE_STOPPED)
 		{
@@ -333,11 +336,11 @@ void CVideo::threadAnalyzingLoop()
 				try
 				{
 					//Feature detection (throws exception if not grayscale)
-					prevFrame.featuresDetec(greyMatPrev, g_keypointsPrev);//Train
-					currentFrame.featuresDetec(greyMatCurr, g_keypointsCurr);//Query
+					prevFrame.featuresDetec(greyMatPrev, keypointsPrev);//Train
+					currentFrame.featuresDetec(greyMatCurr, keypointsCurr);//Query
 
-					extractor.compute(greyMatPrev, g_keypointsPrev, m_descriptorPrev);
-					extractor.compute(greyMatCurr, g_keypointsCurr, m_descriptorCurr);
+					extractor.compute(greyMatPrev, keypointsPrev, m_descriptorPrev);
+					extractor.compute(greyMatCurr, keypointsCurr, m_descriptorCurr);
 				}
 				catch (...)
 				{
@@ -364,17 +367,17 @@ void CVideo::threadAnalyzingLoop()
 					const DMatch& match = m_matches[i];
 					Point2f query, train;
 
-					query = g_keypointsPrev[match.queryIdx].pt;
-					train = g_keypointsCurr[match.trainIdx].pt;
+					query = keypointsPrev[match.queryIdx].pt;
+					train = keypointsCurr[match.trainIdx].pt;
 
 					volatile float dX = train.x - query.x;
 					volatile float dY = train.y - query.y;
 					double dist = sqrt(pow(dX,2) + pow(dY,2));
 
-					if (dist < 12.0f)
+					if (dist < sqrt(162))
 					{
-						m_pts1.push_back(g_keypointsPrev[match.queryIdx].pt);//Query (Curr)
-						m_pts2.push_back(g_keypointsCurr[match.trainIdx].pt);//Train (Train)
+						m_pts1.push_back(keypointsPrev[match.queryIdx].pt);//Query (Curr)
+						m_pts2.push_back(keypointsCurr[match.trainIdx].pt);//Train (Train)
 					}
 				}//for matches
 
@@ -422,6 +425,8 @@ void CVideo::threadAnalyzingLoop()
 #endif
 
 	fclose(m_correctFile);
+	keypointsCurr.clear();
+	keypointsPrev.clear();
 }
 
  /*************************************
@@ -534,14 +539,15 @@ bool CVideo::generateSummarizationFrames()
  * Function: videoIndex
  * Description: 
  *************************************/
+static vector<KeyPoint> keypoints, keypointsIndex;
 unsigned long CVideo::videoIndex(MyImage& _source)
 {
 	//Speeded-Up Robust Features
 	SurfDescriptorExtractor extractor;
 	SurfFeatureDetector detector(400);//For real-time processing
 	unsigned long ulFrameIndex = 0;
-	Mat descriptors;
-	Mat greyMat;
+	Mat descriptors, descriptorsIndex;
+	Mat greyMat, greyMatIndex;
 	unsigned long ulFrameIndexMaxMatch = 0;
 	unsigned long ulMaxMatch = 0;
 
@@ -549,48 +555,69 @@ unsigned long CVideo::videoIndex(MyImage& _source)
 	double dDiff = 0;
 
 	//have we already analyzed?
-	if (m_descriptors.size() == m_ulNoFrames)
+//	if (m_descriptors.size() == m_ulNoFrames)
 	{
-		Mat	dataMat(m_unVideoWidth, m_unVideoHeight, CV_8UC3, _source.getImageData());
-		g_keypointsPrev.resize(0);
+		Mat	dataMat(_source.getHeight(), _source.getWidth(), CV_8UC3, _source.getImageData());
+		Mat cvDataResized(m_unVideoHeight,m_unVideoWidth, CV_8UC3, Scalar(0, 0, 0));
+		resize(dataMat, cvDataResized, cvDataResized.size(), INTER_LINEAR);
+		cvtColor(cvDataResized, greyMat, CV_BGR2GRAY);
 
-		cvtColor(dataMat, greyMat, CV_BGR2GRAY);
-		detector.detect(greyMat, g_keypointsPrev);
-		extractor.compute(greyMat, g_keypointsPrev, descriptors);
+		detector.detect(greyMat, keypoints);
+		extractor.compute(greyMat, keypoints, descriptors);
 
 		do
 		{
+			MyImage imageIndex;
+			imageIndex.setHeight(m_unVideoHeight);
+			imageIndex.setWidth(m_unVideoWidth);
+			readVideoFrame(imageIndex, ulFrameIndex);
+			Mat	dataMatIndex(m_unVideoHeight, m_unVideoWidth, CV_8UC3, imageIndex.getImageData());
+			cvtColor(dataMatIndex, greyMatIndex, CV_BGR2GRAY);
+
+			//imshow("1", greyMatIndex);
+			//waitKey(60);
+
+			detector.detect(greyMatIndex, keypointsIndex);
+			extractor.compute(greyMatIndex, keypointsIndex, descriptorsIndex);
 			m_matches.clear();
-			Mat refDescriptors = m_descriptors.at(ulFrameIndex);
-			m_pMatcher->match(refDescriptors, descriptors, m_matches);
+
+			//Mat refDescriptors = m_descriptors.at(ulFrameIndex);
+			m_pMatcher->match(descriptors, descriptorsIndex, m_matches);
+
+			//Remove outliers
+			std::vector< DMatch > good_matches;
+			for (int i = 0; i < m_matches.size(); i++) {
+				char str[128] = { 0 };
+				Point2f query, train;
+				const DMatch& match = m_matches[i];
+
+				query = keypoints[match.queryIdx].pt;
+				train = keypointsIndex[match.trainIdx].pt;
+
+				volatile float dX = train.x - query.x;
+				volatile float dY = train.y - query.y;
+				double dist = sqrt(pow(dX, 2) + pow(dY, 2));
+
+				if (dist < sqrt(8)) //2px offset
+				{
+					good_matches.push_back(m_matches[i]);
+				}
+			}
+
+			//Mat img_matches;
+			//drawMatches(greyMat, keypoints, greyMatIndex, keypointsIndex, good_matches, img_matches);
+			//imshow("Matches", img_matches);
+			//waitKey(60);
 
 			char str[128] = { 0 };
-			sprintf(str, "[%d] Matched: %d (%d)\n", ulFrameIndex, m_matches.size(), m_descriptors.at(ulFrameIndex).size());
+			sprintf(str, "[%d] Matched: %d %f\n", ulFrameIndex, good_matches.size());
 			OutputDebugString(_T(str));
 
-			if (m_matches.size() > ulMaxMatch)
+			if (good_matches.size() > ulMaxMatch)
 			{
-				ulMaxMatch = m_matches.size();
+				ulMaxMatch = good_matches.size();
 				ulFrameIndexMaxMatch = ulFrameIndex;
 			}
-
-#if 0
-			MyImage image;
-			image.setHeight(m_unVideoHeight);
-			image.setWidth(m_unVideoWidth);
-
-			readVideoFrame(image, ulFrameIndex);
-			dDiff = _source.templateMatchDifference(image);
-
-			if (dDiff < dMinDiff)
-			{
-				sprintf(str, "--> [%d] X2Diff: %.3f\n", ulFrameIndex, dDiff);
-				OutputDebugString(_T(str));
-				dMinDiff = dDiff;
-				ulFrameIndexMaxMatch = ulFrameIndex;
-			}
-#endif
-
 		}while (++ulFrameIndex < m_ulNoFrames);
 	}
 
@@ -598,5 +625,6 @@ unsigned long CVideo::videoIndex(MyImage& _source)
 	sprintf(str, "Frame Index: %d (%d) \n", ulFrameIndexMaxMatch, ulMaxMatch);
 	OutputDebugString(_T(str));
 
+	keypoints.clear();
 	return ulFrameIndexMaxMatch;
 }//videoIndex
