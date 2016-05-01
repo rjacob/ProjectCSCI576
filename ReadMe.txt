@@ -1,4 +1,4 @@
-XXX Term Project
-X Videos
+ABC Term Project
+1 Videos
 
 Authors: Roeil Jacob, Timothy Fong
