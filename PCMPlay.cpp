@@ -203,20 +203,23 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 
 					GetOpenFileName(&fileName);
 
-					FILE* pFile = fopen(fileName.lpstrFile, "rb");
-					MyImage image;
-					image.setHeight(720);
-					image.setWidth(1280);
-					image.ReadImage(pFile, 0);//just one frame, read first
+					if (strlen(fileName.lpstrFile))
+					{
+						FILE* pFile = fopen(fileName.lpstrFile, "rb");
+						MyImage image;
+						image.setHeight(720);
+						image.setWidth(1280);
+						image.ReadImage(pFile, 0);//just one frame, read first
 
-					Mat	showImage(720, 1280, CV_8UC3, image.getImageData());
+						Mat	showImage(720, 1280, CV_8UC3, image.getImageData());
 
-					//imshow("1", showImage);
-					//waitKey(0);
+						//imshow("1", showImage);
+						//waitKey(0);
 
-					int index = g_pMyVideo->videoIndex(image);
-					DrawSetFrame(hDlg,index);
-					fclose(pFile);
+						int index = g_pMyVideo->videoIndex(image);
+						DrawSetFrame(hDlg, index);
+						fclose(pFile);
+					}
 				}//IDC_BUTTON_BROWSE
 				break;
                 default:
