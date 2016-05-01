@@ -24,6 +24,10 @@ private:
 	//WAVE audio data
 	int* wavData;
 
+	//Analysis Data
+	double* movingAverage;
+	int* zeroCrossingData;
+
 	//Helper functions
 	unsigned int parseWavHeaderField(FILE* inputWAV, unsigned int numBytes);
 	int parseWavDataSample(FILE* inputWAV, unsigned int bytesPerSample);
@@ -43,10 +47,15 @@ public:
 	unsigned int getBitrate();
 	unsigned int getNumSamples();
 	int getAudioSample(unsigned int index);
+	double getMovingAverageData(unsigned int index);
+	int getZeroCrossingData(unsigned int index);
 
 	// Input Output operations
 	bool readWAV(FILE* inputWAV);
 	
 	// Calculations
-	unsigned int zeroCrossing(unsigned int windowSize);
+	bool calcMovingAverage(unsigned int windowSize);
+	bool calcZeroCrossing(unsigned int windowSize);
+	int FFT(unsigned int startIndex, unsigned int endIndex);
+	
 };
