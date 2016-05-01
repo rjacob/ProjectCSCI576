@@ -72,7 +72,6 @@ public:
 	// Input Output operations
 	bool	ReadImage(FILE*, unsigned int);
 	bool	WriteImage(FILE*, Mat&);
-	bool	WriteImage2(FILE*, Mat&);
 	
 	// Calculations
 	double	calcEntropy();

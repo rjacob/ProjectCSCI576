@@ -32,6 +32,7 @@ HRESULT OnPlaySound( HWND hDlg );
 VOID    OnTimer( HWND hDlg );
 VOID    EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eState);
 VOID	DrawThumbnails(HWND, int);
+VOID    DrawSetFrame(HWND, int);
 
 //-----------------------------------------------------------------------------
 // Defines, constants, and global variables
@@ -93,7 +94,6 @@ INT APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pCmdLine,
 //-----------------------------------------------------------------------------
 INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    HRESULT hr;
 	PAINTSTRUCT ps;
 	HDC hdc;
 	unsigned short unMin, unSec, unSubSec;
@@ -209,12 +209,9 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 					image.setWidth(g_w);
 					image.ReadImage(pFile, 0);
 
+					int index = g_pMyVideo->videoIndex(image);
+					DrawSetFrame(hDlg,index);
 					fclose(pFile);
-					Mat	dataMatCurrent(g_w, g_h, CV_8UC3, image.getImageData());
-					char str[128] = { 0 };
-					sprintf(str, "Frame Index: %d\n", g_pMyVideo->videoIndex(dataMatCurrent));
-
-					OutputDebugString(_T(str));
 				}//IDC_BUTTON_BROWSE
 				break;
                 default:
@@ -298,30 +295,13 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 				if (mousePos.y > 320 && mousePos.y < 320 + 270 / 4 &&
 					mousePos.x > THUMBNAIL_X_OFFSET && mousePos.x < 480 + 4)
 				{
-					MyImage outputImage;
-					outputImage.setHeight(g_pMyVideo->getVideoHeight());
-					outputImage.setWidth(g_pMyVideo->getVideoWidth());
 					//1st
 					if (mousePos.x < THUMBNAIL_X_OFFSET + 480 / 4 + 1)
 					{
 						if (g_IFrames.size())
 						{
 							int index = g_IFrames.at(g_nCurrentScrollbarPos);
-							outputImage = g_pMyVideo->setCurrentFrameNo(index);
-
-							SetDIBitsToDevice(GetDC(hDlg),
-								34, 20, outputImage.getWidth(), outputImage.getHeight(),
-								0, 0, 0, outputImage.getHeight(),
-								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
-
-							unMin = floor((index / FRAME_RATE_HZ) / 60);
-							unSec = floor((index / FRAME_RATE_HZ) % 60);
-							unSubSec = (index % FRAME_RATE_HZ);
-
-							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
-							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
-
-							g_pSound->SetCurrentIndex((index/ FRAME_RATE_HZ)*2* 24000);
+							DrawSetFrame(hDlg, index);
 						}
 					}
 					//2nd
@@ -330,21 +310,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						if (g_IFrames.size())
 						{
 							int index = g_IFrames.at(g_nCurrentScrollbarPos+1);
-							outputImage = g_pMyVideo->setCurrentFrameNo(index);
-
-							SetDIBitsToDevice(GetDC(hDlg),
-								34, 20, outputImage.getWidth(), outputImage.getHeight(),
-								0, 0, 0, outputImage.getHeight(),
-								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
-
-							unMin = floor((index / FRAME_RATE_HZ) / 60);
-							unSec = floor((index / FRAME_RATE_HZ) % 60);
-							unSubSec = (index % FRAME_RATE_HZ);
-
-							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
-							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
-
-							g_pSound->SetCurrentIndex((index / FRAME_RATE_HZ) * 2 * 24000);
+							DrawSetFrame(hDlg, index);
 						}
 					}
 					//3rd
@@ -353,21 +319,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						if (g_IFrames.size())
 						{
 							int index = g_IFrames.at(g_nCurrentScrollbarPos + 2);
-							outputImage = g_pMyVideo->setCurrentFrameNo(index);
-
-							SetDIBitsToDevice(GetDC(hDlg),
-								34, 20, outputImage.getWidth(), outputImage.getHeight(),
-								0, 0, 0, outputImage.getHeight(),
-								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
-
-							unMin = floor((index / FRAME_RATE_HZ) / 60);
-							unSec = floor((index / FRAME_RATE_HZ) % 60);
-							unSubSec = (index % FRAME_RATE_HZ);
-
-							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
-							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
-
-							g_pSound->SetCurrentIndex((index / FRAME_RATE_HZ) * 2 * 24000);
+							DrawSetFrame(hDlg, index);
 						}
 					}
 					//4th
@@ -376,20 +328,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						if (g_IFrames.size())
 						{
 							int index = g_IFrames.at(g_nCurrentScrollbarPos + 3);
-							outputImage = g_pMyVideo->setCurrentFrameNo(index);
-
-							SetDIBitsToDevice(GetDC(hDlg),
-								34, 20, outputImage.getWidth(), outputImage.getHeight(),
-								0, 0, 0, outputImage.getHeight(),
-								outputImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
-
-							unMin = floor((index / FRAME_RATE_HZ) / 60);
-							unSec = floor((index / FRAME_RATE_HZ) % 60);
-							unSubSec = (index % FRAME_RATE_HZ);
-
-							sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
-							SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
-							g_pSound->SetCurrentIndex((index / FRAME_RATE_HZ) * 2 * 24000);
+							DrawSetFrame(hDlg, index);
 						}
 					}
 				}//if
@@ -699,7 +638,6 @@ void DrawThumbnails(HWND _hDlg, int _nHShift)
 	MyImage image;
 	RECT rect;
 	int nWindowWidth;
-	static int nFirstTime = 1;
 
 	if (GetWindowRect(_hDlg, &rect))
 	{
@@ -746,3 +684,39 @@ void DrawThumbnails(HWND _hDlg, int _nHShift)
 		}
 	}//for
 }//DrawThumbnails
+
+void DrawSetFrame(HWND _hDlg, int _nIndex)
+{
+	BITMAPINFO bitmapinfo;
+	MyImage image;
+	unsigned short unMin, unSec, unSubSec;
+	char str[128] = { 0 };
+
+	image.setHeight(g_pMyVideo->getVideoHeight());
+	image.setWidth(g_pMyVideo->getVideoWidth());
+
+	image = g_pMyVideo->setCurrentFrameNo(_nIndex);
+
+	memset(&bitmapinfo, 0, sizeof(bitmapinfo));
+	bitmapinfo.bmiHeader.biSize = sizeof(g_bmi.bmiHeader);
+	bitmapinfo.bmiHeader.biPlanes = 1;
+	bitmapinfo.bmiHeader.biBitCount = 24;
+	bitmapinfo.bmiHeader.biCompression = BI_RGB;
+	bitmapinfo.bmiHeader.biWidth = g_pMyVideo->getVideoWidth();
+	bitmapinfo.bmiHeader.biHeight = -(g_pMyVideo->getVideoHeight());  // Use negative height.  DIB is top-down.
+	bitmapinfo.bmiHeader.biSizeImage = g_pMyVideo->getVideoWidth()*g_pMyVideo->getVideoHeight();
+
+	SetDIBitsToDevice(GetDC(_hDlg),
+		34, 20, image.getWidth(), image.getHeight(),
+		0, 0, 0, image.getHeight(),
+		image.getImageData(), &g_bmi, DIB_RGB_COLORS);
+
+	unMin = floor((_nIndex / FRAME_RATE_HZ) / 60);
+	unSec = floor((_nIndex / FRAME_RATE_HZ) % 60);
+	unSubSec = (_nIndex % FRAME_RATE_HZ);
+
+	sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
+	SetWindowText(GetDlgItem(_hDlg, IDC_STATIC_START), str);
+
+	g_pSound->SetCurrentIndex((_nIndex / FRAME_RATE_HZ) * 2 * 24000);
+}//DrawSetFrame

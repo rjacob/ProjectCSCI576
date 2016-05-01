@@ -34,7 +34,6 @@ public:
 	unsigned int getVideoWidth() const { return m_unVideoWidth;}
 	unsigned int getVideoHeight() const { return m_unVideoHeight; }
 	long getNoFrames() const { return m_ulNoFrames;}
-	unsigned int getVideoDuration() const { return m_unVideoDurationSubSec; }
 	VIDEO_STATE_E getVideoState() const { return m_eVideoState; }
 	unsigned long getCurrentFrameNo() const { return (m_ulCurrentFrameIndex); }//TODO: m_ulCurrentFrameIndex
 	vector<unsigned short> getIFrames() const { return m_iFrames; }
@@ -49,7 +48,7 @@ public:
 	bool pauseVideo();
 	bool stopVideo();
 	bool analyzeVideo();
-	unsigned long videoIndex(Mat&);
+	unsigned long videoIndex(MyImage&);
 
 	unsigned short copyVideoFrame(MyImage&);
 	bool readVideoFrame(MyImage&, unsigned int _nFrame);

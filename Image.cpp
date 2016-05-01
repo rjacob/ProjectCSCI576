@@ -175,31 +175,6 @@ bool MyImage::WriteImage(FILE* _pImageFile, Mat& _data)
 	return true;
 }//WriteImage
 
-bool MyImage::WriteImage2(FILE* _pImageFile, Mat& _data)
-{
-	// Create and populate RGB buffers
-	unsigned char *Rbuf = new unsigned char[m_nHeight * m_nWidth];
-	unsigned char *Gbuf = new unsigned char[m_nHeight * m_nWidth];
-	unsigned char *Bbuf = new unsigned char[m_nHeight * m_nWidth];
-
-	for (int i = 0; i < m_nHeight * m_nWidth; i++) {
-		Rbuf[i] = _data.data[3 * i + 2];
-		Gbuf[i] = _data.data[3 * i + 1];
-		Bbuf[i] = _data.data[3 * i];
-	}
-
-	// Write data to file
-	fwrite(Rbuf, sizeof(unsigned char), m_nHeight * m_nWidth, _pImageFile);
-	fwrite(Gbuf, sizeof(unsigned char), m_nHeight * m_nWidth, _pImageFile);
-	fwrite(Bbuf, sizeof(unsigned char), m_nHeight * m_nWidth, _pImageFile);
-
-	delete Rbuf;
-	delete Gbuf;
-	delete Bbuf;
-
-	return true;
-}//WriteImage2
-
 // Calculate entropy of image
 // Calculation based on flattening RGB image into 1D array
 double MyImage::calcEntropy()
@@ -330,8 +305,9 @@ void MyImage::featuresDetec(Mat &_dataMat, vector<KeyPoint> &_keypoints)
 	if (!_dataMat.empty())
 	{
 		Mat mask = Mat::zeros(_dataMat.size(), _dataMat.type());
-		// select a ROI
-		Mat regionOfInterest(mask, Rect(120, 67, 240, 135));
+		// select a ROI (Center 50%)
+		//Mat regionOfInterest(mask, Rect(120, 67, 240, 135));
+		Mat regionOfInterest(mask, Rect(0, 0, 480, 270));
 
 		// fill the ROI with (255, 255, 255) (which is white in RGB space);
 		// the original image will be modified
