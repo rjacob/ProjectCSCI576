@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <vector>
 
 class WAVAudio 
 {
@@ -27,6 +28,7 @@ private:
 	//Analysis Data
 	double* movingAverage;
 	int* zeroCrossingData;
+	std::vector<unsigned long> m_syncFrames;
 
 	//Helper functions
 	unsigned int parseWavHeaderField(FILE* inputWAV, unsigned int numBytes);
@@ -56,6 +58,6 @@ public:
 	// Calculations
 	bool calcMovingAverage(unsigned int windowSize);
 	bool calcZeroCrossing(unsigned int windowSize);
-	int FFT(unsigned int startIndex, unsigned int endIndex);
+	bool generateAudioSync();
 	
 };

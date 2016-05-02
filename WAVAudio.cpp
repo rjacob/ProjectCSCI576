@@ -196,6 +196,14 @@ bool WAVAudio::calcMovingAverage(unsigned int windowSize) {
 
 //Calculate zero crossing in audio
 bool WAVAudio::calcZeroCrossing(unsigned int windowSize) {
+	//If moving average not applied, then apply to original audio data
+	if (!movingAverage) {
+		movingAverage = new double[getNumSamples()];
+		for (long i = 0; i < getNumSamples(); i++) {
+			movingAverage[i] = (double)wavData[i];
+		}
+	}
+
 	if (!zeroCrossingData) {
 		zeroCrossingData = new int[getNumSamples()];
 	}
@@ -203,17 +211,18 @@ bool WAVAudio::calcZeroCrossing(unsigned int windowSize) {
 	//Calculate zero crossings for whole audio
 	int *tempZeroCrossings = new int[getNumSamples() + 1];
 
-	tempZeroCrossings[0] = (wavData[0] != 0);
+	tempZeroCrossings[0] = (movingAverage[0] != 0);
 	for (unsigned int i = 1; i < getNumSamples(); i++) {
-		if ((wavData[i - 1] <= 0) && (wavData[i] > 0)) { tempZeroCrossings[i] = 1; }
-		else if ((wavData[i - 1] >= 0) && (wavData[i] < 0)) { tempZeroCrossings[i] = 1; }
+		if ((movingAverage[i - 1] <= 0) && (movingAverage[i] > 0)) { tempZeroCrossings[i] = 1; }
+		else if ((movingAverage[i - 1] >= 0) && (movingAverage[i] < 0)) { tempZeroCrossings[i] = 1; }
 		else { tempZeroCrossings[i] = 0; }
 	}
-	tempZeroCrossings[getNumSamples()] = (wavData[getNumSamples() - 1] != 0);
+	tempZeroCrossings[getNumSamples()] = (movingAverage[getNumSamples() - 1] != 0);
 
 	//Set up initial zero crossing value for index 0
 	int halfWindowSize = (windowSize - 1) / 2;
-	int zeroCrossings = halfWindowSize;	//Left side of index 0
+	//int zeroCrossings = halfWindowSize;	//Left side of index 0
+	int zeroCrossings = 0;
 	for (int i = 0; i < halfWindowSize; i++) {
 		zeroCrossings += tempZeroCrossings[i];
 	}
@@ -221,8 +230,8 @@ bool WAVAudio::calcZeroCrossing(unsigned int windowSize) {
 
 	//Calculate zero crossing values for rest of audio
 	for (long i = 1; i < getNumSamples(); i++) {
-		int leftValue = 1;
-		int rightValue = 1;
+		int leftValue = 0;
+		int rightValue = 0;
 		if ((i - halfWindowSize) - 1 >= 0) {
 			leftValue = tempZeroCrossings[i - halfWindowSize - 1];
 		}
@@ -235,5 +244,36 @@ bool WAVAudio::calcZeroCrossing(unsigned int windowSize) {
 	}
 
 	delete tempZeroCrossings;
+	return true;
+}
+
+//Generate vector data for audio sync
+bool WAVAudio::generateAudioSync() {
+	double average = 0;
+	for (unsigned long i = 0; i < getNumSamples(); i++) {
+		average += zeroCrossingData[i];
+	}
+	average /= getNumSamples();
+
+	//Find variance and standard deviation of xSquared values
+	double variance = 0;
+	for (unsigned long i = 0; i < getNumSamples(); i++) {
+		variance += pow(zeroCrossingData[i] - average, 2.0);
+	}
+	variance /= getNumSamples();
+	double standardDeviation = sqrt(variance);
+
+	//Generate sync frames
+	
+	double limit = average + standardDeviation;
+	//cout << limit << endl;
+
+	for (long i = 0; i < getNumSamples(); i++) {
+		if (zeroCrossingData[i] > limit) {
+			m_syncFrames.push_back(i);
+			//cout << i << endl;
+		}
+	}
+	//cout << m_syncFrames.size() << endl;
 	return true;
 }
