@@ -169,27 +169,27 @@ bool WAVAudio::calcMovingAverage(unsigned int windowSize) {
 	movingAverage[0] = 0;
 	int halfWindowSize = (windowSize - 1) / 2;
 	for (unsigned int i = 0; i <= halfWindowSize; i++) {
-		movingAverage[0] += wavData[i];
+		movingAverage[0] += (wavData[i] / (double)windowSize);
 	}
 
 	//Calculate moving average for rest of audio
 	for (long i = 1; i < getNumSamples(); i++) {
-		int leftValue = 0;
-		int rightValue = 0;
+		double leftValue = 0;
+		double rightValue = 0;
 		if (i - (long)halfWindowSize - 1 >= 0) { 
-			leftValue = wavData[i - halfWindowSize - 1];
+			leftValue = (wavData[i - halfWindowSize - 1] / (double)windowSize);
 		}
 		if (i + (long)halfWindowSize < getNumSamples()) {
-			rightValue = wavData[i + halfWindowSize];
+			rightValue = (wavData[i + halfWindowSize] / (double)windowSize);
 		}
 
 		movingAverage[i] = movingAverage[i - 1] - leftValue + rightValue;
 	}
 
 	//Get average
-	for (long i = 0; i < getNumSamples(); i++) {
-		movingAverage[i] /= windowSize;
-	}
+	//for (long i = 0; i < getNumSamples(); i++) {
+	//	movingAverage[i] /= windowSize;
+	//}
 
 	return true;
 }
