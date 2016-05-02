@@ -264,16 +264,27 @@ bool WAVAudio::generateAudioSync() {
 	double standardDeviation = sqrt(variance);
 
 	//Generate sync frames
-	
 	double limit = average + standardDeviation;
 	//cout << limit << endl;
 
+	int frameCountLimit = 24000;	//Minimum number of frames between syncs
+	int frameCount = frameCountLimit;
 	for (long i = 0; i < getNumSamples(); i++) {
-		if (zeroCrossingData[i] > limit) {
+		if ((zeroCrossingData[i] > limit) && (frameCount >= frameCountLimit)) {
 			m_syncFrames.push_back(i);
+			frameCount = 0;
 			//cout << i << endl;
 		}
+
+		else {
+			frameCount++;
+		}
 	}
-	//cout << m_syncFrames.size() << endl;
+
+	/*
+	cout << m_syncFrames.size() << endl;
+	for (long i = 0; i < m_syncFrames.size(); i++) {
+		cout << m_syncFrames[i] << endl;
+	}*/
 	return true;
 }
