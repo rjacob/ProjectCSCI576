@@ -124,7 +124,9 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 					BOOL checked = IsDlgButtonChecked(hDlg, IDC_CORRECT_CHECK);
 
 					if (g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
+					{
 						g_pMyVideo->pauseVideo();
+					}
 					else
 					{
 						if (checked)
@@ -449,7 +451,7 @@ HRESULT OnPlaySound( HWND hDlg )
     }
     else
     {
-        if(g_pSound->IsSoundPlaying() )
+        if(g_pSound->IsSoundPlaying())
         {
             // To pause, just stop the buffer, but don't reset the position
             if( g_pSound )
@@ -462,12 +464,13 @@ HRESULT OnPlaySound( HWND hDlg )
         {
             // The buffer is not playing, so play it again
             DWORD dwFlags = bLooped ? DSBPLAY_LOOPING : 0L;
-            if( FAILED( hr = g_pSound->Play( 0, dwFlags ) ) )
+
+            if(FAILED( hr = g_pSound->Play( 0, dwFlags ) ) )
                 return DXTRACE_ERR( TEXT("Play"), hr );
 
             // Update the UI controls to show the sound as playing
             g_bBufferPaused = FALSE;
-            EnablePlayUI( hDlg, VIDEO_STATE_PLAYING);
+            //EnablePlayUI( hDlg, VIDEO_STATE_PLAYING);
         }
     }
 
@@ -494,39 +497,45 @@ VOID OnTimer( HWND hDlg )
 		if (IsWindowEnabled(GetDlgItem(hDlg, IDC_STOP)))
 		{
 			// We think the sound is playing, so see if it has stopped yet.
-			if (!g_pSound->IsSoundPlaying())
+			if (g_pSound->IsSoundPlaying())
 			{
 				// Update the UI controls to show the sound as stopped
 				if(g_pMyVideo->getVideoState() == VIDEO_STATE_STOPPED)
+				{
 					EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
-				else if(g_pMyVideo->getVideoState() == VIDEO_STATE_PAUSED)
+				}
+				else if (g_pMyVideo->getVideoState() == VIDEO_STATE_PAUSED)
+				{
+					// To pause, just stop the buffer, but don't reset the position
+					if (g_pSound)
+						g_pSound->Stop();
 					EnablePlayUI(hDlg, VIDEO_STATE_PAUSED);
+				}
 			}
 		}
 	}
 
 	if(g_pMyVideo->getVideoState() == VIDEO_STATE_PLAYING)
 	{
+		if (!g_pSound->IsSoundPlaying())
+		{
+			// The 'play'/'pause' button was pressed
+			if (FAILED(hr = OnPlaySound(hDlg)))
+			{
+				DXTRACE_ERR(TEXT("OnPlaySound"), hr);
+				MessageBox(hDlg, "Error playing DirectSound buffer. "
+					"Sample will now exit.", "DirectSound Sample",
+					MB_OK | MB_ICONERROR);
+				EndDialog(hDlg, IDABORT);
+			}
+		}
+
 		unsigned short usCurrentFrameNo = 0;
 		if ((usCurrentFrameNo = g_pMyVideo->copyVideoFrame(g_outImage)))
 		{
-			if (!g_pSound->IsSoundPlaying())
-			{
-				// The 'play'/'pause' button was pressed
-				if (FAILED(hr = OnPlaySound(hDlg)))
-				{
-					DXTRACE_ERR(TEXT("OnPlaySound"), hr);
-					MessageBox(hDlg, "Error playing DirectSound buffer. "
-						"Sample will now exit.", "DirectSound Sample",
-						MB_OK | MB_ICONERROR);
-					EndDialog(hDlg, IDABORT);
-				}
-			}
-
 			//Snaps audio for every 150 frames 10 second (every 15 frames is 1 sec)
 			if(usCurrentFrameNo % 150 == 0)
 				g_pSound->SetCurrentIndex((usCurrentFrameNo / FRAME_RATE_HZ) * 2 * 24000);
-
 
 			//This is very we draw subsequent frames to display
 			SetDIBitsToDevice(GetDC(hDlg),
@@ -534,12 +543,23 @@ VOID OnTimer( HWND hDlg )
 				0, 0, 0, g_outImage.getHeight(),
 				g_outImage.getImageData(), &g_bmi, DIB_RGB_COLORS);
 
-			unMin = floor((usCurrentFrameNo / FRAME_RATE_HZ) / 60);
-			unSec = floor((usCurrentFrameNo / FRAME_RATE_HZ) % 60);
-			unSubSec = (usCurrentFrameNo % FRAME_RATE_HZ);
+			unMin = floor(((usCurrentFrameNo+1) / FRAME_RATE_HZ) / 60);
+			unSec = floor(((usCurrentFrameNo+1) / FRAME_RATE_HZ) % 60);
+			unSubSec = ((usCurrentFrameNo+1) % FRAME_RATE_HZ);
 
 			sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_START), str);
+		}
+
+		if (usCurrentFrameNo == g_pMyVideo->getNoFrames() - 1)//Reached the end
+		{
+			//TODO: Check if it the loop checkbox is checked
+			if (g_pSound)
+			{
+				g_pSound->Stop();
+				g_pSound->Reset();
+			}
+			EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
 		}
 	}
 	else if (g_pMyVideo->getVideoState() == VIDEO_STATE_BUFFERING)
@@ -597,6 +617,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 
         EnableWindow(   GetDlgItem( hDlg, IDC_PLAY ),       TRUE );
 		EnableWindow(GetDlgItem(hDlg, IDC_ANALYZE), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDCANCEL), TRUE);
         SetFocus(       GetDlgItem( hDlg, IDC_PLAY ) );
 		//EnableWindow(GetDlgItem(hDlg, IDC_SCROLLBAR1), FALSE);
         SetDlgItemText( hDlg, IDC_PLAY, "&Play" );
@@ -617,7 +638,7 @@ VOID EnablePlayUI( HWND hDlg, VIDEO_STATE_E _eVideoState )
 		{
 			//Stopped by user and not on completion
 			SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETPOS, 0, 0);
-			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%%");
+			SetWindowText(GetDlgItem(hDlg, IDC_STATIC_PER), "0%");
 		}
 		SetDlgItemText(hDlg, IDC_PLAY, "&Play");
 	}
@@ -719,9 +740,9 @@ void DrawSetFrame(HWND _hDlg, int _nIndex)
 		0, 0, 0, image.getHeight(),
 		image.getImageData(), &g_bmi, DIB_RGB_COLORS);
 
-	unMin = floor((_nIndex / FRAME_RATE_HZ) / 60);
-	unSec = floor((_nIndex / FRAME_RATE_HZ) % 60);
-	unSubSec = (_nIndex % FRAME_RATE_HZ);
+	unMin = floor((_nIndex+1 / FRAME_RATE_HZ) / 60);
+	unSec = floor((_nIndex+1 / FRAME_RATE_HZ) % 60);
+	unSubSec = (_nIndex+1 % FRAME_RATE_HZ);
 
 	sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 	SetWindowText(GetDlgItem(_hDlg, IDC_STATIC_START), str);
