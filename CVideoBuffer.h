@@ -2,7 +2,7 @@
 #include "CMutexExclusiveLock.h"
 #include "Image.h"
 
-#define BUFFER_SIZE  100//1100/* (480*270*3*1100) Mb RAM */
+#define BUFFER_SIZE  1100 /* (480*270*3*1100) Mb RAM */
 #define DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
 
 typedef enum

@@ -470,7 +470,7 @@ HRESULT OnPlaySound( HWND hDlg )
 
             // Update the UI controls to show the sound as playing
             g_bBufferPaused = FALSE;
-            //EnablePlayUI( hDlg, VIDEO_STATE_PLAYING);
+            EnablePlayUI( hDlg, VIDEO_STATE_PLAYING);
         }
     }
 
@@ -579,6 +579,7 @@ VOID OnTimer( HWND hDlg )
 		DrawThumbnails(hDlg,0);
 		g_pMyVideo->stopVideo();
 		EnablePlayUI(hDlg, VIDEO_STATE_ANALYSIS_COMPLETE);
+		EnablePlayUI(hDlg, VIDEO_STATE_STOPPED);
 	}
 }//OnTimer
 
@@ -740,9 +741,9 @@ void DrawSetFrame(HWND _hDlg, int _nIndex)
 		0, 0, 0, image.getHeight(),
 		image.getImageData(), &g_bmi, DIB_RGB_COLORS);
 
-	unMin = floor((_nIndex+1 / FRAME_RATE_HZ) / 60);
-	unSec = floor((_nIndex+1 / FRAME_RATE_HZ) % 60);
-	unSubSec = (_nIndex+1 % FRAME_RATE_HZ);
+	unMin = floor(((_nIndex+1) / FRAME_RATE_HZ) / 60);
+	unSec = floor(((_nIndex + 1) / FRAME_RATE_HZ) % 60);
+	unSubSec = ((_nIndex + 1) % FRAME_RATE_HZ);
 
 	sprintf(str, "%02d:%02d.%02d", unMin, unSec, unSubSec);
 	SetWindowText(GetDlgItem(_hDlg, IDC_STATIC_START), str);
