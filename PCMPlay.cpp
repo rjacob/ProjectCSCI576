@@ -43,6 +43,7 @@ BOOL           g_bBufferPaused;
 CVideo*        g_pMyVideo;
 MyImage        g_outImage;
 vector <unsigned short> g_IFrames;
+vector <unsigned short> g_ASFrames;
 int g_w, g_h;
 int g_nCurrentScrollbarPos;
 
@@ -174,6 +175,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 						SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBS_SMOOTH, 0, 1);
 						SendMessage(GetDlgItem(hDlg, IDC_PROGRESS), PBM_SETSTEP, (WPARAM)1, 0);
 						g_pMyVideo->analyzeVideo();
+						//g_ASFrames = g_pMyVideo->getSyncFrames(".\\video\\Alin_Day1_002 - Copy.wav");
 
 						int noFrames = g_pMyVideo->getNoFrames();
 						unMin = floor((noFrames / FRAME_RATE_HZ) / 60);
@@ -491,6 +493,7 @@ VOID OnTimer( HWND hDlg )
 	unsigned short unMin, unSec, unSubSec;
 	char str[32] = { 0 };
 	HRESULT hr;
+	static unsigned int unAudioSyncFrame = 0;
 
 	if (++ulTimerCount % FRAME_RATE_HZ == 0)//Check only at 4hz, when timer is at 15Hz
 	{
@@ -533,9 +536,20 @@ VOID OnTimer( HWND hDlg )
 		unsigned short usCurrentFrameNo = 0;
 		if ((usCurrentFrameNo = g_pMyVideo->copyVideoFrame(g_outImage)))
 		{
-			//Snaps audio for every 150 frames 10 second (every 15 frames is 1 sec)
-			if(usCurrentFrameNo % 150 == 0)
-				g_pSound->SetCurrentIndex((usCurrentFrameNo / FRAME_RATE_HZ) * 2 * 24000);
+			if (g_ASFrames.size() && unAudioSyncFrame < g_ASFrames.size())
+			{
+				if (usCurrentFrameNo == g_ASFrames.at(unAudioSyncFrame))
+				{
+					g_pSound->SetCurrentIndex((usCurrentFrameNo / FRAME_RATE_HZ) * 2 * 24000);
+					unAudioSyncFrame++;
+				}
+			}
+			else
+			{
+				//Snaps audio for every 150 frames 10 second (every 15 frames is 1 sec)
+				if(usCurrentFrameNo % 150 == 0)
+					g_pSound->SetCurrentIndex((usCurrentFrameNo / FRAME_RATE_HZ) * 2 * 24000);
+			}
 
 			//This is very we draw subsequent frames to display
 			SetDIBitsToDevice(GetDC(hDlg),

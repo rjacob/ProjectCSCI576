@@ -28,7 +28,9 @@ private:
 	//Analysis Data
 	double* movingAverage;
 	int* zeroCrossingData;
-	std::vector<unsigned long> m_syncFrames;
+	std::vector<unsigned long> m_syncSamples;		//Audio samples to sync (low detected speech)
+	std::vector<unsigned long> m_speechSamples;		//Audio samples with detected speech
+	std::vector<unsigned short> m_syncFrames;		//Video frames to sync
 
 	//Helper functions
 	unsigned int parseWavHeaderField(FILE* inputWAV, unsigned int numBytes);
@@ -51,6 +53,7 @@ public:
 	int getAudioSample(unsigned int index);
 	double getMovingAverageData(unsigned int index);
 	int getZeroCrossingData(unsigned int index);
+	std::vector<unsigned short> getSyncFrames() const { return m_syncFrames; }
 
 	// Input Output operations
 	bool readWAV(FILE* inputWAV);
@@ -58,6 +61,6 @@ public:
 	// Calculations
 	bool calcMovingAverage(unsigned int windowSize);
 	bool calcZeroCrossing(unsigned int windowSize);
-	bool generateAudioSync();
+	bool analyzeAudio();
 	
 };

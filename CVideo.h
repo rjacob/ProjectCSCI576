@@ -3,9 +3,11 @@
 #include <windows.h>
 #include <time.h>
 #include "Image.h"
+#include "WAVAudio.h"
 #include "CVideoBuffer.h"
 
 #define DEBUG_FILE 0
+#define ANALYSIS_CV 0
 #define FRAME_RATE_HZ 15
 
 static vector<KeyPoint> keypointsCurr;
@@ -53,6 +55,8 @@ public:
 	unsigned short copyVideoFrame(MyImage&);
 	bool readVideoFrame(MyImage&, unsigned int _nFrame);
 	
+	vector<unsigned short> getSyncFrames(char* audioPath);
+
 private:
 	char* m_pVideoPath;
 	unsigned long m_ulNoFrames;
@@ -91,6 +95,8 @@ private:
 	//void featuresMatch(Mat&, vector<KeyPoint>&, Mat&, vector<KeyPoint>&);
 	//void outlierRejection(vector<DMatch>&, vector<KeyPoint>&, vector<KeyPoint>&);
 	//void transformFrame(Mat);
+
+	WAVAudio* audio;
 
 	//Thread Procesing
 	static void spawnPlayingThread(CVideo* _pThis) { _pThis->threadPlayingLoop(); }

@@ -1,4 +1,5 @@
 #include "CVideo.h"
+#include "Image.h"
 
 //Video Player
 /*************************************
@@ -47,6 +48,9 @@ CVideo::~CVideo()
 		m_pMatcher->clear();
 		//delete m_pMatcher;
 	}
+
+	if (audio)
+		delete audio;
 
 }//destructor
 
@@ -298,6 +302,7 @@ void CVideo::threadAnalyzingLoop()
 	debugOutput = fopen("Video Data.txt", "a");
 #endif
 
+#if ANALYSIS_CV
 	char pCorrectedFilePath[128] = { 0 };
 	char* addr;
 	sprintf(pCorrectedFilePath, "%s", m_pVideoPath);
@@ -306,7 +311,8 @@ void CVideo::threadAnalyzingLoop()
 	m_correctFile = fopen(pCorrectedFilePath, "wb");
 
 	if(m_correctFile == NULL)
-		OutputDebugString(_T("Shit!"));
+		OutputDebugString(_T("Dohhhhhh!"));
+#endif
 
 
 	readVideoFrame(prevFrame, 0);//Get first frame, one step ahead
@@ -318,7 +324,7 @@ void CVideo::threadAnalyzingLoop()
 			readVideoFrame(currentFrame, i);
 			videoSummarization(i, prevFrame, currentFrame);
 
-#if 1
+#if ANALYSIS_CV
 			// Open CV data matrices
 			Mat	dataMatCurrent(m_unVideoHeight, m_unVideoWidth, CV_8UC3, currentFrame.getImageData());
 			Mat dataMatPrev(m_unVideoHeight, m_unVideoWidth, CV_8UC3, prevFrame.getImageData());
@@ -374,6 +380,12 @@ void CVideo::threadAnalyzingLoop()
 					volatile float dY = train.y - query.y;
 					double dist = sqrt(pow(dX,2) + pow(dY,2));
 
+					if ((m_matches.size() >= m_pts1.size()) || (m_matches.size() >= m_pts2.size())) {
+						char str[128] = { 0 };
+						sprintf(str, "%d: %d\t%d\n", m_matches.size(), m_pts1.size(), m_pts2.size());
+						OutputDebugString(_T(str));
+					}
+
 					if (dist < sqrt(162))
 					{
 						m_pts1.push_back(keypointsPrev[match.queryIdx].pt);//Query (Curr)
@@ -424,9 +436,11 @@ void CVideo::threadAnalyzingLoop()
 	fclose(debugOutput);
 #endif
 
+#if ANALYSIS_CV
 	fclose(m_correctFile);
 	keypointsCurr.clear();
 	keypointsPrev.clear();
+#endif
 }
 
  /*************************************
@@ -628,3 +642,26 @@ unsigned long CVideo::videoIndex(MyImage& _source)
 	keypoints.clear();
 	return ulFrameIndexMaxMatch;
 }//videoIndex
+
+//Get sync frames
+vector<unsigned short> CVideo::getSyncFrames(char* audioPath) {
+	FILE* pInputAudio = NULL;
+	vector<unsigned short> output;
+
+	if (audioPath == NULL) {
+		return output;
+	}
+
+	pInputAudio = fopen(audioPath, "rb");
+
+	if (pInputAudio)
+	{
+		audio->readWAV(pInputAudio);
+		fclose(pInputAudio);
+	}
+	audio->calcMovingAverage(51);
+	audio->calcZeroCrossing(24001);
+	audio->analyzeAudio();
+	output = audio->getSyncFrames();
+	return output;
+}

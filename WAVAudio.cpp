@@ -90,6 +90,7 @@ int WAVAudio::convertTwosComplement(unsigned int sample, unsigned int bytesPerSa
 	return sample;
 }
 
+
 //Read WAV audio file
 bool WAVAudio::readWAV(FILE* inputWAV) {
 	unsigned char buffer[4];
@@ -248,7 +249,7 @@ bool WAVAudio::calcZeroCrossing(unsigned int windowSize) {
 }
 
 //Generate vector data for audio sync
-bool WAVAudio::generateAudioSync() {
+bool WAVAudio::analyzeAudio() {
 	double average = 0;
 	for (unsigned long i = 0; i < getNumSamples(); i++) {
 		average += zeroCrossingData[i];
@@ -264,27 +265,77 @@ bool WAVAudio::generateAudioSync() {
 	double standardDeviation = sqrt(variance);
 
 	//Generate sync frames
-	double limit = average + standardDeviation;
-	//cout << limit << endl;
+	double upperBound = average - standardDeviation;	//Values above this, speech
+	double lowerBound = average - standardDeviation;	//Values below this, no speech
+	cout << upperBound << endl;
+	cout << lowerBound << endl;
 
-	int frameCountLimit = 24000;	//Minimum number of frames between syncs
-	int frameCount = frameCountLimit;
+	//Create audio sync vector
+	/*
+	int syncFrameCountLimit = 24000;	//Minimum number of frames between syncs
+	int syncFrameCount = syncFrameCountLimit;
 	for (long i = 0; i < getNumSamples(); i++) {
-		if ((zeroCrossingData[i] > limit) && (frameCount >= frameCountLimit)) {
-			m_syncFrames.push_back(i);
-			frameCount = 0;
+		if ((zeroCrossingData[i] > upperBound) && (syncFrameCount >= syncFrameCountLimit)) {
+			m_syncSamples.push_back(i);
+			syncFrameCount = 0;
 			//cout << i << endl;
 		}
 
 		else {
-			frameCount++;
+			syncFrameCount++;
+		}
+	}*/
+
+	int syncFrameCountLimit = 24000;	//Minimum number of frames between syncs
+	int syncFrameCount = syncFrameCountLimit;
+	int continuousFrameCount = 0;
+	int idealFrameCount = 24000;
+	for (long i = 0; i < getNumSamples(); i++) {
+		if ((zeroCrossingData[i] < lowerBound)) {
+			continuousFrameCount++;
+			if (continuousFrameCount >= idealFrameCount) {
+				m_syncSamples.push_back(i - (idealFrameCount - 1));
+				continuousFrameCount = 0;
+			}
+		}
+
+		else {
+			continuousFrameCount = 0;
+		}
+	}
+	
+	//Window sizes for silence vs speech may need to be different
+	//Create detected speech vector
+	int speechFrameCountLimit = 24000;	//Minimum number of frames for speech
+	int speechFrameCount = speechFrameCountLimit;
+	for (long i = 0; i < getNumSamples(); i++) {
+		if ((zeroCrossingData[i] > upperBound) && (speechFrameCount >= speechFrameCountLimit)) {
+			m_speechSamples.push_back(i);
+			speechFrameCount = 0;
+		}
+
+		else {
+			speechFrameCount++;
 		}
 	}
 
+	//Create video sync frames from audio sync samples
+	for (long i = 0; i < m_syncSamples.size(); i++) {
+		unsigned short frame = m_syncSamples[i] / 24000 * 15;
+		m_syncFrames.push_back(frame);
+	}
+	
 	/*
-	cout << m_syncFrames.size() << endl;
-	for (long i = 0; i < m_syncFrames.size(); i++) {
-		cout << m_syncFrames[i] << endl;
+	cout << "Number of sync frames: " << m_syncSamples.size() << endl;
+	cout << "Number of speech frames: " << m_speechSamples.size() << endl;
+	for (long i = 0; i < m_syncSamples.size(); i++) {
+		cout << m_syncFrames[i] << "\t" << m_syncSamples[i] << "\t" << m_syncSamples[i] / 24000.0 << "s" << endl;
 	}*/
+
+	
+	//for (long i = 0; i < m_m_speechSamples.size(); i++) {
+	//	cout << m_m_speechSamples[i] / 24000.0 << "s" << endl;
+	//}
+
 	return true;
 }
