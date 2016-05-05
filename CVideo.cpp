@@ -700,7 +700,7 @@ vector<unsigned short> CVideo::summarizationFramesPatch() {
 
 //Create rgb video file from vector
 bool CVideo::writeVectortoVideo(char* filename, vector<unsigned short> frames) {
-	FILE* output = fopen(filename, "ab");
+	FILE* output = fopen(filename, "wb");
 	FILE* video = fopen(m_pVideoPath, "rb");
 	unsigned char buffer[480 * 270 * 3];
 	
@@ -715,22 +715,6 @@ bool CVideo::writeVectortoVideo(char* filename, vector<unsigned short> frames) {
 		fwrite(buffer, sizeof(unsigned char), 480 * 270 * 3, output);
 		index++;
 	}
-
-	/*
-	for (unsigned int i = 0; i < 50 * 15; i++) {
-		fread(buffer, sizeof(unsigned char), 480 * 270 * 3, video);
-		fwrite(buffer, sizeof(unsigned char), 480 * 270 * 3, output);
-	}
-
-	for (unsigned int i = 0; i < 200 * 15; i++) {
-		fread(buffer, sizeof(unsigned char), 480 * 270 * 3, video);
-	}
-
-	for (unsigned int i = 0; i < 50 * 15; i++) {
-		fread(buffer, sizeof(unsigned char), 480 * 270 * 3, video);
-		fwrite(buffer, sizeof(unsigned char), 480 * 270 * 3, output);
-	}
-	*/
 
 	fclose(output);
 	fclose(video);

@@ -339,3 +339,48 @@ bool WAVAudio::analyzeAudio() {
 
 	return true;
 }
+
+//Creates output audio file using vector of video frames
+bool WAVAudio::writeVectortoWAV(char* filename, vector<unsigned short> frames) {
+	FILE* output = fopen(filename, "wb");
+
+	//Conversions
+	int videoFramesPerSecond = 15;
+	int audioSamplesPerVideoFrame = sampleRate / videoFramesPerSecond;
+
+	//Updated values
+	unsigned int newSubchunk2Size = frames.size() * audioSamplesPerVideoFrame * numChannels * bitsPerSample / 8;
+	unsigned int newChunkSize = 36 + newSubchunk2Size;
+
+	//RIFF
+	fwrite(&chunkID, sizeof(unsigned char), 4, output);
+	fwrite(&newChunkSize, sizeof(unsigned char), 4, output);
+	fwrite(&format, sizeof(unsigned char), 4, output);
+
+	//fmt
+	fwrite(&subChunk1ID, sizeof(unsigned char), 4, output);
+	fwrite(&subChunk1Size, sizeof(unsigned char), 4, output);
+	fwrite(&audioFormat, sizeof(unsigned char), 2, output);
+	fwrite(&numChannels, sizeof(unsigned char), 2, output);
+	fwrite(&sampleRate, sizeof(unsigned char), 4, output);
+	fwrite(&byteRate, sizeof(unsigned char), 4, output);
+	fwrite(&blockAlign, sizeof(unsigned char), 2, output);
+	fwrite(&bitsPerSample, sizeof(unsigned char), 2, output);
+
+	//Data
+	fwrite(&subChunk2ID, sizeof(unsigned char), 4, output);
+	fwrite(&newSubchunk2Size, sizeof(unsigned char), 4, output);
+
+	//Parse frame vector to add audio samples
+	for (unsigned int i = 0; i < frames.size(); i++) {
+		unsigned long audioIndex = frames[i] * audioSamplesPerVideoFrame;
+		for (int j = 0; j < audioSamplesPerVideoFrame; j++) {
+			unsigned long currentAudioIndex = audioIndex + j;
+			int currentSample = wavData[currentAudioIndex];
+			fwrite(&currentSample, sizeof(unsigned char), 2, output);
+		}
+	}
+
+	fclose(output);
+	return true;
+}
