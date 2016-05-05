@@ -1,5 +1,7 @@
 #include "WAVAudio.h"
 #include <iostream>
+#include <Windows.h>
+#include <tchar.h>
 using namespace std;
 
 // Constructor and Desctructors
@@ -26,6 +28,7 @@ WAVAudio::WAVAudio() {
 
 	//Analysis Data
 	zeroCrossingData = NULL;
+	movingAverage = NULL;
 }
 
 WAVAudio::~WAVAudio()
@@ -36,9 +39,8 @@ WAVAudio::~WAVAudio()
 	if (movingAverage)
 		delete movingAverage;
 
-	if (zeroCrossingData) {
+	if (zeroCrossingData)
 		delete zeroCrossingData;
-	}
 }
 
 //Parse each WAV header parameter
@@ -346,10 +348,10 @@ bool WAVAudio::writeVectortoWAV(char* filename, vector<unsigned short> frames) {
 
 	//Conversions
 	int videoFramesPerSecond = 15;
-	int audioSamplesPerVideoFrame = sampleRate / videoFramesPerSecond;
+	int audioSamplesPerVideoFrame = round(sampleRate / videoFramesPerSecond);
 
 	//Updated values
-	unsigned int newSubchunk2Size = frames.size() * audioSamplesPerVideoFrame * numChannels * bitsPerSample / 8;
+	unsigned int newSubchunk2Size = frames.size() * audioSamplesPerVideoFrame * numChannels * blockAlign;
 	unsigned int newChunkSize = 36 + newSubchunk2Size;
 
 	//RIFF
@@ -370,14 +372,33 @@ bool WAVAudio::writeVectortoWAV(char* filename, vector<unsigned short> frames) {
 	//Data
 	fwrite(&subChunk2ID, sizeof(unsigned char), 4, output);
 	fwrite(&newSubchunk2Size, sizeof(unsigned char), 4, output);
+	
+	//Debug
+	char str[64] = { 0 };
+	unsigned long largestIndex = 0;
 
 	//Parse frame vector to add audio samples
 	for (unsigned int i = 0; i < frames.size(); i++) {
 		unsigned long audioIndex = frames[i] * audioSamplesPerVideoFrame;
-		for (int j = 0; j < audioSamplesPerVideoFrame; j++) {
+		for (unsigned int j = 0; j < audioSamplesPerVideoFrame; j++) {
 			unsigned long currentAudioIndex = audioIndex + j;
 			int currentSample = wavData[currentAudioIndex];
 			fwrite(&currentSample, sizeof(unsigned char), 2, output);
+			
+			if (frames[i] == 3400) {
+				sprintf(str, "%d\t%d\t%d\t%d\t%d\n", currentAudioIndex, largestIndex, audioIndex, j, frames[i]);
+				OutputDebugString(_T(str));
+			}
+
+			if (currentAudioIndex < largestIndex) {
+				sprintf(str, "%d\t%d\t%d\t%d\t%d\n", currentAudioIndex, largestIndex, audioIndex, j, frames[i]);
+				OutputDebugString(_T(str));
+				largestIndex = currentAudioIndex;
+			}
+
+			else {
+				largestIndex = currentAudioIndex;
+			}
 		}
 	}
 

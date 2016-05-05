@@ -704,7 +704,9 @@ void DrawThumbnails(HWND _hDlg, int _nHShift)
 
 	if(!g_IFrames.size())
 	{
-		g_IFrames = g_pMyVideo->getIFrames();//First Time
+		//Create I frames here
+		g_IFrames = g_pMyVideo->iFramesPatch();
+		//g_IFrames = g_pMyVideo->getIFrames();//First Time
 
 		//Create summarization frames here (aflag)
 		g_summarizationFrames = g_pMyVideo->summarizationFramesPatch();
@@ -718,9 +720,14 @@ void DrawThumbnails(HWND _hDlg, int _nHShift)
 		OutputDebugString(_T(str));
 		sprintf(str, "Number of summarization frames: %d\n", g_summarizationFrames.size());
 		OutputDebugString(_T(str));
-		vector<unsigned short> testing;
-		//g_pMyVideo->writeVectortoVideo("summarization test.rgb", testing);
+
+		//Create summarization video and audio here
 		g_pMyVideo->writeVectortoVideo("summarization test.rgb", g_summarizationFrames);
+		WAVAudio sumAudio;
+		FILE* inputAudio = fopen(AudioPath, "rb");
+		sumAudio.readWAV(inputAudio);
+		sumAudio.writeVectortoWAV("summarization test.wav", g_summarizationFrames);
+		fclose(inputAudio);
 
 		SetScrollRange(GetDlgItem(_hDlg, IDC_SCROLLBAR1), SB_CTL, 0, g_IFrames.size(), TRUE);
 	}

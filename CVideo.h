@@ -58,6 +58,7 @@ public:
 	vector<unsigned short> getSyncFrames(char* audioPath);
 
 	vector<unsigned short> summarizationFramesPatch();
+	vector<unsigned short> iFramesPatch();
 	bool writeVectortoVideo(char* filename, vector<unsigned short> frames);
 
 private:

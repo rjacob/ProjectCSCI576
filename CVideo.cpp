@@ -429,7 +429,7 @@ void CVideo::threadAnalyzingLoop()
 	m_eVideoState = VIDEO_STATE_ANALYSIS_COMPLETE;
 	m_ulCurrentFrameIndex = 0;
 
-	generateIFrames();	//Generate vector of I frames
+	//generateIFrames();	//Generate vector of I frames
 	//generateSummarizationFrames();	//Generate vector of summarization frames
 
 #if DEBUG_FILE
@@ -544,23 +544,23 @@ bool CVideo::generateSummarizationFrames()
 	//increase the GOP length instead of creating new GOP
 	unsigned int num_Iframes = m_iFrames.size();
 	unsigned int idealVideoLength = 30;		//In seconds
-	unsigned short minGOPLength = idealVideoLength * FRAME_RATE_HZ / num_Iframes;	//Make minimum GOP size so close to ideal video length
+	unsigned short minGOPLength = round(idealVideoLength * FRAME_RATE_HZ / num_Iframes);	//Make minimum GOP size so close to ideal video length
 	unsigned long lastFrameIndex = 0;
 	for (int iFrameIndex = 0; iFrameIndex < m_iFrames.size(); iFrameIndex++) {
 		unsigned long currentIFrame = m_iFrames[iFrameIndex];
 
-		int flexibleGOPLength = minGOPLength;	//Allows GOP size to grow if unable to allocate frame
-		for (int i = 0; i < flexibleGOPLength; i++) {
+		//Either add next frame if ahead of last frame, or increment last frame
+		for (int i = 0; i < minGOPLength; i++) {
 			if (currentIFrame + i >= lastFrameIndex) {
 				m_summarizationFrames.push_back(currentIFrame + i);
+				lastFrameIndex = currentIFrame + i + 1;
 			}
 
 			else {
-				flexibleGOPLength++;
+				m_summarizationFrames.push_back(lastFrameIndex);
+				lastFrameIndex++;
 			}
 		}
-
-		lastFrameIndex = m_iFrames[iFrameIndex] + minGOPLength;
 	}
 
 #if DEBUG_FILE
@@ -696,6 +696,11 @@ vector<unsigned short> CVideo::getSyncFrames(char* audioPath) {
 vector<unsigned short> CVideo::summarizationFramesPatch() {
 	generateSummarizationFrames();
 	return m_summarizationFrames;
+}
+
+vector<unsigned short> CVideo::iFramesPatch() {
+	generateIFrames();
+	return m_iFrames;
 }
 
 //Create rgb video file from vector
