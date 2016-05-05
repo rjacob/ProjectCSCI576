@@ -57,6 +57,7 @@ public:
 
 	// Input Output operations
 	bool readWAV(FILE* inputWAV);
+	bool writeVectortoWAV(char* filename, vector<unsigned short> frames);	//Uses vector of image frames
 	
 	// Calculations
 	bool calcMovingAverage(unsigned int windowSize);

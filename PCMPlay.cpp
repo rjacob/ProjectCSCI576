@@ -51,6 +51,8 @@ char FramePath[_MAX_PATH];
 char AudioPath[_MAX_PATH];
 BITMAPINFO g_bmi;
 
+vector <unsigned short> g_summarizationFrames;
+
 //-----------------------------------------------------------------------------
 // Name: WinMain()
 // Desc: Entry point for the application.  Since we use a simple dialog for 
@@ -98,7 +100,7 @@ INT_PTR CALLBACK MainDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam 
 	PAINTSTRUCT ps;
 	HDC hdc;
 	unsigned short unMin, unSec, unSubSec;
-	char str[32] = { 0 };
+	char str[64] = { 0 };
 	static clock_t iterationTime;
 
     switch( msg ) 
@@ -703,6 +705,23 @@ void DrawThumbnails(HWND _hDlg, int _nHShift)
 	if(!g_IFrames.size())
 	{
 		g_IFrames = g_pMyVideo->getIFrames();//First Time
+
+		//Create summarization frames here (aflag)
+		g_summarizationFrames = g_pMyVideo->summarizationFramesPatch();
+		char str[64] = { 0 };
+		for (int i = 0; i < g_summarizationFrames.size(); i++) {
+			sprintf(str, "%d\n", g_summarizationFrames[i]);
+			OutputDebugString(_T(str));
+		}
+
+		sprintf(str, "Number of I-frames: %d\n", g_IFrames.size());
+		OutputDebugString(_T(str));
+		sprintf(str, "Number of summarization frames: %d\n", g_summarizationFrames.size());
+		OutputDebugString(_T(str));
+		vector<unsigned short> testing;
+		//g_pMyVideo->writeVectortoVideo("summarization test.rgb", testing);
+		g_pMyVideo->writeVectortoVideo("summarization test.rgb", g_summarizationFrames);
+
 		SetScrollRange(GetDlgItem(_hDlg, IDC_SCROLLBAR1), SB_CTL, 0, g_IFrames.size(), TRUE);
 	}
 

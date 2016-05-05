@@ -496,12 +496,30 @@ bool CVideo::generateIFrames()
 	double standardDeviation = sqrt(variance);
 
 	//Generate I-frames
-	double limit = average + standardDeviation;		//Need to figure this out
-	m_iFrames.push_back(0);	//Frame 0 is always an I-frame (Maybe?)
-	for (unsigned long i = 1; i < m_ulNoFrames; i++) {
-		if (xSquaredValues[i] > limit) {
-			m_iFrames.push_back(i);
+	//Reiterate if number of I-frames is too small or too large
+	int min_Iframes = 10;
+	int max_Iframes = 20;
+	double iFrameThreshold = average + standardDeviation;		//Need to figure this out
+	while (m_iFrames.size() < min_Iframes) {
+		m_iFrames.clear();
+		m_iFrames.push_back(0);	//Frame 0 is always an I-frame (Maybe?)
+		for (unsigned long i = 1; i < m_ulNoFrames; i++) {
+			if (xSquaredValues[i] > iFrameThreshold) {
+				m_iFrames.push_back(i);
+			}
 		}
+		iFrameThreshold -= (standardDeviation * 0.1);		//Lower threshold to try to get more I-frames
+	}
+
+	while (m_iFrames.size() > max_Iframes) {
+		m_iFrames.clear();
+		m_iFrames.push_back(0);	//Frame 0 is always an I-frame (Maybe?)
+		for (unsigned long i = 1; i < m_ulNoFrames; i++) {
+			if (xSquaredValues[i] > iFrameThreshold) {
+				m_iFrames.push_back(i);
+}
+		}
+		iFrameThreshold += (standardDeviation * 0.1);		//Raise threshold to try to get more I-frames
 	}
 
 #if DEBUG_FILE
@@ -524,13 +542,21 @@ bool CVideo::generateSummarizationFrames()
 {
 	//If there is an I-frame within the GOP of another I-frame
 	//increase the GOP length instead of creating new GOP
-	unsigned short minGOPLength = 3 * FRAME_RATE_HZ;	//Make minimum GOP size to 3 seconds
+	unsigned int num_Iframes = m_iFrames.size();
+	unsigned int idealVideoLength = 30;		//In seconds
+	unsigned short minGOPLength = idealVideoLength * FRAME_RATE_HZ / num_Iframes;	//Make minimum GOP size so close to ideal video length
 	unsigned long lastFrameIndex = 0;
 	for (int iFrameIndex = 0; iFrameIndex < m_iFrames.size(); iFrameIndex++) {
 		unsigned long currentIFrame = m_iFrames[iFrameIndex];
-		for (int i = 0; i < minGOPLength; i++) {
+
+		int flexibleGOPLength = minGOPLength;	//Allows GOP size to grow if unable to allocate frame
+		for (int i = 0; i < flexibleGOPLength; i++) {
 			if (currentIFrame + i >= lastFrameIndex) {
 				m_summarizationFrames.push_back(currentIFrame + i);
+			}
+
+			else {
+				flexibleGOPLength++;
 			}
 		}
 
@@ -664,4 +690,49 @@ vector<unsigned short> CVideo::getSyncFrames(char* audioPath) {
 	audio->analyzeAudio();
 	output = audio->getSyncFrames();
 	return output;
+}
+
+//Create summarization frames after creating I-frames
+vector<unsigned short> CVideo::summarizationFramesPatch() {
+	generateSummarizationFrames();
+	return m_summarizationFrames;
+}
+
+//Create rgb video file from vector
+bool CVideo::writeVectortoVideo(char* filename, vector<unsigned short> frames) {
+	FILE* output = fopen(filename, "ab");
+	FILE* video = fopen(m_pVideoPath, "rb");
+	unsigned char buffer[480 * 270 * 3];
+	
+	unsigned int index = 0;
+	for (unsigned int i = 0; i < frames.size(); i++) {
+		while (index < frames[i]) {
+			fread(buffer, sizeof(unsigned char), 480 * 270 * 3, video);
+			index++;
+		}
+		
+		fread(buffer, sizeof(unsigned char), 480 * 270 * 3, video);
+		fwrite(buffer, sizeof(unsigned char), 480 * 270 * 3, output);
+		index++;
+	}
+
+	/*
+	for (unsigned int i = 0; i < 50 * 15; i++) {
+		fread(buffer, sizeof(unsigned char), 480 * 270 * 3, video);
+		fwrite(buffer, sizeof(unsigned char), 480 * 270 * 3, output);
+	}
+
+	for (unsigned int i = 0; i < 200 * 15; i++) {
+		fread(buffer, sizeof(unsigned char), 480 * 270 * 3, video);
+	}
+
+	for (unsigned int i = 0; i < 50 * 15; i++) {
+		fread(buffer, sizeof(unsigned char), 480 * 270 * 3, video);
+		fwrite(buffer, sizeof(unsigned char), 480 * 270 * 3, output);
+	}
+	*/
+
+	fclose(output);
+	fclose(video);
+	return true;
 }
