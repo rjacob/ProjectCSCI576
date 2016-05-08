@@ -1,4 +1,4 @@
-ABC Term Project
-1 Videos
+CSCI 576 Term Project
+Egocentric Videos
 
 Authors: Roeil Jacob, Timothy Fong
