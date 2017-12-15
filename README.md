@@ -5,7 +5,7 @@
 ### Authors: Roeil Jacob, Timothy Fong 
 
 # Video/Audio Player - GUI Design
-![alt text](http://url/to/img.png)
+![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/gui.png)
 
 # Video/Audio Player - Algorithm
 
