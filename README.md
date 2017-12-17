@@ -27,7 +27,7 @@ Audio Sync
 
 # Video Indexing
  - Using Computer Vision (CV) techniques
-   -- Resize Source image using Bilinear Interpolation
+   - Resize Source image using Bilinear Interpolation
    -- Convert Source Frame and Video Frames to Grayscale (single channel)
    -- Detect Features using Speeded Up Robust Features (SURF 64)
    --- Several times faster than SIFT
