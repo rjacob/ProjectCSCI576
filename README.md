@@ -5,7 +5,7 @@
 ### Authors: Roeil Jacob, Timothy Fong 
 
 # Video/Audio Player - GUI Design
-![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/gui.png)
+![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/img/gui.png)
 
 # Video/Audio Player - Algorithm
 Multi Threaded
@@ -37,21 +37,23 @@ Audio Sync
      - Ignore Features that have moved more than distance √2
 
 ## Results 
+On the right, the target. On the left, the match.
+
 Alin_Day1_002\11475.png
 Frame: 636 (15 matches)
-![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/11475.png)
+![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/img/11475.png)
 
 Alin_Day1_002\12651.png
 Frame: 1731 (9 matches)
-![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/12651.png)
+![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/img/12651.png)
 
 Alin_Day1_002\16192.png
 Frame: 3306 (34 matches)
-![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/16192.png)
+![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/img/16192.png)
 
 Alin_Day1_002\16700.png
 Frame: 3801 (7 matches)
-![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/16700.png)
+![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/img/16700.png)
 
 Alin_Day1_002\16954.png
 Frame: 4053 (15 matches)
@@ -76,7 +78,7 @@ Frame: 4053 (15 matches)
 
 # Areas for Improvement
  - Audio Video Player
-   - Attempts were made to analyze audio to outlie regions where there were no human voice (imperceptible to viewer). 
+   - Attempts were made to analyse audio to out-lie regions where there were no human voice (imperceptible to viewer). 
    - Rendering Timer unreliable (use of deterministic clock instead to guarantee 15 Hz)
  - Summarization
    - Consolidate analysis to determine inliers.
