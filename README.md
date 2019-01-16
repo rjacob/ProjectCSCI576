@@ -57,7 +57,7 @@ Frame: 3801 (7 matches)
 
 Alin_Day1_002\16954.png
 Frame: 4053 (15 matches)
-![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/16954.png)
+![alt text](https://github.com/rjacob/ProjectCSCI576/blob/master/img/16954.png)
 
 # Video Corrections
  - Motion Stabilization
